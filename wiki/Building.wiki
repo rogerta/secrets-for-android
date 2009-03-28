@@ -1,3 +1,5 @@
+#summary Build environment
+
 =Building Secrets for Android=
 
 The source tree includes project files for building the application with Eclipse.  More specifically, this project was built using the following version of eclipse and the related Android development tools:
