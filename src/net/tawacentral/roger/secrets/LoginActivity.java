@@ -161,8 +161,15 @@ public class LoginActivity extends Activity {
               @Override
               public void onClick(DialogInterface dialog, int which) {
                 if (DialogInterface.BUTTON1 == which) {
+                  // If we delete the secrets from disk, make sure to also
+                  // clear them from memory too.  This is to handle the case
+                  // where the user knows his password and has logged in, but
+                  // he returned to the login screen and asked to reset his
+                  // password.
                   if (!FileUtils.deleteSecrets(LoginActivity.this))
                     showToast(R.string.error_reset_password, Toast.LENGTH_LONG);
+                  else
+                    secrets = null;
                   
                   onResume();
                 }
@@ -239,7 +246,9 @@ public class LoginActivity extends Activity {
     SecurityUtils.createCiphers(password_string);
     password_string = null;
     
-    if (!is_first_run) {
+    if (is_first_run) {
+      secrets = new ArrayList<Secret>();
+    } else {
       secrets = FileUtils.loadSecrets(this);
       if (null == secrets) {
         // TODO(rogerta): need better error message here.  There are probably

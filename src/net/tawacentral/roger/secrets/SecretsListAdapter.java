@@ -77,11 +77,12 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
    * Create a new secret list adapter for the UI from the given list.
    * 
    * @param context Context of the application, used for getting resources.
+   * @param secrets The list of user secrets.  This list cannot be null.
    */
   SecretsListAdapter(Context context, ArrayList<Secret> secrets) {
     this.context = context;
     inflater = LayoutInflater.from(this.context);
-    all_secrets = null != secrets ? secrets : new ArrayList<Secret>();
+    all_secrets = secrets;
     this.secrets = all_secrets;
     
     // Fill in the auto complete adapters with the initial data from the
