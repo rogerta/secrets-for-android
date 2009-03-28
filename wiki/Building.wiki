@@ -1,9 +1,7 @@
 #summary Build environments
 #labels Phase-Implementation
 
-=Building Secrets for Android=
-
-The source tree includes project files for building the application with Eclipse.  More specifically, this project was built using the following version of eclipse and the related Android development tools:
+The source tree includes project files for building the application with Eclipse.  This project builds in the following environments:
 
 ==Ubuntu 8.10 Intrepid Ibex==
   * Eclipse 3.4.2, Build id: M20090211-1700
@@ -15,4 +13,5 @@ The source tree includes project files for building the application with Eclipse
   * Android Development Toolkit 0.8.0v200809220836-110569
   * android-sdk-windows-1.1_r1
 
-Other platforms supported by Eclipse and the Android SDK should also work fine.  I'll add them here as I test them.
+Other platforms supported by Eclipse and the Android SDK should also work fine, please let me know.
+
