@@ -5,11 +5,14 @@
 
 The source tree includes project files for building the application with Eclipse.  More specifically, this project was built using the following version of eclipse and the related Android development tools:
 
+==Ubuntu 8.10 Intrepid Ibex==
   * Eclipse 3.4.2, Build id: M20090211-1700
-  * Android Common Plugin 0.8.0v200809220836-110569
   * Android Development Toolkit 0.8.0v200809220836-110569
-  * Dalvik Debug Monitor Service 0.8.0v200809220836-110569
   * android-sdk-linux_x86-1.1_r1
-  * Ubuntu 8.10 Intrepid Ibex
+
+==Microsoft Windows XP SP2==
+  * Eclipse 3.4.0, Build id: M20080617-2000
+  * Android Development Toolkit 0.8.0v200809220836-110569
+  * android-sdk-windows-1.1_r1
 
 Other platforms supported by Eclipse and the Android SDK should also work fine.  I'll add them here as I test them.
