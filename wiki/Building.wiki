@@ -1,0 +1,10 @@
+=Building Secrets for Android=
+
+The source tree includes project files for building the application with Eclipse.  More specifically, this project was built using the following version of eclipse and the related Android development tools:
+
+  * Eclipse 3.4.2, Build id: M20090211-1700
+  * Android Common Plugin 0.8.0v200809220836-110569
+  * Android Development Toolkit 0.8.0v200809220836-110569
+  * Dalvik Debug Monitor Service 0.8.0v200809220836-110569
+  * android-sdk-linux_x86-1.1_r1
+  * Ubuntu 8.10 Intrepid Ibex
