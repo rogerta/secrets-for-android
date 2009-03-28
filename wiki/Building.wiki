@@ -1,4 +1,5 @@
-#summary Build environment
+#summary Build environments
+#labels Phase-Implementation
 
 =Building Secrets for Android=
 
@@ -10,3 +11,5 @@ The source tree includes project files for building the application with Eclipse
   * Dalvik Debug Monitor Service 0.8.0v200809220836-110569
   * android-sdk-linux_x86-1.1_r1
   * Ubuntu 8.10 Intrepid Ibex
+
+Other platforms supported by Eclipse and the Android SDK should also work fine.  I'll add them here as I test them.
