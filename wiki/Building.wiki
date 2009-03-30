@@ -3,15 +3,27 @@
 
 The source tree includes project files for building the application with Eclipse.  This project builds in the following environments:
 
-==Ubuntu 8.10 Intrepid Ibex==
+==Platforms==
+
+===Linux-based Environment===
+  * Ubuntu 8.10 Intrepid Ibex
   * Eclipse 3.4.2, Build id: M20090211-1700
   * Android Development Toolkit 0.8.0v200809220836-110569
   * android-sdk-linux_x86-1.1_r1
 
-==Microsoft Windows XP SP2==
+===Windows-based Environment===
+  * Microsoft Windows XP SP2
   * Eclipse 3.4.0, Build id: M20080617-2000
   * Android Development Toolkit 0.8.0v200809220836-110569
   * android-sdk-windows-1.1_r1
 
 Other platforms supported by Eclipse and the Android SDK should also work fine, please let me know.
 
+==Building==
+
+To build Secrets for Android yourself, follow these steps:
+
+  * check out the code as instructed in "Source" tab above
+  * start Eclipse and choose the menu item "File / Import..."
+  * in the Import dialog choose "General / Existing Projects into Workspace" in the tree control
+  * Press the "Next>" button and follow the instructions
