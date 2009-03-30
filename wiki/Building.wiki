@@ -1,9 +1,9 @@
 #summary Build environments
 #labels Phase-Implementation
 
-The source tree includes project files for building the application with Eclipse.  This project builds in the following environments:
+The source tree includes project files for building the application with Eclipse.
 
-==Platforms==
+==Supported Platforms==
 
 ===Linux-based Environment===
   * Ubuntu 8.10 Intrepid Ibex
@@ -23,7 +23,7 @@ Other platforms supported by Eclipse and the Android SDK should also work fine, 
 
 To build Secrets for Android yourself, follow these steps:
 
-  * check out the code as instructed in "Source" tab above
+  * check out the code as instructed under the "Source" tab above
   * start Eclipse and choose the menu item "File / Import..."
   * in the Import dialog choose "General / Existing Projects into Workspace" in the tree control
   * Press the "Next>" button and follow the instructions
