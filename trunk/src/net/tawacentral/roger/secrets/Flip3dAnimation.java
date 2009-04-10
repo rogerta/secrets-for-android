@@ -49,10 +49,10 @@ public class Flip3dAnimation extends Animation {
   private Camera camera;
   private View view1;
   private View view2;
-  private float center_x;
-  private float center_y;
+  private float centerX;
+  private float centerY;
   private boolean forward;
-  private boolean visibility_swapped;
+  private boolean visibilitySwapped;
 
   /**
    * Creates a 3D flip animation between two views.  If forward is true, its
@@ -62,16 +62,16 @@ public class Flip3dAnimation extends Animation {
    * 
    * @param view1 First view in the transition.
    * @param view2 Second view in the transition.
-   * @param center_x The center of the views in the x-axis.
-   * @param center_y The center of the views in the y-axis.
+   * @param centerX The center of the views in the x-axis.
+   * @param centerY The center of the views in the y-axis.
    * @param forward The direction of the animation.
    */
-  Flip3dAnimation(View view1, View view2, int center_x, int center_y,
+  Flip3dAnimation(View view1, View view2, int centerX, int centerY,
                   boolean forward) {
     this.view1 = view1;
     this.view2 = view2;
-    this.center_x = center_x;
-    this.center_y = center_y;
+    this.centerX = centerX;
+    this.centerY = centerY;
     this.forward = forward;
     
     setDuration(1000);
@@ -102,7 +102,7 @@ public class Flip3dAnimation extends Animation {
     if (interpolatedTime >= 0.5f) {
       degrees -= 180.f;
       
-      if (!visibility_swapped) {
+      if (!visibilitySwapped) {
         if (forward) {
           view1.setVisibility(View.GONE);
           view2.setVisibility(View.VISIBLE);
@@ -111,7 +111,7 @@ public class Flip3dAnimation extends Animation {
           view1.setVisibility(View.VISIBLE);
         }
         
-        visibility_swapped = true;
+        visibilitySwapped = true;
       }
     }
     
@@ -126,7 +126,7 @@ public class Flip3dAnimation extends Animation {
     camera.getMatrix(matrix);
     camera.restore();
 
-    matrix.preTranslate(-center_x, -center_y);
-    matrix.postTranslate(center_x, center_y);
+    matrix.preTranslate(-centerX, -centerY);
+    matrix.postTranslate(centerX, centerY);
   }
 }

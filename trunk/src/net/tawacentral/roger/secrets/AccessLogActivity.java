@@ -48,14 +48,14 @@ public class AccessLogActivity extends ListActivity {
     // Create an array of strings from the access log.
     Secret secret = (Secret) getIntent().getExtras().getSerializable(
         SecretsListActivity.EXTRA_ACCESS_LOG);
-    List<Secret.LogEntry> access_log = secret.getAccessLog();
+    List<Secret.LogEntry> accessLog = secret.getAccessLog();
     
     String pattern = getText(R.string.log_name_format).toString();
     setTitle(MessageFormat.format(pattern, secret.getDescription()));
     
     ArrayList<String> strings = new ArrayList<String>();
     
-    for (Secret.LogEntry entry : access_log) {
+    for (Secret.LogEntry entry : accessLog) {
       String s = getElapsedString(this, entry, 0);
       strings.add(s);
     }
@@ -74,9 +74,9 @@ public class AccessLogActivity extends ListActivity {
     // If the keyguard has been displayed, exit this activity.  This returns
     // us to the login page requiring the user to enter his password again
     // before get access again to his secrets.
-    KeyguardManager key_guard = (KeyguardManager) getSystemService(
+    KeyguardManager keyGuard = (KeyguardManager) getSystemService(
         KEYGUARD_SERVICE);
-    boolean isInputRestricted = key_guard.inKeyguardRestrictedInputMode();
+    boolean isInputRestricted = keyGuard.inKeyguardRestrictedInputMode();
     if (isInputRestricted)
       finish();
   }
@@ -114,7 +114,7 @@ public class AccessLogActivity extends ListActivity {
     c.set(Calendar.MILLISECOND, 0);
     long midnight = c.getTimeInMillis();
     c.add(Calendar.DAY_OF_YEAR, -1);
-    long yesterday_midnight = c.getTimeInMillis();
+    long yesterdayMidnight = c.getTimeInMillis();
     
     long time = entry.getTime();
     long diff = (now - time) / 1000;
@@ -144,7 +144,7 @@ public class AccessLogActivity extends ListActivity {
     } else if (time > midnight) {
       String pattern = context.getText(R.string.log_today).toString();
       s += MessageFormat.format(pattern, new Date(time));
-    } else if (time > yesterday_midnight) {
+    } else if (time > yesterdayMidnight) {
       String pattern = context.getText(R.string.log_yesterday).toString();
       s += MessageFormat.format(pattern, new Date(time));
     } else {
