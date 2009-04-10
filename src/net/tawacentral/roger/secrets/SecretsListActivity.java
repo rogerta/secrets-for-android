@@ -76,8 +76,8 @@ public class SecretsListActivity extends ListActivity {
   
   private SecretsListAdapter secretsList;  // list of secrets
   private Toast toast;  // toast used to show password
-  private boolean is_editing;  // true if changing a secret
-  private int editing_position;  // position of item being edited
+  private boolean isEditing;  // true if changing a secret
+  private int editingPosition;  // position of item being edited
   private View root;  // root of the layout for this activity
   private View edit;  // root view for the editing layout
   
@@ -117,13 +117,13 @@ public class SecretsListActivity extends ListActivity {
     
     // If there is state information, use it to initialize the activity.
     if (null != state) {
-      is_editing = state.getBoolean(STATE_IS_EDITING);
-      if (is_editing) {
+      isEditing = state.getBoolean(STATE_IS_EDITING);
+      if (isEditing) {
         EditText description = (EditText) findViewById(R.id.list_description);
         EditText password = (EditText) findViewById(R.id.list_password);
         EditText notes = (EditText) findViewById(R.id.list_notes);
 
-        editing_position = state.getInt(STATE_EDITING_POSITION);
+        editingPosition = state.getInt(STATE_EDITING_POSITION);
         description.setText(state.getCharSequence(STATE_EDITING_DESCRIPTION));
         username.setText(state.getCharSequence(STATE_EDITING_USERNAME));
         password.setText(state.getCharSequence(STATE_EDITING_PASSWORD));
@@ -209,9 +209,9 @@ public class SecretsListActivity extends ListActivity {
     
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
-    menu.findItem(R.id.list_add).setVisible(!is_editing);
-    menu.findItem(R.id.list_save).setVisible(is_editing);
-    menu.findItem(R.id.list_discard).setVisible(is_editing);
+    menu.findItem(R.id.list_add).setVisible(!isEditing);
+    menu.findItem(R.id.list_save).setVisible(isEditing);
+    menu.findItem(R.id.list_discard).setVisible(isEditing);
     menu.findItem(R.id.list_delete).setVisible(
         position != AdapterView.INVALID_POSITION);
     menu.findItem(R.id.list_access).setVisible(
@@ -308,7 +308,7 @@ public class SecretsListActivity extends ListActivity {
    * AdpaterView.INVALID_POSITION is returned. 
    */
   private int getCurrentSecretIndex() {
-    return is_editing ? editing_position
+    return isEditing ? editingPosition
                       : getListView().getSelectedItemPosition();
   }
   
@@ -319,7 +319,7 @@ public class SecretsListActivity extends ListActivity {
    */
   @Override
   public boolean onKeyDown(int key_code, KeyEvent event) {
-    if (is_editing && KeyEvent.KEYCODE_BACK == key_code) {
+    if (isEditing && KeyEvent.KEYCODE_BACK == key_code) {
       saveSecret();
       animateFromEditView();
       return true;
@@ -338,9 +338,9 @@ public class SecretsListActivity extends ListActivity {
     super.onSaveInstanceState(state);
     
     // Save our state for later.
-    state.putBoolean(STATE_IS_EDITING, is_editing);
+    state.putBoolean(STATE_IS_EDITING, isEditing);
     
-    if (is_editing) {
+    if (isEditing) {
       saveSecret();
       
       EditText description = (EditText) findViewById(R.id.list_description);
@@ -349,7 +349,7 @@ public class SecretsListActivity extends ListActivity {
       EditText email = (EditText) findViewById(R.id.list_email);
       EditText notes = (EditText) findViewById(R.id.list_notes);
 
-      state.putInt(STATE_EDITING_POSITION, editing_position);
+      state.putInt(STATE_EDITING_POSITION, editingPosition);
       state.putCharSequence(STATE_EDITING_DESCRIPTION, description.getText());
       state.putCharSequence(STATE_EDITING_USERNAME, username.getText());
       state.putCharSequence(STATE_EDITING_PASSWORD, password.getText());
@@ -386,7 +386,7 @@ public class SecretsListActivity extends ListActivity {
    * @param position Position of secret to edit.
    */
   private void SetEditViews(int position) {
-    editing_position = position;
+    editingPosition = position;
     
     EditText description = (EditText) findViewById(R.id.list_description);
     EditText username = (EditText) findViewById(R.id.list_username);
@@ -444,7 +444,7 @@ public class SecretsListActivity extends ListActivity {
     String email_text = email.getText().toString();
     String note_text = notes.getText().toString();
     
-    if (AdapterView.INVALID_POSITION == editing_position) {
+    if (AdapterView.INVALID_POSITION == editingPosition) {
       if (0 == description.getText().length() &&
           0 == username.getText().length() &&
           0 == password.getText().length() &&
@@ -454,7 +454,7 @@ public class SecretsListActivity extends ListActivity {
       
       secret = new Secret();
     } else {
-      secret = secretsList.getSecret(editing_position);
+      secret = secretsList.getSecret(editingPosition);
       
       if (description_text.equals(secret.getDescription()) &&
           username_text.equals(secret.getUsername()) &&
@@ -463,7 +463,7 @@ public class SecretsListActivity extends ListActivity {
           note_text.equals(secret.getNote()))
         return;
       
-      secretsList.remove(editing_position);
+      secretsList.remove(editingPosition);
     }
     
     secret.setDescription(description.getText().toString());
@@ -472,7 +472,7 @@ public class SecretsListActivity extends ListActivity {
     secret.setEmail(email.getText().toString());
     secret.setNote(notes.getText().toString());
     
-    editing_position = secretsList.insert(secret);
+    editingPosition = secretsList.insert(secret);
     secretsList.notifyDataSetChanged();
   }
 
@@ -487,7 +487,7 @@ public class SecretsListActivity extends ListActivity {
       // TODO(rogerta): is this is really a performance issue to save here?
       //if (!FileUtils.saveSecrets(this, secretsList_.getAllSecrets()))
       //  showToast(R.string.error_save_secrets);
-      if (is_editing) {
+      if (isEditing) {
         animateFromEditView();
       } else {
         setTitle();
@@ -533,8 +533,8 @@ public class SecretsListActivity extends ListActivity {
    * the secret edit view.
    */
   private void animateToEditView() {
-    assert(!is_editing);
-    is_editing = true;
+    assert(!isEditing);
+    isEditing = true;
 
     // Cancel any toast that may currently be displayed.
     if (null != toast)
@@ -567,8 +567,8 @@ public class SecretsListActivity extends ListActivity {
    * the list of secrets.
    */
   private void animateFromEditView() {
-    assert(is_editing);
-    is_editing = false;
+    assert(isEditing);
+    isEditing = false;
     
     View list = getListView();
     int cx = root.getWidth() / 2;
@@ -577,10 +577,10 @@ public class SecretsListActivity extends ListActivity {
     animation.setAnimationListener(new AnimationListener() {
       @Override
       public void onAnimationEnd(Animation animation) {
-        if (AdapterView.INVALID_POSITION != editing_position) {
+        if (AdapterView.INVALID_POSITION != editingPosition) {
           ListView list_view = getListView();
           list_view.requestFocus();
-          list_view.setSelection(editing_position);
+          list_view.setSelection(editingPosition);
           
           Rect rect = new Rect();
           list_view.getFocusedRect(rect);

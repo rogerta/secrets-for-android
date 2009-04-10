@@ -50,9 +50,9 @@ public class LoginActivity extends Activity {
    * from other parts of the program. */
   private static ArrayList<Secret> secrets = null;
   
-  private boolean is_first_run;
-  private boolean is_validating_password;
-  private String password_string;
+  private boolean isFirstRun;
+  private boolean isValidatingPassword;
+  private String passwordString;
   private Toast toast;
   
   /** Called when the activity is first created. */
@@ -99,16 +99,16 @@ public class LoginActivity extends Activity {
     //  . when the user leaves the SecretsListActivity, the list of secrets
     //    is overwritten by an empty list
     
-    password_string = null;
-    is_validating_password = false;
+    passwordString = null;
+    isValidatingPassword = false;
     
     // If there is no existing secrets file, this is a first-run scenario.
     // (Its also possible that the user started the app but never got passed
     // entering his password)  In this case, we will show a special first time
     // message with instructions about entering a password, followed by a
     // validation pass to get him to enter the password again.
-    is_first_run = isFirstRun();
-    if (is_first_run) {
+    isFirstRun = isFirstRun();
+    if (isFirstRun) {
       TextView text = (TextView)findViewById(R.id.login_instructions);
       text.setText(R.string.login_instruction_1);
       text = (TextView)findViewById(R.id.login_second_line);
@@ -202,40 +202,40 @@ public class LoginActivity extends Activity {
   /**
    * Handle a user click on the password view.
    * 
-   * @param password_view The password view holding the entered password.
+   * @param passwordView The password view holding the entered password.
    */
-  private void handlePasswordClick(TextView password_view) {
+  private void handlePasswordClick(TextView passwordView) {
     // The program tries to minimize the amount of the time the users password
     // is held in memory.  The password edit field is cleared immediately
     // after getting the value, and the password string is held only as long as
     // required to generated the ciphers.
-    String password_string = password_view.getText().toString();
-    password_view.setText("");
+    String passwordString = passwordView.getText().toString();
+    passwordView.setText("");
     
-    if (is_first_run) {
+    if (isFirstRun) {
       TextView instructions = (TextView)findViewById(R.id.login_instructions);
       
-      if (!is_validating_password) {
+      if (!isValidatingPassword) {
         // This is the first run, and the user has created his password for the
         // first time.  We need to get him to validate it, so show the second
         // set of instructions, remember the password, clear the password field,
         // and wait for him to enter it again.
         instructions.setText(R.string.login_instruction_2);
         
-        this.password_string = password_string;
-        is_validating_password = true;
+        this.passwordString = passwordString;
+        isValidatingPassword = true;
         return;
       } else {
         // This is the first run, and the user is validating his password.
         // If they are the same, continue to the next activity.  If not,
         // display an error message and go back to creating a brand new
         // password.
-        if (!password_string.equals(this.password_string)) {
+        if (!passwordString.equals(this.passwordString)) {
           instructions.setText(R.string.login_instruction_1);
           showToast(R.string.invalid_password, Toast.LENGTH_SHORT);
         
-          this.password_string = null;
-          is_validating_password = false;
+          this.passwordString = null;
+          isValidatingPassword = false;
           return;
         }
       }
@@ -243,10 +243,10 @@ public class LoginActivity extends Activity {
     
     // Lets not save the password in memory anywhere.  Create all the ciphers
     // we will need based on the password and save those.
-    SecurityUtils.createCiphers(password_string);
-    password_string = null;
+    SecurityUtils.createCiphers(passwordString);
+    passwordString = null;
     
-    if (is_first_run) {
+    if (isFirstRun) {
       secrets = new ArrayList<Secret>();
     } else {
       secrets = FileUtils.loadSecrets(this);
