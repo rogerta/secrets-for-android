@@ -73,8 +73,8 @@ public class Secret implements Serializable {
      * @param time Time of the entry, in milliseconds.
      */
     public LogEntry(int type, long time) {
-      this.type_ = type;
-      this.time_ = time;
+      type_ = type;
+      time_ = time;
     }
 
     /**

@@ -101,7 +101,6 @@ public class FileUtils {
                                 cipher));
       secrets = (ArrayList<Secret>) input.readObject();
     } catch (Exception ex) {
-      Log.e(LOG_TAG, "loadSecrets", ex);
     } finally {
       try {if (null != input) input.close();} catch (IOException ex) {}
     }
@@ -116,7 +115,6 @@ public class FileUtils {
                                   cipher));
         secrets = (ArrayList<Secret>) input.readObject();
       } catch (Exception ex) {
-        Log.e(LOG_TAG, "loadSecrets(old)", ex);
       } finally {
         try {if (null != input) input.close();} catch (IOException ex) {}
       }

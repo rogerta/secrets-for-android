@@ -57,21 +57,21 @@ public class SecurityUtils {
   // protection, because if an attacker can get to the secrets file, then he
   // has broken into the phone, and therefore would be able to get to the
   // random salt too.
-  private static final byte[] salt = {
+  private static final byte[] s_salt = {
     (byte)0xA4, (byte)0x0B, (byte)0xC8, (byte)0x34,
     (byte)0xD6, (byte)0x95, (byte)0xF3, (byte)0x13
   };
   
-  private static Cipher encryptCipher;
-  private static Cipher decryptCipher;
-  private static Cipher oldDecryptCipher;
+  private static Cipher encrypt_cipher;
+  private static Cipher decrypt_cipher;
+  private static Cipher old_decrypt_cipher;
 
   /**
    * Get the cipher used to encrypt data using the password given to the
    * createCiphers() function.
    */
   public static Cipher getEncryptionCipher() {
-    return encryptCipher;
+    return encrypt_cipher;
   }
   
   /**
@@ -79,7 +79,7 @@ public class SecurityUtils {
    * createCiphers() function.
    */
   public static Cipher getDecryptionCipher() {
-    return decryptCipher;
+    return decrypt_cipher;
   }
   
   /**
@@ -87,7 +87,7 @@ public class SecurityUtils {
    * createCiphers() function.
    */
   public static Cipher getOldDecryptionCipher() {
-    return oldDecryptCipher;
+    return old_decrypt_cipher;
   }
   
   /**
@@ -103,19 +103,19 @@ public class SecurityUtils {
     boolean succeeded = false;
     
     try {
-      encryptCipher = createCipher(password,
+      encrypt_cipher = createCipher(password,
                                     KEY_FACTORY,
                                     KEY_ITERATION_COUNT,
                                     Cipher.ENCRYPT_MODE);
-      decryptCipher = createCipher(password,
+      decrypt_cipher = createCipher(password,
                                     KEY_FACTORY,
                                     KEY_ITERATION_COUNT,
                                     Cipher.DECRYPT_MODE);
       
-      // TODO(rogerta): should probably optimize this, since in 99.9999% of the
+      // TODO(rogerta): should probably optimize this, since in 99.9999% if the
       // cases the old cipher will never be needed.  However, this would mean
       // having to store the password in memory for longer.
-      oldDecryptCipher = createCipher(password,
+      old_decrypt_cipher = createCipher(password,
                                         OLD_KEY_FACTORY,
                                         OLD_KEY_ITERATION_COUNT,
                                         Cipher.DECRYPT_MODE);
@@ -147,12 +147,12 @@ public class SecurityUtils {
           NoSuchPaddingException, InvalidKeyException,
           InvalidAlgorithmParameterException {
     PBEKeySpec keyspec = new PBEKeySpec(password.toCharArray(),
-                                        salt,
+                                        s_salt,
                                         count,
                                         32);
     SecretKeyFactory skf = SecretKeyFactory.getInstance(factory);
     SecretKey key = skf.generateSecret(keyspec);
-    AlgorithmParameterSpec aps = new PBEParameterSpec(salt, count);
+    AlgorithmParameterSpec aps = new PBEParameterSpec(s_salt, count);
     Cipher cipher = Cipher.getInstance(factory);
     cipher.init(mode, key, aps);
 
