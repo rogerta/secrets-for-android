@@ -19,7 +19,11 @@ limitations under the License.
 
 <string name="login_first_line">Welcome to your Secrets</string>
 <string name="login_second_line">Enter password to continue</string>
-<string name="copyright">Version 1.0.1 (c) 2009 Google Inc.</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">Version 1.0.2 (c) 2009 Google Inc.</string>
+
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="error_reset_password">Uh oh.  Unable to reset your password.</string>
 <string name="error_save_secrets">Uh oh.  Unable to save your secrets.</string>
