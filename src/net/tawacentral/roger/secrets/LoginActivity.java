@@ -36,7 +36,7 @@ import android.widget.Toast;
  * his password, or guides him through the process of creating one.  This
  * activity also permits the user to reset his password, which essentially
  * means deletes all his secrets.
- *  
+ *
  * @author rogerta
  */
 public class LoginActivity extends Activity {
@@ -44,17 +44,17 @@ public class LoginActivity extends Activity {
   private static final int DIALOG_RESET_PASSWORD = 1;
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
-  
+
   /**
    * This is the global list of the user's secrets.  This list is accessed
    * from other parts of the program. */
   private static ArrayList<Secret> secrets = null;
-  
+
   private boolean isFirstRun;
   private boolean isValidatingPassword;
   private String passwordString;
   private Toast toast;
-  
+
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -70,7 +70,7 @@ public class LoginActivity extends Activity {
         handlePasswordClick(password);
       }
     });
-    
+
     Log.d(LOG_TAG, "LoginActivity.onCreate");
   }
 
@@ -98,10 +98,10 @@ public class LoginActivity extends Activity {
     //    the secrets list, its null
     //  . when the user leaves the SecretsListActivity, the list of secrets
     //    is overwritten by an empty list
-    
+
     passwordString = null;
     isValidatingPassword = false;
-    
+
     // If there is no existing secrets file, this is a first-run scenario.
     // (Its also possible that the user started the app but never got passed
     // entering his password)  In this case, we will show a special first time
@@ -137,7 +137,7 @@ public class LoginActivity extends Activity {
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     boolean handled = false;
-    
+
     switch(item.getItemId()) {
       case R.id.reset_password:
         showDialog(DIALOG_RESET_PASSWORD);
@@ -146,14 +146,14 @@ public class LoginActivity extends Activity {
       default:
         break;
     }
-    
+
     return handled;
   }
-  
+
   @Override
   public Dialog onCreateDialog(int id) {
     Dialog dialog = null;
-    
+
     switch (id) {
       case DIALOG_RESET_PASSWORD: {
         DialogInterface.OnClickListener listener =
@@ -170,7 +170,7 @@ public class LoginActivity extends Activity {
                     showToast(R.string.error_reset_password, Toast.LENGTH_LONG);
                   else
                     secrets = null;
-                  
+
                   onResume();
                 }
               }
@@ -187,7 +187,7 @@ public class LoginActivity extends Activity {
       default:
         break;
     }
-    
+
     return dialog;
   }
 
@@ -201,7 +201,7 @@ public class LoginActivity extends Activity {
 
   /**
    * Handle a user click on the password view.
-   * 
+   *
    * @param passwordView The password view holding the entered password.
    */
   private void handlePasswordClick(TextView passwordView) {
@@ -211,17 +211,17 @@ public class LoginActivity extends Activity {
     // required to generated the ciphers.
     String passwordString = passwordView.getText().toString();
     passwordView.setText("");
-    
+
     if (isFirstRun) {
       TextView instructions = (TextView)findViewById(R.id.login_instructions);
-      
+
       if (!isValidatingPassword) {
         // This is the first run, and the user has created his password for the
         // first time.  We need to get him to validate it, so show the second
         // set of instructions, remember the password, clear the password field,
         // and wait for him to enter it again.
         instructions.setText(R.string.login_instruction_2);
-        
+
         this.passwordString = passwordString;
         isValidatingPassword = true;
         return;
@@ -233,19 +233,19 @@ public class LoginActivity extends Activity {
         if (!passwordString.equals(this.passwordString)) {
           instructions.setText(R.string.login_instruction_1);
           showToast(R.string.invalid_password, Toast.LENGTH_SHORT);
-        
+
           this.passwordString = null;
           isValidatingPassword = false;
           return;
         }
       }
     }
-    
+
     // Lets not save the password in memory anywhere.  Create all the ciphers
     // we will need based on the password and save those.
     SecurityUtils.createCiphers(passwordString);
     passwordString = null;
-    
+
     if (isFirstRun) {
       secrets = new ArrayList<Secret>();
     } else {
@@ -257,16 +257,16 @@ public class LoginActivity extends Activity {
         return;
       }
     }
-    
+
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
     Log.d(LOG_TAG, "LoginActivity.handlePasswordClick");
   }
-  
+
   /**
    * Show a toast on the screen with the given message.  If a toast is already
    * being displayed, the message is replaced and timer is restarted.
-   * 
+   *
    * @param message Resource id of tText to display in the toast.
    * @param length Length of time to show toast.
    */
@@ -277,12 +277,22 @@ public class LoginActivity extends Activity {
     } else {
       toast.setText(message);
     }
-    
+
     toast.show();
   }
 
   /** Gets the global list if the user's secrets. */
   public static ArrayList<Secret> getSecrets() {
     return secrets;
+  }
+
+  /** Overwrite the current secrets with the given list. */
+  public static void restoreSecrets(ArrayList<Secret> secrets) {
+    // I don't want to change the actual instance of the global array that
+    // holds the secrets, since this array is referred to from other places
+    // in the code.  I will simply replace the existing array with the entries
+    // from the new one.
+    LoginActivity.secrets.clear();
+    LoginActivity.secrets.addAll(secrets);
   }
 }

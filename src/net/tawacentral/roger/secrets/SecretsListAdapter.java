@@ -31,11 +31,13 @@ import java.util.TreeSet;
 /**
  * Maintains a user's list of secrets.  Implements all required interfaces to
  * allow the list to be shown in List and Spinner views.  Also provides support
- * for the auto complete adapters for the username and email edit views. 
+ * for the auto complete adapters for the username and email edit views.
  *
  * @author rogerta
  */
 public class SecretsListAdapter extends BaseAdapter implements Filterable {
+  private static final char DOT = '.';
+
   // There are two secrets arrays.  secrets represents the array
   // use to implement the Adapter interface of this class (inherited from
   // BaseAdapter).  allSecrets is the real array that holds the secrets.
@@ -49,7 +51,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   // member functions, and we don't ever want the instance to change.
   private ArrayList<Secret> secrets;
   private final ArrayList<Secret> allSecrets;
-  
+
   // These members are used to maintain the auto complete lists for the
   // username and email fields.  I need to use the tree set because I don't
   // want to search the ArrayAdapters for existing names before inserting into
@@ -58,15 +60,15 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   private TreeSet<String> emails;
   private ArrayAdapter<String> usernameAdapter;
   private ArrayAdapter<String> emailAdapter;
-  
+
   // Cache of objects to use in the various methods.
   private Context context;
   private LayoutInflater inflater;
   private SecretsFilter filter;
-  
+
   /**
    * Create a new secret list adapter for the UI from the given list.
-   * 
+   *
    * @param context Context of the application, used for getting resources.
    * @param secrets The list of user secrets.  This list cannot be null.
    */
@@ -75,7 +77,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     inflater = LayoutInflater.from(this.context);
     allSecrets = secrets;
     this.secrets = allSecrets;
-    
+
     // Fill in the auto complete adapters with the initial data from the
     // secrets.
     // TODO(rogerta): would probably be more efficient to use a custom
@@ -88,26 +90,26 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         android.R.layout.simple_dropdown_item_1line);
     usernames = new TreeSet<String>();
     emails = new TreeSet<String>();
-    
+
     usernameAdapter.setNotifyOnChange(false);
     emailAdapter.setNotifyOnChange(false);
-    
+
     for (int i = 0; i < allSecrets.size(); ++i) {
       Secret secret = allSecrets.get(i);
       usernames.add(secret.getUsername());
       emails.add(secret.getEmail());
     }
-    
+
     for (String username : usernames)
       usernameAdapter.add(username);
-    
+
     for (String email : emails)
       emailAdapter.add(email);
-    
+
     usernameAdapter.setNotifyOnChange(true);
     emailAdapter.setNotifyOnChange(true);
   }
-  
+
   @Override
   public boolean areAllItemsEnabled() {
     return true;
@@ -165,7 +167,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
 
     text1.setText(secret.getDescription());
     text2.setText(getFriendlyId(secret));
-    
+
     return convertView;
   }
 
@@ -188,14 +190,14 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   public Filter getFilter() {
     if (null == filter)
       filter  = new SecretsFilter();
-    
+
     return filter;
   }
-  
+
   /**
    * Concrete subclass of Filter to allow filtering the list of secrets by
    * typing the first letters of the secret's description.
-   *  
+   *
    * @author rogerta
    *
    */
@@ -206,11 +208,32 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     protected FilterResults performFiltering(CharSequence prefix) {
       // NOTE: this function is *always* called from a background thread, and
       // not the UI thread.
-      
+
+      boolean isFullTextSearch = false;
       FilterResults results = new FilterResults();
       String prefixString = null == prefix ? null
                                            : prefix.toString().toLowerCase();
       ArrayList<Secret> secrets;
+
+      // if the prefix starts with a dot, then this is interpreted as a full
+      // text search.  This means that a given secret matches the "prefix",
+      // not including the dot, if the prefix appears in any part of any field
+      // of the secret.  If the prefix does not start with a dot, this is a
+      // normal prefix search of the description.  If the prefix starts with
+      // two dots, this is considered a prefix search with a single dot.
+      //
+      // Examples:
+      //
+      //  prefix="abc"   -> prefix search with "abc"
+      //  prefix=".abc"  -> full text search with "abc"
+      //  prefix="..abc" -> prefix search with ".abc"
+      if (null != prefixString) {
+        if (prefixString.length() > 0 && prefixString.charAt(0) == DOT) {
+          isFullTextSearch = prefixString.length() > 1 &&
+              prefixString.charAt(1) != DOT;
+          prefixString = prefixString.substring(1);
+        }
+      }
 
       if (null != prefixString && prefixString.length() > 0) {
         // Do a shallow copy of the secrets list.  This works because all the
@@ -219,18 +242,26 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         synchronized (allSecrets) {
           secrets = (ArrayList<Secret>) allSecrets.clone();
         }
-  
+
         // We loop backwards because we may be removing elements from the array
-        // in the loop, and we don't want to disturb the index when this\
+        // in the loop, and we don't want to disturb the index when this
         // happens.
         for (int i = secrets.size() - 1; i >= 0; --i) {
           Secret secret = secrets.get(i);
-          String description = secret.getDescription().toLowerCase();
-          if (!description.startsWith(prefixString)) {
-            secrets.remove(i);
+          if (isFullTextSearch) {
+            if (!secret.getDescription().toLowerCase().contains(prefixString) &&
+                !secret.getEmail().toLowerCase().contains(prefixString) &&
+                !secret.getUsername().toLowerCase().contains(prefixString) &&
+                !secret.getNote().toLowerCase().contains(prefixString))
+              secrets.remove(i);
+          } else {
+            String description = secret.getDescription().toLowerCase();
+            if (!description.startsWith(prefixString)) {
+              secrets.remove(i);
+            }
           }
         }
-        
+
         results.values = secrets;
         results.count = secrets.size();
       } else {
@@ -240,7 +271,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
           results.count = allSecrets.size();
         }
       }
-      
+
       return results;
     }
 
@@ -253,16 +284,16 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
       notifyDataSetChanged();
     }
   }
-  
+
   /**
    * Totally for debugging.  Should be taken out before releasing.
-   * 
+   *
    * @param view View to walk.
    * @return Id of view.
    */
   /*private int walkViewTree(View view) {
     int id = view.getId();
-    
+
     if (view instanceof ViewGroup) {
       ViewGroup group = (ViewGroup) view;
       int count = group.getChildCount();
@@ -271,7 +302,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         walkViewTree(child);
       }
     }
-    
+
     return id;
   }*/
 
@@ -283,7 +314,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   /**
    * Get the array of secrets backing this adapter.  Its expected that callers
    * of this method will not modify the returned list.
-   * 
+   *
    * Any filter applied to this adapter will not affect the secrets returned.
    * This method is meant to get all the user's secrets, and is used mainly
    * for saving the list of secrets.
@@ -291,14 +322,14 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   public List<Secret> getAllSecrets() {
     return allSecrets;
   }
-  
+
   /** Remove the secret at the given position. */
   public Secret remove(int position) {
     // NOTE: i will not remove usernames and emails from the auto complete
     // adapters.  For one, it would be expensive, and two, I actually think
     // this behaviour is good.  The adapters will be reset the next time the
     // list activity is restarted.
-    
+
     // The position argument is relevant to the secrets array, but also need
     // to remove the corresponding element from the allSecrets array.  I
     // will remove from secrets first, then use the object found to remove
@@ -312,20 +343,20 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         allSecrets.remove(position);
       }
     }
-    
+
     return secret;
   }
 
   /**
    * Insert the secret into the list.  The secret is inserted in alphabetical
    * order as determined by the description.
-   * 
+   *
    * @param secret Secret to insert.
    * @return Position where the secret was inserted.
    */
   public int insert(Secret secret) {
     int i;
-    
+
     // We need to synch our access to allSecrets since it also accessed from
     // a background thread when doing filtering.  This is a shallow lock, in
     // the sense that access to the array elements is not synch'ed.  That's
@@ -337,7 +368,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
           break;
       }
       allSecrets.add(i, secret);
-      
+
       if (secrets != allSecrets) {
         for (i = 0; i < secrets.size(); ++i) {
           Secret s = secrets.get(i);
@@ -347,18 +378,18 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         secrets.add(i, secret);
       }
     }
-    
+
     // Add the username and email to the auto complete adapters.
     if (!usernames.contains(secret.getUsername())) {
       usernames.add(secret.getUsername());
       usernameAdapter.add(secret.getUsername());
     }
-    
+
     if (!emails.contains(secret.getEmail())) {
       emails.add(secret.getEmail());
       emailAdapter.add(secret.getEmail());
     }
-    
+
     return i;
   }
 
@@ -366,20 +397,20 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   public ArrayAdapter<String> getUsernameAutoCompleteAdapter() {
     return usernameAdapter;
   }
-  
+
   /** Gets the auto complete adapter used for completing emails. */
   public ArrayAdapter<String> getEmailAutoCompleteAdapter() {
     return emailAdapter;
   }
-  
+
   /**
    * Gets the friendly id of this secret.  This is a combination of the
    * username and email address.
-   * 
+   *
    * The friendly id will be cached in the secret object for future use.
    * Any change to the username or email address will automatically invalidate
    * the friend id and cause it to be recalculated here.
-   * 
+   *
    * @param secret Secret whose friendly name we want to generate.
    * @return Friendly name for the secret.
    */
@@ -403,7 +434,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
 
     if (friendlyId.length() > 0)
       friendlyId += ", ";
-    
+
     friendlyId += lastAccessed;
     return friendlyId;
   }

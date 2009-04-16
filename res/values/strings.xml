@@ -22,11 +22,22 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.0.2 (c) 2009 Google Inc.</string>
+<string name="copyright">Version 1.1 (c) 2009 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="error_reset_password">Uh oh.  Unable to reset your password.</string>
 <string name="error_save_secrets">Uh oh.  Unable to save your secrets.</string>
+
+<string name="backup_succeeded">Backup succeeded.</string>
+<string name="restore_succeeded">Restore succeeded.</string>
+<string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
+
+<string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
+<string name="export_failed">Uh oh.  Unable to export your secrets.</string>
+
+<string name="import_not_found">No CSV file found on the SD card.\n\nSecrets can be imported from the following files:\n\n{0}</string>
+<string name="import_partial">Hmmm, only some secrets were imported successfully.  Check your secrets and the \'\'{0}\'\' file for correctness.</string>
+<string name="import_failed">Uh oh.  Unable to import your secrets from \'\'{0}\'\'.</string>
 
 <string name="login_instruction_1">
 Create a password to protect your secrets.  Use letters, numbers, and
@@ -73,11 +84,22 @@ Are you really sure?
 Are you sure you want to delete \'\'{0}\'\'?
 </string>
 
+<string name="edit_menu_restore_secrets_message">
+Restoring secrets from the backup will overwrite all current secrets.
+Continue anyway?
+</string>
+
+<string name="edit_menu_import_secrets_message">Import successful.  Delete \'\'{0}\'\' now?</string>
+
 <string name="list_menu_add">Add secret</string>
 <string name="list_menu_save">Save</string>
 <string name="list_menu_discard">Discard changes</string>
 <string name="list_menu_delete">Delete secret</string>
 <string name="list_menu_access">Access history</string>
+<string name="list_menu_backup">Backup to SD</string>
+<string name="list_menu_restore">Restore from SD</string>
+<string name="list_menu_import">Import from CSV</string>
+<string name="list_menu_export">Export to CSV</string>
 
 <string name="log_name">Access log</string>
 <string name="log_name_format">Access log for {0}</string>
@@ -89,5 +111,6 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_created">Created</string>
 <string name="log_changed">Modified</string>
 <string name="log_viewed">Viewed</string>
+<string name="log_exported">Exported</string>
 
 </resources>
