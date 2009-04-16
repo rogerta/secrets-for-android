@@ -33,7 +33,7 @@ import java.util.List;
  * This activity displays the access log for a given secret.  The access log
  * records when a secret was created, viewed, or modified.  The log is shown
  * in reverse chronological order.
- *  
+ *
  * @author rogerta
  */
 public class AccessLogActivity extends ListActivity {
@@ -44,22 +44,22 @@ public class AccessLogActivity extends ListActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
+
     // Create an array of strings from the access log.
     Secret secret = (Secret) getIntent().getExtras().getSerializable(
         SecretsListActivity.EXTRA_ACCESS_LOG);
     List<Secret.LogEntry> accessLog = secret.getAccessLog();
-    
+
     String pattern = getText(R.string.log_name_format).toString();
     setTitle(MessageFormat.format(pattern, secret.getDescription()));
-    
+
     ArrayList<String> strings = new ArrayList<String>();
-    
+
     for (Secret.LogEntry entry : accessLog) {
       String s = getElapsedString(this, entry, 0);
       strings.add(s);
     }
-    
+
     setListAdapter(new ArrayAdapter<String>(this, R.layout.access_log,
                                             strings));
   }
@@ -85,11 +85,11 @@ public class AccessLogActivity extends ListActivity {
    * Formats a string that represents the elapsed time since the log entry
    * was created and the time specified by the now argument.  If now is
    * zero, then the current time will be used.
-   * 
+   *
    * The string is formatted differently depending on how much time has
    * elapsed.  For example, strings can take the form "? seconds ago",
    * "today at ?", or "{date} {time}".
-   * 
+   *
    * @param context Activity context used for getting string resources.
    * @param entry Log entry whose elapsed time we want to show.
    * @param now End time to use for elapsed duration.  May be zero, in which
@@ -99,13 +99,13 @@ public class AccessLogActivity extends ListActivity {
   public static String getElapsedString(Context context, LogEntry entry,
                                         long now) {
     Calendar c = Calendar.getInstance();
-    
+
     // If a time for now is not specified, get it explicitly.
     if (0 == now)
       now = c.getTimeInMillis();
     else
       c.setTimeInMillis(now);
-    
+
     // Calculate the millsecs for the start of today and the start of
     // yesterday.
     c.set(Calendar.HOUR_OF_DAY, 0);
@@ -115,11 +115,11 @@ public class AccessLogActivity extends ListActivity {
     long midnight = c.getTimeInMillis();
     c.add(Calendar.DAY_OF_YEAR, -1);
     long yesterdayMidnight = c.getTimeInMillis();
-    
+
     long time = entry.getTime();
     long diff = (now - time) / 1000;
     String s;
-    
+
     switch(entry.getType()) {
       case LogEntry.CREATED:
         s = context.getText(R.string.log_created).toString() + " ";
@@ -130,10 +130,13 @@ public class AccessLogActivity extends ListActivity {
       case LogEntry.VIEWED:
         s = context.getText(R.string.log_viewed).toString() + " ";
         break;
+      case LogEntry.EXPORTED:
+        s = context.getText(R.string.log_exported).toString() + " ";
+        break;
       default:
         s = "";
     }
-    
+
     if (diff < ONE_MINUTE_IN_SECS) {
       s += context.getText(R.string.log_sec).toString();
       //String pattern = context.getText(R.string.log_sec).toString();
@@ -151,7 +154,7 @@ public class AccessLogActivity extends ListActivity {
       Date d = new Date(time);
       s += DateFormat.getDateInstance(DateFormat.MEDIUM).format(d);
     }
-    
+
     return s;
   }
 }

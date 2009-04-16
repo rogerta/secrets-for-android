@@ -14,7 +14,9 @@
 
 package net.tawacentral.roger.secrets;
 
+import java.io.File;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -47,22 +49,25 @@ import android.widget.AdapterView.OnItemLongClickListener;
  * secrets, and modifying an existing secret.  The reason that these two
  * activities are combined into one is to take advantage of the 3d page flip
  * effect, which basically happens inside one View.
- * 
+ *
  * If the 3d transition could be done while transferring from the view of one
  * activity to the view of another, I would do that instead, since its more
  * natural for an android app.  Because of this hack, I need to override the
  * behaviour of the back button to restore the "natural feel" of the back
  * button to the user.
- *  
+ *
  * @author rogerta
  */
 public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_DELETE_SECRET = 1;
+  private static final int DIALOG_CONFIRM_RESTORE = 2;
+  private static final int DIALOG_IMPORT_SUCCESS = 3;
+
   private static final String EMPTY_STRING = "";
-  
+
   public static final String EXTRA_ACCESS_LOG =
       "net.tawacentreal.secrets.accesslog";
-  
+
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
 
@@ -73,23 +78,24 @@ public class SecretsListActivity extends ListActivity {
   public static final String STATE_EDITING_PASSWORD = "editing_password";
   public static final String STATE_EDITING_EMAIL = "editing_email";
   public static final String STATE_EDITING_NOTES = "editing_notes";
-  
+
   private SecretsListAdapter secretsList;  // list of secrets
   private Toast toast;  // toast used to show password
   private boolean isEditing;  // true if changing a secret
   private int editingPosition;  // position of item being edited
   private View root;  // root of the layout for this activity
   private View edit;  // root view for the editing layout
-  
+  private File importedFile;  // File that was imported
+
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle state) {
     super.onCreate(state);
     setContentView(R.layout.list);
-    
+
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
-     
+
     setListAdapter(secretsList);
     getListView().setTextFilterEnabled(true);
 
@@ -98,23 +104,23 @@ public class SecretsListActivity extends ListActivity {
         findViewById(R.id.list_username);
     AutoCompleteTextView email = (AutoCompleteTextView)
         findViewById(R.id.list_email);
-    
+
     username.setAdapter(secretsList.getUsernameAutoCompleteAdapter());
     email.setAdapter(secretsList.getEmailAutoCompleteAdapter());
-    
+
     // The 3d flip animation will be done on the root view of this activity.
     // Also get the edit group of views for use as the second view in the
     // animation.
     root = findViewById(R.id.list_container);
     edit = findViewById(R.id.edit_layout);
-    
+
     // Show instruction toast if only one secret in the list.
     // TODO(rogerta): this is annoying when filtering is enabled in the list
     // view. May need to use a preference to show this only once.
     if (0 == secretsList.getCount()) {
       showToast(getText(R.string.list_no_data));
     }
-    
+
     // If there is state information, use it to initialize the activity.
     if (null != state) {
       isEditing = state.getBoolean(STATE_IS_EDITING);
@@ -129,28 +135,28 @@ public class SecretsListActivity extends ListActivity {
         password.setText(state.getCharSequence(STATE_EDITING_PASSWORD));
         email.setText(state.getCharSequence(STATE_EDITING_EMAIL));
         notes.setText(state.getCharSequence(STATE_EDITING_NOTES));
-        
+
         getListView().setVisibility(View.GONE);
         edit.setVisibility(View.VISIBLE);
       }
     }
-    
+
     // Hook up interactions.
     getListView().setOnItemClickListener(new OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> parent, View view, int position,
                               long id) {
         Secret secret = getSecret(position);
-        String password = secret.getPassword();
+        String password = secret.getPassword(false);
         showToast(password);
         // TODO(rogerta): to reliably record "view" access, we would want to
         // checkpoint the secrets and save them here.  But doing so causes
         // unacceptable delays is displaying the toast.
-        //FileUtils.saveSecrets(SecretsListActivity.this, 
+        //FileUtils.saveSecrets(SecretsListActivity.this,
         //                      secretsList_.getAllSecrets());
       }
     });
-    
+
     getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
       @Override
       public boolean onItemLongClick(AdapterView<?> parent, View view,
@@ -160,7 +166,7 @@ public class SecretsListActivity extends ListActivity {
         return true;
       }
     });
-    
+
     Log.d(LOG_TAG, "SecretsListActivity.onResume");
   }
 
@@ -177,13 +183,13 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
-  /** Set the title for this activity. */ 
+  /** Set the title for this activity. */
   private void setTitle() {
     StringBuilder builder = new StringBuilder(24);
     int count = secretsList.getCount();
     if (count > 0)
       builder.append(count).append(' ');
-    
+
     builder.append(getText(R.string.list_name));
     setTitle(builder.toString());
   }
@@ -206,7 +212,7 @@ public class SecretsListActivity extends ListActivity {
   public boolean onPrepareOptionsMenu(Menu menu) {
     // Collect information needed to decide the state of the menu buttons.
     int position = getCurrentSecretIndex();
-    
+
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
     menu.findItem(R.id.list_add).setVisible(!isEditing);
@@ -216,7 +222,13 @@ public class SecretsListActivity extends ListActivity {
         position != AdapterView.INVALID_POSITION);
     menu.findItem(R.id.list_access).setVisible(
         position != AdapterView.INVALID_POSITION);
-    
+    menu.findItem(R.id.list_backup).setVisible(!isEditing &&
+        !secretsList.isEmpty());
+    menu.findItem(R.id.list_restore).setVisible(!isEditing);
+    menu.findItem(R.id.list_import).setVisible(!isEditing);
+    menu.findItem(R.id.list_export).setVisible(!isEditing &&
+        !secretsList.isEmpty());
+
     // The menu should be shown if we are editing, or if we must show the
     // delete/access menu items.
     return true;
@@ -247,6 +259,18 @@ public class SecretsListActivity extends ListActivity {
           showDialog(DIALOG_DELETE_SECRET);
         }
         break;
+      case R.id.list_backup:
+        backupSecrets();
+        break;
+      case R.id.list_restore:
+        showDialog(DIALOG_CONFIRM_RESTORE);
+        break;
+      case R.id.list_export:
+        exportSecrets();
+        break;
+      case R.id.list_import:
+        importSecrets();
+        break;
       case R.id.list_access:
         // TODO(rogerta): maybe just stuff the index into the intent instead
         // of serializing the whole secret, it seems to be slow.
@@ -257,61 +281,201 @@ public class SecretsListActivity extends ListActivity {
       default:
         break;
     }
-    
+
     return handled;
+  }
+
+  /** Import from a CSV file on the SD card. */
+  private void importSecrets() {
+    importedFile = FileUtils.getFileToImport();
+    if (null == importedFile) {
+      String template = getText(R.string.import_not_found).toString();
+      String msg = MessageFormat.format(template, FileUtils.getCsvFileNames());
+      showToast(msg);
+      return;
+    }
+
+    ArrayList<Secret> secrets = new ArrayList<Secret>();
+    boolean allSucceeded = FileUtils.importSecrets(this, importedFile, secrets);
+
+    if (!secrets.isEmpty()) {
+      for (Secret secret : secrets) {
+        secretsList.insert(secret);
+      }
+
+      secretsList.notifyDataSetChanged();
+
+      if (allSucceeded) {
+        showDialog(DIALOG_IMPORT_SUCCESS);
+      } else {
+        String template = getText(R.string.import_partial).toString();
+        String msg = MessageFormat.format(template, importedFile.getName());
+        showToast(msg);
+      }
+    } else {
+      String template = getText(R.string.import_failed).toString();
+      String msg = MessageFormat.format(template, importedFile.getName());
+      showToast(msg);
+    }
+  }
+
+  private void deleteImportedFile() {
+    if (null != importedFile) {
+      importedFile.delete();
+      importedFile = null;
+    }
+  }
+
+  private void exportSecrets() {
+    // Export everything to the SD card.
+    if (FileUtils.exportSecrets(this, secretsList.getAllSecrets())) {
+      showToast(R.string.export_succeeded);
+    } else {
+      showToast(R.string.export_failed);
+    }
+  }
+
+  private void restoreSecrets() {
+    // Restore everything to the SD card.
+    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this);
+    if (null != secrets) {
+      LoginActivity.restoreSecrets(secrets);
+      secretsList.notifyDataSetInvalidated();
+      showToast(R.string.restore_succeeded);
+    } else {
+      showToast(R.string.restore_failed);
+    }
+  }
+
+  private void backupSecrets() {
+    // Backup everything to the SD card.
+    if (FileUtils.backupSecrets(this, secretsList.getAllSecrets())) {
+      showToast(R.string.backup_succeeded);
+    } else {
+      showToast(R.string.error_save_secrets);
+    }
   }
 
   @Override
   public Dialog onCreateDialog(int id) {
     Dialog dialog = null;
-    
+
     switch (id) {
       case DIALOG_DELETE_SECRET: {
         // NOTE: the assumption at this point is that position is valid,
         // otherwise we would never get here because of the check done
         // in onOptionsItemSelected().
-        final int position = getCurrentSecretIndex();
-        Secret secret = secretsList.getSecret(position);
-        
         DialogInterface.OnClickListener listener =
             new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
                 if (DialogInterface.BUTTON1 == which) {
-                  deleteSecret(position);
+                  deleteSecret(getCurrentSecretIndex());
                 }
               }
             };
 
-        String template = getText(R.string.edit_menu_delete_secret_message).
-            toString();
-        String msg = MessageFormat.format(template, secret.getDescription());
+        // NOTE: the message part of this dialog is dynamic, so its value is
+        // set in onPrepareDialog() below.  However, its important to set it
+        // to something here, even the empty string, so that the setMessage()
+        // call done later actually has an effect.
         dialog = new AlertDialog.Builder(this)
             .setTitle(R.string.list_menu_delete)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setMessage(EMPTY_STRING)
+            .setPositiveButton(R.string.login_reset_password_pos, listener)
+            .setNegativeButton(R.string.login_reset_password_neg, null)
+            .create();
+        break;
+      }
+      case DIALOG_CONFIRM_RESTORE: {
+        CharSequence msg = getText(R.string.edit_menu_restore_secrets_message);
+
+        DialogInterface.OnClickListener listener =
+          new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              if (DialogInterface.BUTTON1 == which) {
+                restoreSecrets();
+              }
+            }
+          };
+
+        dialog = new AlertDialog.Builder(this)
+            .setTitle(R.string.list_menu_restore)
             .setIcon(android.R.drawable.ic_dialog_alert)
             .setMessage(msg)
             .setPositiveButton(R.string.login_reset_password_pos, listener)
             .setNegativeButton(R.string.login_reset_password_neg, null)
             .create();
-        }
         break;
+      }
+      case DIALOG_IMPORT_SUCCESS: {
+        DialogInterface.OnClickListener listener =
+          new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              if (DialogInterface.BUTTON1 == which) {
+                deleteImportedFile();
+              }
+
+              importedFile = null;
+            }
+          };
+
+        dialog = new AlertDialog.Builder(this)
+            .setTitle(R.string.list_menu_import)
+            .setIcon(android.R.drawable.ic_dialog_info)
+            .setMessage(EMPTY_STRING)
+            .setPositiveButton(R.string.login_reset_password_pos, listener)
+            .setNegativeButton(R.string.login_reset_password_neg, null)
+            .create();
+        break;
+      }
+
       default:
         break;
     }
-    
+
     return dialog;
+  }
+
+  @Override
+  protected void onPrepareDialog(int id, Dialog dialog) {
+    super.onPrepareDialog(id, dialog);
+
+    switch(id) {
+      case DIALOG_DELETE_SECRET: {
+        AlertDialog alert = (AlertDialog) dialog;
+        int position = getCurrentSecretIndex();
+        Secret secret = secretsList.getSecret(position);
+        String template = getText(R.string.edit_menu_delete_secret_message).
+            toString();
+        String msg = MessageFormat.format(template, secret.getDescription());
+        alert.setMessage(msg);
+        break;
+      }
+      case DIALOG_IMPORT_SUCCESS: {
+        AlertDialog alert = (AlertDialog) dialog;
+        String template =
+            getText(R.string.edit_menu_import_secrets_message).toString();
+        String msg = MessageFormat.format(template, importedFile.getName());
+        alert.setMessage(msg);
+        break;
+      }
+    }
   }
 
   /**
    * Get the index of the current secret.  This works in list mode and in
    * edit mode.  In list mode, if no secret is selected,
-   * AdpaterView.INVALID_POSITION is returned. 
+   * AdpaterView.INVALID_POSITION is returned.
    */
   private int getCurrentSecretIndex() {
     return isEditing ? editingPosition
                       : getListView().getSelectedItemPosition();
   }
-  
+
   /**
    * Trap the "back" button to simulate going back from the secret edit
    * view to the list view.  Note this needs to be done in key-down and not
@@ -324,7 +488,7 @@ public class SecretsListActivity extends ListActivity {
       animateFromEditView();
       return true;
     }
-    
+
     return super.onKeyDown(key_code, event);
   }
 
@@ -336,13 +500,13 @@ public class SecretsListActivity extends ListActivity {
   @Override
   protected void onSaveInstanceState(Bundle state) {
     super.onSaveInstanceState(state);
-    
+
     // Save our state for later.
     state.putBoolean(STATE_IS_EDITING, isEditing);
-    
+
     if (isEditing) {
       saveSecret();
-      
+
       EditText description = (EditText) findViewById(R.id.list_description);
       EditText username = (EditText) findViewById(R.id.list_username);
       EditText password = (EditText) findViewById(R.id.list_password);
@@ -356,7 +520,7 @@ public class SecretsListActivity extends ListActivity {
       state.putCharSequence(STATE_EDITING_EMAIL, email.getText());
       state.putCharSequence(STATE_EDITING_NOTES, notes.getText());
     }
-    
+
     Log.d(LOG_TAG, "SecretsListActivity.onSaveInstanceState");
   }
 
@@ -364,56 +528,56 @@ public class SecretsListActivity extends ListActivity {
   @Override
   protected void onPause() {
     Log.d(LOG_TAG, "SecretsListActivity.onPause");
-    
+
     // Cancel any toast that may currently be displayed.
     if (null != toast)
       toast.cancel();
-    
+
     // Save everything now.  Saves are only done when the activity is paused
     // to keep the save time from affecting the user too much.  I'll if this
     // is a good idea or not, or if there are common scenarios where we might
     // not pass through this code.
     if (!FileUtils.saveSecrets(this, secretsList.getAllSecrets()))
       showToast(R.string.error_save_secrets);
-    
+
     super.onPause();
   }
 
   /**
    * Set the secret specified by the given position in the list into the
    * edit fields used to modify the secret.  Position 0 means "add secret".
-   * 
+   *
    * @param position Position of secret to edit.
    */
   private void SetEditViews(int position) {
     editingPosition = position;
-    
+
     EditText description = (EditText) findViewById(R.id.list_description);
     EditText username = (EditText) findViewById(R.id.list_username);
     EditText password = (EditText) findViewById(R.id.list_password);
     EditText email = (EditText) findViewById(R.id.list_email);
     EditText notes = (EditText) findViewById(R.id.list_notes);
-    
+
     if (AdapterView.INVALID_POSITION == position) {
       description.setText(EMPTY_STRING);
       username.setText(EMPTY_STRING);
       password.setText(EMPTY_STRING);
       email.setText(EMPTY_STRING);
       notes.setText(EMPTY_STRING);
-      
+
       description.requestFocus();
     } else {
       Secret secret = secretsList.getSecret(position);
-      
+
       description.setText(secret.getDescription());
       username.setText(secret.getUsername());
-      password.setText(secret.getPassword());
+      password.setText(secret.getPassword(false));
       email.setText(secret.getEmail());
       notes.setText(secret.getNote());
-      
+
       password.requestFocus();
     }
-    
+
     ScrollView scroll = (ScrollView) findViewById(R.id.edit_layout);
     scroll.scrollTo(0, 0);
   }
@@ -422,8 +586,8 @@ public class SecretsListActivity extends ListActivity {
    * Save the current values in the edit views into the current secret being
    * edited.  If the current secret is at position 0, this means add a new
    * secret.
-   * 
-   * Secrets will be added in alphabetical order by description. 
+   *
+   * Secrets will be added in alphabetical order by description.
    *
    * All secrets are flushed to persistent storage.
    */
@@ -438,12 +602,12 @@ public class SecretsListActivity extends ListActivity {
     // supposed to be adding a secret.  Also, if all the views are
     // the same as the current secret, don't do anything either.
     Secret secret;
-    String description_text = description.getText().toString(); 
+    String description_text = description.getText().toString();
     String username_text = username.getText().toString();
     String password_text = password.getText().toString();
     String email_text = email.getText().toString();
     String note_text = notes.getText().toString();
-    
+
     if (AdapterView.INVALID_POSITION == editingPosition) {
       if (0 == description.getText().length() &&
           0 == username.getText().length() &&
@@ -451,27 +615,27 @@ public class SecretsListActivity extends ListActivity {
           0 == email.getText().length() &&
           0 == notes.getText().length())
         return;
-      
+
       secret = new Secret();
     } else {
       secret = secretsList.getSecret(editingPosition);
-      
+
       if (description_text.equals(secret.getDescription()) &&
           username_text.equals(secret.getUsername()) &&
-          password_text.equals(secret.getPassword()) &&
+          password_text.equals(secret.getPassword(false)) &&
           email_text.equals(secret.getEmail()) &&
           note_text.equals(secret.getNote()))
         return;
-      
+
       secretsList.remove(editingPosition);
     }
-    
+
     secret.setDescription(description.getText().toString());
     secret.setUsername(username.getText().toString());
     secret.setPassword(password.getText().toString());
     secret.setEmail(email.getText().toString());
     secret.setNote(notes.getText().toString());
-    
+
     editingPosition = secretsList.insert(secret);
     secretsList.notifyDataSetChanged();
   }
@@ -494,21 +658,21 @@ public class SecretsListActivity extends ListActivity {
       }
     }
   }
-  
+
   /**
    * Show a toast on the screen with the given message.  If a toast is already
    * being displayed, the message is replaced and timer is restarted.
-   * 
+   *
    * @param message Resource id of the text to display in the toast.
    */
   private void showToast(int message) {
     showToast(getText(message));
   }
-  
+
   /**
    * Show a toast on the screen with the given message.  If a toast is already
    * being displayed, the message is replaced and timer is restarted.
-   * 
+   *
    * @param message Text to display in the toast.
    */
   private void showToast(CharSequence message) {
@@ -519,7 +683,7 @@ public class SecretsListActivity extends ListActivity {
     } else {
       toast.setText(message);
     }
-    
+
     toast.show();
   }
 
@@ -527,7 +691,7 @@ public class SecretsListActivity extends ListActivity {
   private Secret getSecret(int position) {
     return (Secret) getListAdapter().getItem(position);
   }
-  
+
   /**
    * Start the view animation that transitions from the list of secrets to
    * the secret edit view.
@@ -539,7 +703,7 @@ public class SecretsListActivity extends ListActivity {
     // Cancel any toast that may currently be displayed.
     if (null != toast)
       toast.cancel();
-    
+
     View list = getListView();
     int cx = root.getWidth() / 2;
     int cy = root.getHeight() / 2;
@@ -558,10 +722,10 @@ public class SecretsListActivity extends ListActivity {
       public void onAnimationStart(Animation animation) {
       }
     });
-    
+
     root.startAnimation(animation);
   }
-  
+
   /**
    * Start the view animation that transitions from the secret edit view to
    * the list of secrets.
@@ -569,7 +733,7 @@ public class SecretsListActivity extends ListActivity {
   private void animateFromEditView() {
     assert(isEditing);
     isEditing = false;
-    
+
     View list = getListView();
     int cx = root.getWidth() / 2;
     int cy = root.getHeight() / 2;
@@ -581,14 +745,14 @@ public class SecretsListActivity extends ListActivity {
           ListView list_view = getListView();
           list_view.requestFocus();
           list_view.setSelection(editingPosition);
-          
+
           Rect rect = new Rect();
           list_view.getFocusedRect(rect);
           list_view.requestChildRectangleOnScreen(list_view, rect, false);
         }
-        
+
         setTitle();
-        
+
         if (1 == secretsList.getCount()) {
           showToast(getText(R.string.list_instructions));
         }

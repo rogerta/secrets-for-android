@@ -30,14 +30,14 @@ public class Secret implements Serializable {
   private static final long serialVersionUID = -116450416616138469L;
   private static final int TIMEOUT_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
-  
+
   private String description;
   private String username;
   private String password;
   private String email;
   private String note;
   private ArrayList<LogEntry> access_log;
-  
+
   /**
    * An immutable class that represents one entry in the access log.  Each
    * time the password is viewed or modified, the access log is updated with
@@ -46,7 +46,7 @@ public class Secret implements Serializable {
    * Log entries are pruned so that they don't grow indefinitely.  The
    * maximum size of an access log is given by the MAX_LOG_SIZE constant.
    * The CREATED log entry is never pruned though.
-   *    
+   *
    * @author rogerta
    */
   public static final class LogEntry implements Serializable {
@@ -56,10 +56,11 @@ public class Secret implements Serializable {
     public static final int CREATED = 1;
     public static final int VIEWED = 2;
     public static final int CHANGED = 3;
-    
+    public static final int EXPORTED = 4;
+
     private int type_;
     private long time_;
-    
+
     /** Used internally to create the CREATED long entry. */
     LogEntry() {
       type_ = CREATED;
@@ -68,7 +69,7 @@ public class Secret implements Serializable {
 
     /**
      * Creates a new log entry object of the given type for the given time.
-     * 
+     *
      * @param type One of CREATED, VIEWED, or CHANGED.
      * @param time Time of the entry, in milliseconds.
      */
@@ -79,19 +80,19 @@ public class Secret implements Serializable {
 
     /**
      * Returns the type of this log entry.
-     * 
+     *
      * @return One of CREATED, VIEWED, or CHANGED.
      */
     public int getType() {
       return type_;
     }
-    
+
     /** Returns the time stamp associated with this log entry. */
     public long getTime() {
       return time_;
     }
   }
-  
+
   /**
    * Creates a new secret where all fields are empty.  The access log contains
    * only on CREATED entry with the current time.
@@ -119,7 +120,7 @@ public class Secret implements Serializable {
   /**
    * Sets the password for the secret, updating the access log with a
    * CHANGED entry.
-   * 
+   *
    * <p>If the most recent entry is a VIEWED, and that view was pretty recent,
    * then replace the VIEWED with a CHANGED.  This is to handle the case
    * when the user edits a secret, we don't want to accumulate too many
@@ -137,24 +138,25 @@ public class Secret implements Serializable {
       access_log.add(0, new LogEntry(LogEntry.CHANGED, entry.getTime()));
       pruneAccessLog();
     }
-    
+
     this.password = password;
   }
 
   /**
    * Gets the password for the secret, updating the access log with a
-   * VIEWED entry if the most recent access is not too recent.
+   * VIEWED (if the most recent access is not too recent) or EXPORTED entry.
    */
-  public String getPassword() {
+  public String getPassword(boolean forExport) {
     // Don't add an entry to the access log if the last entry is within
     // 60 seconds of now.
     long now = System.currentTimeMillis();
     LogEntry entry = access_log.get(0);
-    if (now - entry.getTime() > TIMEOUT_MS) {
-      access_log.add(0, new LogEntry(LogEntry.VIEWED, now));
+    if (forExport || (now - entry.getTime() > TIMEOUT_MS)) {
+      int type = forExport ? LogEntry.EXPORTED : LogEntry.VIEWED;
+      access_log.add(0, new LogEntry(type, now));
       pruneAccessLog();
     }
-    
+
     return password;
   }
 
@@ -171,7 +173,7 @@ public class Secret implements Serializable {
     // Need to be careful about an etry that is modified often, in which case
     // a naive implementation of the above could end up never storing any and
     // VIEWED entries.
-    
+
     while(access_log.size() > MAX_LOG_SIZE) {
       // The "created" entry is always the first one in the list, and there
       // is only ever one.  So try to delete the second last item.

@@ -29,5 +29,17 @@ limitations under the License.
         android:icon="@android:drawable/ic_menu_delete" />
     <item android:id="@+id/list_access"
         android:title="@string/list_menu_access"
-        android:icon="@android:drawable/ic_menu_more" />
+        android:icon="@android:drawable/ic_menu_recent_history" />
+    <item android:id="@+id/list_backup"
+        android:title="@string/list_menu_backup"
+        android:icon="@android:drawable/ic_menu_save" />
+    <item android:id="@+id/list_export"
+        android:title="@string/list_menu_export"
+        android:icon="@android:drawable/ic_menu_upload" />
+    <item android:id="@+id/list_restore"
+        android:title="@string/list_menu_restore"
+        android:icon="@android:drawable/stat_sys_download" />
+    <item android:id="@+id/list_import"
+        android:title="@string/list_menu_import"
+        android:icon="@android:drawable/stat_sys_download" />
 </menu>
