@@ -304,6 +304,7 @@ public class SecretsListActivity extends ListActivity {
       }
 
       secretsList.notifyDataSetChanged();
+      setTitle();
 
       if (allSucceeded) {
         showDialog(DIALOG_IMPORT_SUCCESS);
@@ -341,6 +342,7 @@ public class SecretsListActivity extends ListActivity {
     if (null != secrets) {
       LoginActivity.restoreSecrets(secrets);
       secretsList.notifyDataSetInvalidated();
+      setTitle();
       showToast(R.string.restore_succeeded);
     } else {
       showToast(R.string.restore_failed);

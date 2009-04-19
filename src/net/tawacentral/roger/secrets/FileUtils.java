@@ -147,6 +147,8 @@ public class FileUtils {
   public static ArrayList<Secret> loadSecrets(Context context) {
     Log.d(LOG_TAG, "FileUtils.loadSecrets");
 
+    SecurityUtils.ExecutionTimer timer = new SecurityUtils.ExecutionTimer();
+
     Cipher cipher = SecurityUtils.getDecryptionCipher();
     if (null == cipher)
       return null;
@@ -158,6 +160,7 @@ public class FileUtils {
       input = new ObjectInputStream(
           new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
                                 cipher));
+      timer.logElapsed("Time to open file for reading: ");
       secrets = (ArrayList<Secret>) input.readObject();
     } catch (Exception ex) {
       Log.e(LOG_TAG, "loadSecrets", ex);
@@ -165,22 +168,7 @@ public class FileUtils {
       try {if (null != input) input.close();} catch (IOException ex) {}
     }
 
-    // If we were not able to load the secrets, try using the old decryption
-    // cipher.
-    if (null == secrets) {
-      try {
-        cipher = SecurityUtils.getOldDecryptionCipher();
-        input = new ObjectInputStream(
-            new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
-                                  cipher));
-        secrets = (ArrayList<Secret>) input.readObject();
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "loadSecrets(old)", ex);
-      } finally {
-        try {if (null != input) input.close();} catch (IOException ex) {}
-      }
-    }
-
+    timer.logElapsed("Time to load: ");
     return secrets;
   }
 
