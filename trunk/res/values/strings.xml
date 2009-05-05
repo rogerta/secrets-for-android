@@ -91,6 +91,8 @@ Continue anyway?
 
 <string name="edit_menu_import_secrets_message">Import successful.  Delete \'\'{0}\'\' now?</string>
 
+<string name="copied_to_clipboard">{0}\'\'s password has been copied to the clipboard.</string>
+
 <string name="list_menu_add">Add</string>
 <string name="list_menu_edit">Edit</string>
 <string name="list_menu_save">Save</string>

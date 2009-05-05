@@ -301,6 +301,9 @@ public class SecretsListActivity extends ListActivity {
         ClipboardManager cm = (ClipboardManager) getSystemService(
             CLIPBOARD_SERVICE);
         cm.setText(secret.getPassword(false));
+        String template = getText(R.string.copied_to_clipboard).toString();
+        String msg = MessageFormat.format(template, secret.getDescription());
+        showToast(msg);
         break;
       }
       default:
