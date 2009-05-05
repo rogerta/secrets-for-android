@@ -15,6 +15,8 @@
 package net.tawacentral.roger.secrets;
 
 import java.io.File;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 
@@ -26,6 +28,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -212,23 +215,26 @@ public class SecretsListActivity extends ListActivity {
   public boolean onPrepareOptionsMenu(Menu menu) {
     // Collect information needed to decide the state of the menu buttons.
     int position = getCurrentSecretIndex();
-
+    boolean isPositionValid = position != AdapterView.INVALID_POSITION; 
+      
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
     menu.findItem(R.id.list_add).setVisible(!isEditing);
+    menu.findItem(R.id.list_edit).setVisible(!isEditing && isPositionValid);
     menu.findItem(R.id.list_save).setVisible(isEditing);
+    menu.findItem(R.id.list_generate_password).setVisible(isEditing);
     menu.findItem(R.id.list_discard).setVisible(isEditing);
-    menu.findItem(R.id.list_delete).setVisible(
-        position != AdapterView.INVALID_POSITION);
-    menu.findItem(R.id.list_access).setVisible(
-        position != AdapterView.INVALID_POSITION);
+    menu.findItem(R.id.list_delete).setVisible(isPositionValid);
+    menu.findItem(R.id.list_access).setVisible(isPositionValid);
     menu.findItem(R.id.list_backup).setVisible(!isEditing &&
         !secretsList.isEmpty());
     menu.findItem(R.id.list_restore).setVisible(!isEditing);
     menu.findItem(R.id.list_import).setVisible(!isEditing);
     menu.findItem(R.id.list_export).setVisible(!isEditing &&
         !secretsList.isEmpty());
-
+    menu.findItem(R.id.list_copy_password_to_clipboard).setVisible(!isEditing
+        && isPositionValid);
+    
     // The menu should be shown if we are editing, or if we must show the
     // delete/access menu items.
     return true;
@@ -244,8 +250,12 @@ public class SecretsListActivity extends ListActivity {
     // to figure out what the interaction with the menu is.  This does not
     // happen when using the back button to finish the editing activity.
     switch (item.getItemId()) {
+        //SetEditViews(AdapterView.INVALID_POSITION);
+        //animateToEditView();
+        //break;
       case R.id.list_add:
-        SetEditViews(AdapterView.INVALID_POSITION);
+      case R.id.list_edit:
+        SetEditViews(position);
         animateToEditView();
         break;
       case R.id.list_save:
@@ -254,6 +264,12 @@ public class SecretsListActivity extends ListActivity {
       case R.id.list_discard:
         animateFromEditView();
         break;
+      case R.id.list_generate_password: {
+        String pwd = generatePassword();
+        EditText password = (EditText) findViewById(R.id.list_password);
+        password.setText(pwd);
+        break;
+      }
       case R.id.list_delete:
         if (AdapterView.INVALID_POSITION != position) {
           showDialog(DIALOG_DELETE_SECRET);
@@ -271,13 +287,22 @@ public class SecretsListActivity extends ListActivity {
       case R.id.list_import:
         importSecrets();
         break;
-      case R.id.list_access:
+      case R.id.list_access: {
         // TODO(rogerta): maybe just stuff the index into the intent instead
         // of serializing the whole secret, it seems to be slow.
         Secret secret = secretsList.getSecret(position);
         Intent intent = new Intent(this, AccessLogActivity.class);
         intent.putExtra(EXTRA_ACCESS_LOG, secret);
         startActivity(intent);
+        break;
+      }
+      case R.id.list_copy_password_to_clipboard: {
+        Secret secret = secretsList.getSecret(position);
+        ClipboardManager cm = (ClipboardManager) getSystemService(
+            CLIPBOARD_SERVICE);
+        cm.setText(secret.getPassword(false));
+        break;
+      }
       default:
         break;
     }
@@ -767,5 +792,25 @@ public class SecretsListActivity extends ListActivity {
       }
     });
     root.startAnimation(animation);
+  }
+
+  /** Generate and return a difficult to guess password. */
+  private String generatePassword() {
+    StringBuilder builder = new StringBuilder(8);
+    try {
+      SecureRandom r = SecureRandom.getInstance("SHA1PRNG");
+      final String p = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                       "abcdefghijklmnopqrstuvwxyz" +
+                       "abcdefghijklmnopqrstuvwxyz" +
+                       "0123456789" +
+                       "0123456789" +
+                       "~!@#$%^&*()_+`-=[]{}|;':,./<>?";
+
+      for (int i = 0; i < 8; ++i)
+        builder.append(p.charAt(r.nextInt(128)));
+    } catch (NoSuchAlgorithmException ex) {
+      Log.e(LOG_TAG, "restoreSecrets", ex);
+    }
+    return builder.toString();
   }
 }
