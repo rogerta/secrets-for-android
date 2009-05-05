@@ -22,7 +22,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.1 (c) 2009 Google Inc.</string>
+<string name="copyright">Version 1.2 (c) 2009 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="error_reset_password">Uh oh.  Unable to reset your password.</string>
@@ -91,15 +91,18 @@ Continue anyway?
 
 <string name="edit_menu_import_secrets_message">Import successful.  Delete \'\'{0}\'\' now?</string>
 
-<string name="list_menu_add">Add secret</string>
+<string name="list_menu_add">Add</string>
+<string name="list_menu_edit">Edit</string>
 <string name="list_menu_save">Save</string>
-<string name="list_menu_discard">Discard changes</string>
-<string name="list_menu_delete">Delete secret</string>
-<string name="list_menu_access">Access history</string>
-<string name="list_menu_backup">Backup to SD</string>
-<string name="list_menu_restore">Restore from SD</string>
-<string name="list_menu_import">Import from CSV</string>
-<string name="list_menu_export">Export to CSV</string>
+<string name="list_menu_discard">Discard</string>
+<string name="list_menu_delete">Delete</string>
+<string name="list_menu_access">History</string>
+<string name="list_menu_backup">Backup</string>
+<string name="list_menu_restore">Restore</string>
+<string name="list_menu_import">Import</string>
+<string name="list_menu_export">Export</string>
+<string name="list_menu_copy_password_to_clipoboard">To clip</string>
+<string name="list_menu_generate_password">Generate</string>
 
 <string name="log_name">Access log</string>
 <string name="log_name_format">Access log for {0}</string>
