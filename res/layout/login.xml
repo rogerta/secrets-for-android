@@ -42,7 +42,6 @@ limitations under the License.
     android:password="true"
     android:clickable="true"
     android:singleLine="true"
-    android:inputType="textPassword"
     android:id="@+id/login_password"
     />
 <TextView  
