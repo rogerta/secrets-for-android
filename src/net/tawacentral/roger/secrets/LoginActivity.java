@@ -24,10 +24,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnKeyListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,14 +65,28 @@ public class LoginActivity extends Activity {
 
     // Setup the behaviour of the password edit view.
     View password = findViewById(R.id.login_password);
-    password.setOnClickListener(new View.OnClickListener() {
+//    password.setOnClickListener(new View.OnClickListener() {
+//      @Override
+//      public void onClick(View v) {
+//        TextView password = (TextView) v;
+//        handlePasswordClick(password);
+//      }
+//    });
+
+    password.setOnKeyListener(new View.OnKeyListener() {
       @Override
-      public void onClick(View v) {
-        TextView password = (TextView) v;
-        handlePasswordClick(password);
+      public boolean onKey(View v, int keyCode, KeyEvent event) {
+        if (KeyEvent.KEYCODE_ENTER == keyCode) {
+          if (KeyEvent.ACTION_UP == event.getAction())
+            handlePasswordClick((TextView) v);
+          
+          return true;
+        }
+        
+        return false;
       }
     });
-
+    
     Log.d(LOG_TAG, "LoginActivity.onCreate");
   }
 
