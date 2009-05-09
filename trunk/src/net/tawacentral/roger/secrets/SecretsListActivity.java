@@ -250,10 +250,10 @@ public class SecretsListActivity extends ListActivity {
     // to figure out what the interaction with the menu is.  This does not
     // happen when using the back button to finish the editing activity.
     switch (item.getItemId()) {
-        //SetEditViews(AdapterView.INVALID_POSITION);
-        //animateToEditView();
-        //break;
-      case R.id.list_add:
+    case R.id.list_add:
+        SetEditViews(AdapterView.INVALID_POSITION);
+        animateToEditView();
+        break;
       case R.id.list_edit:
         SetEditViews(position);
         animateToEditView();
