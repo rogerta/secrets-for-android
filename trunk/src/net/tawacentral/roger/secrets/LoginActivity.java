@@ -65,17 +65,19 @@ public class LoginActivity extends Activity {
 
     // Setup the behaviour of the password edit view.
     View password = findViewById(R.id.login_password);
-//    password.setOnClickListener(new View.OnClickListener() {
-//      @Override
-//      public void onClick(View v) {
-//        TextView password = (TextView) v;
-//        handlePasswordClick(password);
-//      }
-//    });
-
     password.setOnKeyListener(new View.OnKeyListener() {
       @Override
       public boolean onKey(View v, int keyCode, KeyEvent event) {
+        // In the Android 1.1 platform, I used to use a click listener, since
+        // pressing the Enter key would generate that event.  However, in
+        // Android 1.5 (cupcake) that no longer works.  Therefore I trap the
+        // Enter key here with a key listener, and try handling the password
+        // when the Enter key is released (action up).  Note that in 1.1 though,
+        // if I completely ignore the Enter key action down, I get a popup menu
+        // with a paste command.  To get around this, I always return true if
+        // the Enter key is pressed or released, but I only try to handle the
+        // password on release.  This works for both 1.1 and 1.5.  The Enter
+        // does not become part of the password.
         if (KeyEvent.KEYCODE_ENTER == keyCode) {
           if (KeyEvent.ACTION_UP == event.getAction())
             handlePasswordClick((TextView) v);
