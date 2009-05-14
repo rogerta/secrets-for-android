@@ -682,6 +682,10 @@ public class SecretsListActivity extends ListActivity {
       //if (!FileUtils.saveSecrets(this, secretsList_.getAllSecrets()))
       //  showToast(R.string.error_save_secrets);
       if (isEditing) {
+        // We need to clear the edit position so that when the animation is
+        // done, the code does not try to make visible a secret that no longer
+        // exists.  This was causing a crash (issue 16).
+        editingPosition = AdapterView.INVALID_POSITION;
         animateFromEditView();
       } else {
         setTitle();
