@@ -52,5 +52,6 @@ limitations under the License.
         android:stateNotNeeded="true"
         android:finishOnTaskLaunch="true"></activity>
   </application>
+  <uses-sdk android:minSdkVersion="2"></uses-sdk>
 </manifest>
  
