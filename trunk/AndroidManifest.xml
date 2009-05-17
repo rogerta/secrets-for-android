@@ -19,7 +19,10 @@ limitations under the License.
      the strings.xml file -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.tawacentral.roger.secrets"
-    android:versionName="1.2.2" android:versionCode="7">
+    android:versionName="1.3" android:versionCode="8">
+  <!--The app now uses some cupcake specific APIs to handle showing and
+      hiding the soft keyboard, so the minimum sdk version must reflect this -->
+  <uses-sdk android:minSdkVersion="3"></uses-sdk>
   <application android:icon="@drawable/icon" android:label="@string/app_name">
     <!-- I set the clearTaskOnLaunch so that when the user restarts
          secrets, they start with the login page.  Without this flag set,
@@ -52,6 +55,5 @@ limitations under the License.
         android:stateNotNeeded="true"
         android:finishOnTaskLaunch="true"></activity>
   </application>
-  <uses-sdk android:minSdkVersion="2"></uses-sdk>
 </manifest>
  
