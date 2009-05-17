@@ -36,8 +36,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -117,10 +119,8 @@ public class SecretsListActivity extends ListActivity {
     root = findViewById(R.id.list_container);
     edit = findViewById(R.id.edit_layout);
 
-    // Show instruction toast if only one secret in the list.
-    // TODO(rogerta): this is annoying when filtering is enabled in the list
-    // view. May need to use a preference to show this only once.
-    if (0 == secretsList.getCount()) {
+    // Show instruction toast if there are no secrets in the list.
+    if (0 == secretsList.getAllSecrets().size()) {
       showToast(getText(R.string.list_no_data));
     }
 
@@ -150,7 +150,10 @@ public class SecretsListActivity extends ListActivity {
       public void onItemClick(AdapterView<?> parent, View view, int position,
                               long id) {
         Secret secret = getSecret(position);
-        String password = secret.getPassword(false);
+        CharSequence password = secret.getPassword(false);
+        if (password.length() == 0)
+          password = getText(R.string.no_password);
+        
         showToast(password);
         // TODO(rogerta): to reliably record "view" access, we would want to
         // checkpoint the secrets and save them here.  But doing so causes
@@ -169,8 +172,6 @@ public class SecretsListActivity extends ListActivity {
         return true;
       }
     });
-
-    Log.d(LOG_TAG, "SecretsListActivity.onResume");
   }
 
   private void checkKeyguard() {
@@ -188,20 +189,24 @@ public class SecretsListActivity extends ListActivity {
 
   /** Set the title for this activity. */
   private void setTitle() {
-    StringBuilder builder = new StringBuilder(24);
-    int count = secretsList.getCount();
-    if (count > 0)
+    CharSequence title;
+    int count = secretsList.getAllSecrets().size();
+    if (count > 0) {
+      StringBuilder builder = new StringBuilder(24);
       builder.append(count).append(' ');
-
-    builder.append(getText(R.string.list_name));
-    setTitle(builder.toString());
+      builder.append(getText(R.string.list_name));
+      title = builder.toString();
+    } else {
+      title = getText(R.string.list_no_data);
+    }
+    
+    setTitle(title);
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     checkKeyguard();
-    Log.d(LOG_TAG, "SecretsListActivity.onResume");
   }
 
   @Override
@@ -734,9 +739,11 @@ public class SecretsListActivity extends ListActivity {
     assert(!isEditing);
     isEditing = true;
 
-    // Cancel any toast that may currently be displayed.
+    // Cancel any toast and soft keyboard that may currently be displayed.
     if (null != toast)
       toast.cancel();
+    
+    hideSoftKeyboard();
 
     View list = getListView();
     int cx = root.getWidth() / 2;
@@ -768,6 +775,8 @@ public class SecretsListActivity extends ListActivity {
     assert(isEditing);
     isEditing = false;
 
+    hideSoftKeyboard();
+    
     View list = getListView();
     int cx = root.getWidth() / 2;
     int cy = root.getHeight() / 2;
@@ -801,6 +810,24 @@ public class SecretsListActivity extends ListActivity {
     root.startAnimation(animation);
   }
 
+  /** Show the soft keyboard if visible. */
+  private void showSoftKeyboard() {
+    InputMethodManager manager = (InputMethodManager)
+        getSystemService(INPUT_METHOD_SERVICE);
+    if (!manager.isActive()) {
+      manager.showSoftInput(getListView(), 0);
+    }
+  }
+  
+  /** Hide the soft keyboard if visible. */
+  private void hideSoftKeyboard() {
+    InputMethodManager manager = (InputMethodManager)
+        getSystemService(INPUT_METHOD_SERVICE);
+    if (manager.isActive()) {
+      manager.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
+    }
+  }
+  
   /** Generate and return a difficult to guess password. */
   private String generatePassword() {
     StringBuilder builder = new StringBuilder(8);
@@ -816,7 +843,7 @@ public class SecretsListActivity extends ListActivity {
       for (int i = 0; i < 8; ++i)
         builder.append(p.charAt(r.nextInt(128)));
     } catch (NoSuchAlgorithmException ex) {
-      Log.e(LOG_TAG, "restoreSecrets", ex);
+      Log.e(LOG_TAG, "generatePassword", ex);
     }
     return builder.toString();
   }

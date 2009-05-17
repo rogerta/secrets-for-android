@@ -22,9 +22,10 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.2.2 (c) 2009 Google Inc.</string>
+<string name="copyright">Version 1.3 (c) 2009 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
+<string name="no_password">&lt;No password/PIN&gt;</string>
 <string name="error_reset_password">Uh oh.  Unable to reset your password.</string>
 <string name="error_save_secrets">Uh oh.  Unable to save your secrets.</string>
 
@@ -62,7 +63,7 @@ When done, press the Back button, or MENU for more options.
 </string>
 
 <string name="list_name">Secrets</string>
-<string name="list_no_data">Press MENU then \"Add secret\" to begin.</string>
+<string name="list_no_data">Press MENU then \"Add\" to begin.</string>
 <string name="list_descption_label">Web site/Description</string>
 <string name="list_username_label">Username/Id</string>
 <string name="list_password_label">Password/PIN</string>
