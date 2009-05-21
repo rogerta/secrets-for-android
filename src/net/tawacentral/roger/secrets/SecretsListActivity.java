@@ -119,9 +119,16 @@ public class SecretsListActivity extends ListActivity {
     root = findViewById(R.id.list_container);
     edit = findViewById(R.id.edit_layout);
 
-    // Show instruction toast if there are no secrets in the list.
+    // Show instruction toast auto popup options menu if there are no secrets
+    // in the list.
     if (0 == secretsList.getAllSecrets().size()) {
       showToast(getText(R.string.list_no_data));
+      getListView().post(new Runnable() {
+        @Override
+        public void run() {
+          openOptionsMenu();
+        }
+      });
     }
 
     // If there is state information, use it to initialize the activity.
