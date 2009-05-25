@@ -36,7 +36,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.inputmethod.InputMethodManager;
@@ -817,7 +816,7 @@ public class SecretsListActivity extends ListActivity {
     root.startAnimation(animation);
   }
 
-  /** Show the soft keyboard if visible. */
+  /** Show the soft keyboard if not visible. */
   private void showSoftKeyboard() {
     InputMethodManager manager = (InputMethodManager)
         getSystemService(INPUT_METHOD_SERVICE);

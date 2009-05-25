@@ -31,8 +31,8 @@ import java.util.List;
 
 /**
  * This activity displays the access log for a given secret.  The access log
- * records when a secret was created, viewed, or modified.  The log is shown
- * in reverse chronological order.
+ * records when a given action, such as creation, view, or modification, was
+ * performed on the secret.  The log is shown in reverse chronological order.
  *
  * @author rogerta
  */
@@ -45,15 +45,16 @@ public class AccessLogActivity extends ListActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    // Create an array of strings from the access log.
     Secret secret = (Secret) getIntent().getExtras().getSerializable(
         SecretsListActivity.EXTRA_ACCESS_LOG);
-    List<Secret.LogEntry> accessLog = secret.getAccessLog();
 
+    // Set the title of the activity to be the description of the secret.
     String pattern = getText(R.string.log_name_format).toString();
     setTitle(MessageFormat.format(pattern, secret.getDescription()));
 
-    ArrayList<String> strings = new ArrayList<String>();
+    // Create an array of strings from the access log.
+    List<Secret.LogEntry> accessLog = secret.getAccessLog();
+    ArrayList<String> strings = new ArrayList<String>(accessLog.size());
 
     for (Secret.LogEntry entry : accessLog) {
       String s = getElapsedString(this, entry, 0);
@@ -71,13 +72,13 @@ public class AccessLogActivity extends ListActivity {
   }
 
   private void checkKeyguard() {
-    // If the keyguard has been displayed, exit this activity.  This returns
-    // us to the login page requiring the user to enter his password again
-    // before get access again to his secrets.
+    // If the keyguard is being displayed, exit this activity.  This returns
+    // the user to the activity list page, which will in turn return the user
+    // to the login page, requiring the user to enter his password again before
+    // get access again to his secrets.
     KeyguardManager keyGuard = (KeyguardManager) getSystemService(
         KEYGUARD_SERVICE);
-    boolean isInputRestricted = keyGuard.inKeyguardRestrictedInputMode();
-    if (isInputRestricted)
+    if (keyGuard.inKeyguardRestrictedInputMode())
       finish();
   }
 
@@ -100,19 +101,20 @@ public class AccessLogActivity extends ListActivity {
                                         long now) {
     Calendar c = Calendar.getInstance();
 
-    // If a time for now is not specified, get it explicitly.
+    // If a time for now is not specified, get the current time.
     if (0 == now)
       now = c.getTimeInMillis();
     else
       c.setTimeInMillis(now);
 
-    // Calculate the millsecs for the start of today and the start of
-    // yesterday.
+    // Calculate two msecs: one for the start of today and another for the
+    // start of yesterday.
     c.set(Calendar.HOUR_OF_DAY, 0);
     c.set(Calendar.MINUTE, 0);
     c.set(Calendar.SECOND, 0);
     c.set(Calendar.MILLISECOND, 0);
     long midnight = c.getTimeInMillis();
+    
     c.add(Calendar.DAY_OF_YEAR, -1);
     long yesterdayMidnight = c.getTimeInMillis();
 
