@@ -91,6 +91,10 @@ public class SecretsListActivity extends ListActivity {
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
 
+  private static boolean isAndroid15() {
+    return android.os.Build.VERSION.SDK.charAt(0) >= '3';
+  }
+  
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle state) {
@@ -122,12 +126,14 @@ public class SecretsListActivity extends ListActivity {
     // in the list.
     if (0 == secretsList.getAllSecrets().size()) {
       showToast(getText(R.string.list_no_data));
-      getListView().post(new Runnable() {
-        @Override
-        public void run() {
-          openOptionsMenu();
-        }
-      });
+      if (isAndroid15()) {
+        getListView().post(new Runnable() {
+          @Override
+          public void run() {
+            openOptionsMenu();
+          }
+        });
+      }
     }
 
     // If there is state information, use it to initialize the activity.
@@ -818,19 +824,23 @@ public class SecretsListActivity extends ListActivity {
 
   /** Show the soft keyboard if not visible. */
   private void showSoftKeyboard() {
-    InputMethodManager manager = (InputMethodManager)
-        getSystemService(INPUT_METHOD_SERVICE);
-    if (!manager.isActive()) {
-      manager.showSoftInput(getListView(), 0);
+    if (isAndroid15()) {
+      InputMethodManager manager = (InputMethodManager)
+          getSystemService(INPUT_METHOD_SERVICE);
+      if (!manager.isActive()) {
+        manager.showSoftInput(getListView(), 0);
+      }
     }
   }
   
   /** Hide the soft keyboard if visible. */
   private void hideSoftKeyboard() {
-    InputMethodManager manager = (InputMethodManager)
-        getSystemService(INPUT_METHOD_SERVICE);
-    if (manager.isActive()) {
-      manager.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
+    if (isAndroid15()) {
+      InputMethodManager manager = (InputMethodManager)
+          getSystemService(INPUT_METHOD_SERVICE);
+      if (manager.isActive()) {
+        manager.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
+      }
     }
   }
   
