@@ -91,8 +91,18 @@ public class SecretsListActivity extends ListActivity {
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
 
+  private static int sdkVersion = 1; 
+  static {
+    try {
+      sdkVersion = Integer.parseInt(android.os.Build.VERSION.SDK);
+    } catch (Exception ex) {
+    }
+    Log.d(LOG_TAG, "sdkVersion " + sdkVersion);
+  }
+
+  /** Does the device support the cupcake (Android 1.5) APIs? */
   private static boolean isAndroid15() {
-    return android.os.Build.VERSION.SDK.charAt(0) >= '3';
+    return sdkVersion >= 3;
   }
   
   /** Called when the activity is first created. */
@@ -125,14 +135,16 @@ public class SecretsListActivity extends ListActivity {
     // Show instruction toast auto popup options menu if there are no secrets
     // in the list.
     if (0 == secretsList.getAllSecrets().size()) {
-      showToast(getText(R.string.list_no_data));
       if (isAndroid15()) {
+        showToast(getText(R.string.list_no_data));
         getListView().post(new Runnable() {
           @Override
           public void run() {
             openOptionsMenu();
           }
         });
+      } else {
+        showToast(getText(R.string.list_no_data_1_1));
       }
     }
 
@@ -209,7 +221,8 @@ public class SecretsListActivity extends ListActivity {
       builder.append(getText(R.string.list_name));
       title = builder.toString();
     } else {
-      title = getText(R.string.list_no_data);
+      title = getText(isAndroid15() ? R.string.list_no_data
+                                    : R.string.list_no_data_1_1);
     }
     
     setTitle(title);
