@@ -38,7 +38,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -91,20 +90,6 @@ public class SecretsListActivity extends ListActivity {
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
 
-  private static int sdkVersion = 1; 
-  static {
-    try {
-      sdkVersion = Integer.parseInt(android.os.Build.VERSION.SDK);
-    } catch (Exception ex) {
-    }
-    Log.d(LOG_TAG, "sdkVersion " + sdkVersion);
-  }
-
-  /** Does the device support the cupcake (Android 1.5) APIs? */
-  private static boolean isAndroid15() {
-    return sdkVersion >= 3;
-  }
-  
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle state) {
@@ -135,7 +120,10 @@ public class SecretsListActivity extends ListActivity {
     // Show instruction toast auto popup options menu if there are no secrets
     // in the list.
     if (0 == secretsList.getAllSecrets().size()) {
-      if (isAndroid15()) {
+      if (OS.isAndroid15()) {
+        // openOptionsMenu() crashes in Android 1.1, even though this API is
+        // available.  Until I figure that out, I will call this only for
+        // 1.5 and later.
         showToast(getText(R.string.list_no_data));
         getListView().post(new Runnable() {
           @Override
@@ -221,8 +209,8 @@ public class SecretsListActivity extends ListActivity {
       builder.append(getText(R.string.list_name));
       title = builder.toString();
     } else {
-      title = getText(isAndroid15() ? R.string.list_no_data
-                                    : R.string.list_no_data_1_1);
+      title = getText(OS.isAndroid15() ? R.string.list_no_data
+                                       : R.string.list_no_data_1_1);
     }
     
     setTitle(title);
@@ -768,7 +756,7 @@ public class SecretsListActivity extends ListActivity {
     if (null != toast)
       toast.cancel();
     
-    hideSoftKeyboard();
+    OS.hideSoftKeyboard(this, getListView());
 
     View list = getListView();
     int cx = root.getWidth() / 2;
@@ -800,7 +788,7 @@ public class SecretsListActivity extends ListActivity {
     assert(isEditing);
     isEditing = false;
 
-    hideSoftKeyboard();
+    OS.hideSoftKeyboard(this, getListView());
     
     View list = getListView();
     int cx = root.getWidth() / 2;
@@ -835,28 +823,6 @@ public class SecretsListActivity extends ListActivity {
     root.startAnimation(animation);
   }
 
-  /** Show the soft keyboard if not visible. */
-  private void showSoftKeyboard() {
-    if (isAndroid15()) {
-      InputMethodManager manager = (InputMethodManager)
-          getSystemService(INPUT_METHOD_SERVICE);
-      if (!manager.isActive()) {
-        manager.showSoftInput(getListView(), 0);
-      }
-    }
-  }
-  
-  /** Hide the soft keyboard if visible. */
-  private void hideSoftKeyboard() {
-    if (isAndroid15()) {
-      InputMethodManager manager = (InputMethodManager)
-          getSystemService(INPUT_METHOD_SERVICE);
-      if (manager.isActive()) {
-        manager.hideSoftInputFromWindow(getListView().getWindowToken(), 0);
-      }
-    }
-  }
-  
   /** Generate and return a difficult to guess password. */
   private String generatePassword() {
     StringBuilder builder = new StringBuilder(8);
