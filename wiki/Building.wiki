@@ -9,15 +9,15 @@ The source tree includes project files for building the application with Eclipse
   * Ubuntu 8.10 Intrepid Ibex
   * Eclipse 3.4.2, Build id: M20090211-1700
   * Android Development Toolkit 0.8.0v200809220836-110569
-  * android-sdk-linux_x86-1.1_r1
+  * android-sdk-linux_x86-1.5_r1
 
 ===Windows-based Environment===
   * Microsoft Windows XP SP2
   * Eclipse 3.4.0, Build id: M20080617-2000
   * Android Development Toolkit 0.8.0v200809220836-110569
-  * android-sdk-windows-1.1_r1
+  * android-sdk-windows-1.5_r1
 
-Other platforms supported by Eclipse and the Android SDK should also work fine, please let me know.
+Other platforms supported by Eclipse and the Android SDK should also work fine, please let me know.  Note that Secrets now uses some 1.5 specific APIs, so it will no longer build with the 1.1 SDK.
 
 ==Building==
 
