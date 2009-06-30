@@ -1,7 +1,7 @@
 #summary Build environments
 #labels Phase-Implementation
 
-The source tree includes project files for building the Android application and the accompanying AppEngine backup service with Eclipse.
+The source tree includes project files for building the Android application and the accompanying !AppEngine backup service with Eclipse.
 
 <wiki:toc max_depth="3" />
 
