@@ -29,7 +29,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnKeyListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +51,7 @@ public class LoginActivity extends Activity {
    * from other parts of the program. */
   private static ArrayList<Secret> secrets = null;
 
+  private boolean ignoreClick;
   private boolean isFirstRun;
   private boolean isValidatingPassword;
   private String passwordString;
@@ -60,6 +60,7 @@ public class LoginActivity extends Activity {
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
+    Log.d(LOG_TAG, "LoginActivity.onCreate");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.login);
 
@@ -89,7 +90,7 @@ public class LoginActivity extends Activity {
       }
     });
     
-    Log.d(LOG_TAG, "LoginActivity.onCreate");
+    Log.d(LOG_TAG, "LoginActivity.onCreate done");
   }
 
   /**
@@ -98,6 +99,7 @@ public class LoginActivity extends Activity {
    */
   @Override
   protected void onResume() {
+    Log.d(LOG_TAG, "LoginActivity.onResume");
     super.onResume();
 
     // NOTE: don't reset the static secrets member here.  I used to do that,
@@ -119,7 +121,8 @@ public class LoginActivity extends Activity {
 
     passwordString = null;
     isValidatingPassword = false;
-
+    ignoreClick = false;
+    
     // If there is no existing secrets file, this is a first-run scenario.
     // (Its also possible that the user started the app but never got passed
     // entering his password)  In this case, we will show a special first time
@@ -142,7 +145,7 @@ public class LoginActivity extends Activity {
     // activity is started.
     TextView password = (TextView) findViewById(R.id.login_password);
     password.setText("");
-    Log.d(LOG_TAG, "LoginActivity.onResume");
+    Log.d(LOG_TAG, "LoginActivity.onResume done");
   }
 
   @Override
@@ -223,6 +226,15 @@ public class LoginActivity extends Activity {
    * @param passwordView The password view holding the entered password.
    */
   private void handlePasswordClick(TextView passwordView) {
+    Log.d(LOG_TAG, "LoginActivity.handlePasswordClick");
+    
+    if (ignoreClick) {
+      Log.d(LOG_TAG, "LoginActivity.handlePasswordClick ignoring");
+      return;
+    }
+    
+    ignoreClick = true;
+    
     // The program tries to minimize the amount of the time the users password
     // is held in memory.  The password edit field is cleared immediately
     // after getting the value, and the password string is held only as long as
@@ -278,7 +290,7 @@ public class LoginActivity extends Activity {
 
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
-    Log.d(LOG_TAG, "LoginActivity.handlePasswordClick");
+    Log.d(LOG_TAG, "LoginActivity.handlePasswordClick done");
   }
 
   /**
