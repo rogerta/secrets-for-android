@@ -233,8 +233,6 @@ public class LoginActivity extends Activity {
       return;
     }
     
-    ignoreClick = true;
-    
     // The program tries to minimize the amount of the time the users password
     // is held in memory.  The password edit field is cleared immediately
     // after getting the value, and the password string is held only as long as
@@ -288,6 +286,8 @@ public class LoginActivity extends Activity {
       }
     }
 
+    ignoreClick = true;
+    
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
     Log.d(LOG_TAG, "LoginActivity.handlePasswordClick done");
