@@ -530,14 +530,15 @@ public class SecretsListActivity extends ListActivity {
    * key-up, since the system's default action for "back" happen on key-down.
    */
   @Override
-  public boolean onKeyDown(int key_code, KeyEvent event) {
-    if (isEditing && KeyEvent.KEYCODE_BACK == key_code) {
+  public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if (isEditing && KeyEvent.KEYCODE_BACK == keyCode) {
       saveSecret();
       animateFromEditView();
       return true;
+    } else if (KeyEvent.KEYCODE_MENU == keyCode) {
     }
 
-    return super.onKeyDown(key_code, event);
+    return super.onKeyDown(keyCode, event);
   }
 
   /**
