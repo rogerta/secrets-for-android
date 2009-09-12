@@ -51,7 +51,6 @@ public class LoginActivity extends Activity {
    * from other parts of the program. */
   private static ArrayList<Secret> secrets = null;
 
-  private boolean ignoreClick;
   private boolean isFirstRun;
   private boolean isValidatingPassword;
   private String passwordString;
@@ -121,7 +120,6 @@ public class LoginActivity extends Activity {
 
     passwordString = null;
     isValidatingPassword = false;
-    ignoreClick = false;
     
     // If there is no existing secrets file, this is a first-run scenario.
     // (Its also possible that the user started the app but never got passed
@@ -227,8 +225,17 @@ public class LoginActivity extends Activity {
    */
   private void handlePasswordClick(TextView passwordView) {
     Log.d(LOG_TAG, "LoginActivity.handlePasswordClick");
-    
-    if (ignoreClick) {
+
+    // If the secrets have already been loaded, then ignore this click.
+    // This can happen in the rare case where the user has entered his password
+    // correctly and the secrets were decrypted, and then this activity was
+    // destroyed and re-created, like for an orientation change.  See the
+    // comment in onResume() for details.  We don't want to process this click
+    // since we *will* be entering the program, but with incorrect ciphers.
+    // This means that on exit, the secrets will be encrypted with an incorrect
+    // "password", making it impossible for the user to login again, since this
+    // "password" will be unknown to the user.
+    if (null != secrets) {
       Log.d(LOG_TAG, "LoginActivity.handlePasswordClick ignoring");
       return;
     }
@@ -286,8 +293,6 @@ public class LoginActivity extends Activity {
       }
     }
 
-    ignoreClick = true;
-    
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
     Log.d(LOG_TAG, "LoginActivity.handlePasswordClick done");
@@ -324,5 +329,15 @@ public class LoginActivity extends Activity {
     // from the new one.
     LoginActivity.secrets.clear();
     LoginActivity.secrets.addAll(secrets);
+  }
+  
+  /**
+   * Remove secrets from memory and clear the ciphers.  This method does not
+   * save the secrets before clearing them; it is assumed they are already
+   * saved.
+   */
+  public static void clearSecrets() {
+    secrets = null;
+    SecurityUtils.clearCiphers();
   }
 }
