@@ -93,6 +93,7 @@ public class SecretsListActivity extends ListActivity {
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle state) {
+    Log.d(LOG_TAG, "SecretsListActivity.onCreate");
     super.onCreate(state);
     setContentView(R.layout.list);
 
@@ -218,6 +219,7 @@ public class SecretsListActivity extends ListActivity {
 
   @Override
   protected void onResume() {
+    Log.d(LOG_TAG, "SecretsListActivity.onResume");
     super.onResume();
     checkKeyguard();
   }
@@ -548,6 +550,7 @@ public class SecretsListActivity extends ListActivity {
    */
   @Override
   protected void onSaveInstanceState(Bundle state) {
+    Log.d(LOG_TAG, "SecretsListActivity.onSaveInstanceState");
     super.onSaveInstanceState(state);
 
     // Save our state for later.
@@ -590,6 +593,14 @@ public class SecretsListActivity extends ListActivity {
       showToast(R.string.error_save_secrets);
 
     super.onPause();
+  }
+
+  /** Called before activity is destroyed. */
+  @Override
+  protected void onDestroy() {
+    Log.d(LOG_TAG, "SecretsListActivity.onDestroy");
+    LoginActivity.clearSecrets();
+    super.onDestroy();
   }
 
   /**

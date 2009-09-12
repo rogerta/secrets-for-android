@@ -116,12 +116,20 @@ public class SecurityUtils {
       succeeded = true;
     } catch (Exception ex) {
       Log.d(LOG_TAG, "createCiphers", ex);
+      encryptCipher = null;
+      decryptCipher = null;
     }
 
     timer.logElapsed("Time to create cihpers: ");
     return succeeded;
   }
 
+  /** Clear the ciphers from memory. */
+  public static void clearCiphers() {
+    decryptCipher = null;
+    encryptCipher = null;
+  }
+  
   /** This method returns all available services types. */
   /*public static String[] getServiceTypes() {
       java.util.HashSet result = new HashSet();
