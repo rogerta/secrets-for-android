@@ -89,6 +89,7 @@ public class LoginActivity extends Activity {
       }
     });
     
+    FileUtils.cleanupDataFiles(this);
     Log.d(LOG_TAG, "LoginActivity.onCreate done");
   }
 
