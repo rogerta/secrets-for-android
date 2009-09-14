@@ -27,7 +27,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -72,44 +74,128 @@ public class FileUtils {
 
   /** Does the secrets file exist? */
   public static boolean secretsExist(Context context) {
-    String[] filenames = context.fileList();
-    for (String name : filenames) {
-      if (name.equals(SECRETS_FILE_NAME)) {
-        return true;
-      }
-    }
-
-    return false;
+    return context.getFileStreamPath(SECRETS_FILE_NAME).exists();
   }
 
+  /**
+   * Cleanup any residual data files from a previous bad run, if any.  The
+   * algorithm is as follows:
+   * 
+   * - delete any file with "new" in the name.  These are possibly partial
+   *   writes, so their contents is undefined.
+   * - if the secrets file exists, delete all files with "old" in the name.
+   *   These are files that were temporarily pushed aside for safty purposes,
+   *   but since the secrets file exists, they are no longer required.
+   * - if the secrets file does not exists, the choose the most recent "old"
+   *   file and rename it to secrets, deleting all the other "old" files.
+   *   This restores the secrets to a previous state, which means that mostly
+   *   recently added/modified secrets would be lost, but at least we are not
+   *   loosing all the secrets.
+   */
+  public static void cleanupDataFiles(Context context) {
+    String[] filenames = context.fileList();
+    boolean secretsFileExists = secretsExist(context);
+    File mostRecent = null;
+    
+    for (int i = 0; i < filenames.length; ++i) {
+      String filename = filenames[i];
+      if (-1 != filename.indexOf("new")) {
+        context.deleteFile(filename);
+      } else if (-1 != filename.indexOf("old")) {
+        if (secretsFileExists) {
+          context.deleteFile(filename);
+        } else {
+          File f = context.getFileStreamPath(filename);
+          if (null == mostRecent) {
+            mostRecent = f;
+          } else if (f.lastModified() > mostRecent.lastModified()) {
+            mostRecent.delete();
+            mostRecent = f;
+          } else {
+            f.delete();
+          }
+        }
+      }
+    }
+    
+    if (null != mostRecent)
+      mostRecent.renameTo(context.getFileStreamPath(SECRETS_FILE_NAME));
+  }
+  
   /**
    * Saves the secrets to file using the password retrieved from the user.
    *
    * @return True if saved successfully
    * */
-  public static boolean saveSecrets(Context context, List<Secret> secrets) {
+  public static int saveSecrets(Context context, List<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.saveSecrets");
 
     Cipher cipher = SecurityUtils.getEncryptionCipher();
     if (null == cipher)
-      return false;
+      return R.string.error_missing_ciphers;
 
+    // To be as safe as possible, for example to handle low space conditions,
+    // we will save the secrets to a file using the following steps:
+    //
+    //  1- write the secrets to a new temporary file (tempn)
+    //     on error: delete tempn
+    //  2- rename the existing secrets file, if any (to tempo)
+    //     on error: delete tempn
+    //  3- rename the new temporary file to the official file name
+    //     on error: rename tempo back to existing, delete tempn
+    //  4- delete the old secrets temporary file (tempo)
+    //     on error: do nothing
+    //
+    String prefix = MessageFormat.format("t.{0,date,yyyyMMdd}-{0,time,HHmmss}.",
+        new Date(), null);
+    File existing = context.getFileStreamPath(SECRETS_FILE_NAME);
+    File tempn = context.getFileStreamPath(prefix + "new");
+    File tempo = context.getFileStreamPath(prefix + "old");
+
+    for (int i = 0; tempn.exists() || tempo.exists(); ++i) {
+      tempn = context.getFileStreamPath(prefix + "new" + i);
+      tempo = context.getFileStreamPath(prefix + "old" + i);
+    }
+
+    // Step 1
     ObjectOutputStream output = null;
-    boolean success = false;
-
     try {
       output = new ObjectOutputStream(
-          new CipherOutputStream(context.openFileOutput(SECRETS_FILE_NAME,
+          new CipherOutputStream(context.openFileOutput(tempn.getName(),
                                                         Context.MODE_PRIVATE),
                                  cipher));
       output.writeObject(secrets);
-      success = true;
     } catch (Exception ex) {
+      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not write secrets file");
+      // NOTE: this delete() works, even though the file is still open.
+      tempn.delete();
+      return R.string.error_save_secrets;
     } finally {
       try {if (null != output) output.close();} catch (IOException ex) {}
     }
 
-    return success;
+    // Step 2
+    if (existing.exists() && !existing.renameTo(tempo)) {
+      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not move existing file");
+      tempn.delete();
+      return R.string.error_cannot_move_existing;
+    }
+
+    // Step 3
+    if (!tempn.renameTo(existing)) {
+      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not move new file");
+      tempo.renameTo(existing);
+      tempn.delete();
+      return R.string.error_cannot_move_new;
+    }
+    
+    // Step 4
+    if (!tempo.delete()) {
+      // Won't consider this a real error, but will log.
+      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not delete old file");
+    }
+
+    return 0;
   }
 
   /**

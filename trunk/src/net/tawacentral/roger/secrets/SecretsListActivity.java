@@ -589,8 +589,9 @@ public class SecretsListActivity extends ListActivity {
     // to keep the save time from affecting the user too much.  I'll if this
     // is a good idea or not, or if there are common scenarios where we might
     // not pass through this code.
-    if (!FileUtils.saveSecrets(this, secretsList.getAllSecrets()))
-      showToast(R.string.error_save_secrets);
+    int error = FileUtils.saveSecrets(this, secretsList.getAllSecrets()); 
+    if (0 != error)
+      showToast(error);
 
     super.onPause();
   }
