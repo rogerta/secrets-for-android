@@ -89,7 +89,8 @@ public class SecretsListActivity extends ListActivity {
   private View root;  // root of the layout for this activity
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
-
+  private boolean isConfigChange;  // being destroyed for config change?
+  
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle state) {
@@ -596,11 +597,34 @@ public class SecretsListActivity extends ListActivity {
     super.onPause();
   }
 
+  /**
+   * This method is called when the activity is being destroyed and recreated
+   * due to a configuration change, such as the keyboard being opened or closed.
+   * Its called after onPause() and onSaveInstanceState(), but before
+   * onDestroy().
+   * 
+   * When this is called, I will set a boolean value so that onDestroy() will
+   * not clear the secrets data.
+   */
+  @Override
+  public Object onRetainNonConfigurationInstance() {
+    Log.d(LOG_TAG, "SecretsListActivity.onRetainNonConfigurationInstance");
+    isConfigChange = true;
+    return super.onRetainNonConfigurationInstance();
+  }
+
   /** Called before activity is destroyed. */
   @Override
   protected void onDestroy() {
-    Log.d(LOG_TAG, "SecretsListActivity.onDestroy");
-    LoginActivity.clearSecrets();
+    // Don't clear the secrets if this is a configuration change, since we
+    // are going to need it immediately anyway.  We do want to clear it in
+    // other circumstances, otherwise the login activity will ignore attempt
+    // to login again.
+    if (!isConfigChange) {
+      Log.d(LOG_TAG, "SecretsListActivity.onDestroy");
+      LoginActivity.clearSecrets();
+    }
+
     super.onDestroy();
   }
 
