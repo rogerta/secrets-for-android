@@ -40,6 +40,11 @@ import javax.crypto.CipherOutputStream;
  * Helper class to manage reading and writing the secrets file.  The file
  * is encrypted using the ciphers created by the SecurityUtils helper
  * functions.
+ * 
+ * Methods that touch the main secrets files are thread safe.  This is allows
+ * the file to be saved in a background thread so that the UI is not blocked
+ * in the most common use cases.  Note that stopping the app and restarting
+ * it again may still cause the UI to block if the write take a long time. 
  *
  * @author rogerta
  */
@@ -72,9 +77,14 @@ public class FileUtils {
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
 
+  /** Lock for main secrets file. */
+  private static final Object lock = new Object();
+  
   /** Does the secrets file exist? */
   public static boolean secretsExist(Context context) {
-    return context.getFileStreamPath(SECRETS_FILE_NAME).exists();
+    synchronized (lock) {
+      return context.getFileStreamPath(SECRETS_FILE_NAME).exists();
+    }
   }
 
   /**
@@ -93,109 +103,109 @@ public class FileUtils {
    *   loosing all the secrets.
    */
   public static void cleanupDataFiles(Context context) {
-    String[] filenames = context.fileList();
-    boolean secretsFileExists = secretsExist(context);
-    File mostRecent = null;
-    
-    for (int i = 0; i < filenames.length; ++i) {
-      String filename = filenames[i];
-      if (-1 != filename.indexOf("new")) {
-        context.deleteFile(filename);
-      } else if (-1 != filename.indexOf("old")) {
-        if (secretsFileExists) {
+    synchronized (lock) {
+      String[] filenames = context.fileList();
+      boolean secretsFileExists = secretsExist(context);
+      File mostRecent = null;
+      for (int i = 0; i < filenames.length; ++i) {
+        String filename = filenames[i];
+        if (-1 != filename.indexOf("new")) {
           context.deleteFile(filename);
-        } else {
-          File f = context.getFileStreamPath(filename);
-          if (null == mostRecent) {
-            mostRecent = f;
-          } else if (f.lastModified() > mostRecent.lastModified()) {
-            mostRecent.delete();
-            mostRecent = f;
+        } else if (-1 != filename.indexOf("old")) {
+          if (secretsFileExists) {
+            context.deleteFile(filename);
           } else {
-            f.delete();
+            File f = context.getFileStreamPath(filename);
+            if (null == mostRecent) {
+              mostRecent = f;
+            } else if (f.lastModified() > mostRecent.lastModified()) {
+              mostRecent.delete();
+              mostRecent = f;
+            } else {
+              f.delete();
+            }
           }
         }
       }
+
+      if (null != mostRecent)
+        mostRecent.renameTo(context.getFileStreamPath(SECRETS_FILE_NAME));
     }
-    
-    if (null != mostRecent)
-      mostRecent.renameTo(context.getFileStreamPath(SECRETS_FILE_NAME));
   }
   
   /**
    * Saves the secrets to file using the password retrieved from the user.
    *
-   * @return True if saved successfully
-   * */
-  public static int saveSecrets(Context context, List<Secret> secrets) {
-    Log.d(LOG_TAG, "FileUtils.saveSecrets");
+   * @param existing The file to save into.
+   * @param cipher The encryption cipher to use with the file.
+   * @param secrets The list of secrets to save.
+   * @return True if saved successfully.
+   */
+  public static int saveSecrets(File existing,
+                                Cipher cipher,
+                                List<Secret> secrets) {
+    synchronized (lock) {
+      Log.d(LOG_TAG, "FileUtils.saveSecrets");
+      // To be as safe as possible, for example to handle low space conditions,
+      // we will save the secrets to a file using the following steps:
+      //
+      //  1- write the secrets to a new temporary file (tempn)
+      //     on error: delete tempn
+      //  2- rename the existing secrets file, if any (to tempo)
+      //     on error: delete tempn
+      //  3- rename the new temporary file to the official file name
+      //     on error: rename tempo back to existing, delete tempn
+      //  4- delete the old secrets temporary file (tempo)
+      //     on error: do nothing
+      //
+      String prefix = MessageFormat.format(
+          "t.{0,date,yyyyMMdd}-{0,time,HHmmss}.", new Date(), null);
+      File parent = existing.getParentFile();
+      File tempn = new File(parent, prefix + "new");
+      File tempo = new File(parent, prefix + "old");
+      for (int i = 0; tempn.exists() || tempo.exists(); ++i) {
+        tempn = new File(parent, prefix + "new" + i);
+        tempo = new File(parent, prefix + "old" + i);
+      }
+      // Step 1
+      ObjectOutputStream output = null;
+      try {
+        output = new ObjectOutputStream(new CipherOutputStream(
+            new FileOutputStream(tempn), cipher));
+        output.writeObject(secrets);
+      } catch (Exception ex) {
+        Log.d(LOG_TAG, "FileUtils.saveSecrets: could not write secrets file");
+        // NOTE: this delete() works, even though the file is still open.
+        tempn.delete();
+        return R.string.error_save_secrets;
+      } finally {
+        try {if (null != output) output.close();} catch (IOException ex) {}
+      }
 
-    Cipher cipher = SecurityUtils.getEncryptionCipher();
-    if (null == cipher)
-      return R.string.error_missing_ciphers;
+      // Step 2
+      if (existing.exists() && !existing.renameTo(tempo)) {
+        Log.d(LOG_TAG, "FileUtils.saveSecrets: could not move existing file");
+        tempn.delete();
+        return R.string.error_cannot_move_existing;
+      }
 
-    // To be as safe as possible, for example to handle low space conditions,
-    // we will save the secrets to a file using the following steps:
-    //
-    //  1- write the secrets to a new temporary file (tempn)
-    //     on error: delete tempn
-    //  2- rename the existing secrets file, if any (to tempo)
-    //     on error: delete tempn
-    //  3- rename the new temporary file to the official file name
-    //     on error: rename tempo back to existing, delete tempn
-    //  4- delete the old secrets temporary file (tempo)
-    //     on error: do nothing
-    //
-    String prefix = MessageFormat.format("t.{0,date,yyyyMMdd}-{0,time,HHmmss}.",
-        new Date(), null);
-    File existing = context.getFileStreamPath(SECRETS_FILE_NAME);
-    File tempn = context.getFileStreamPath(prefix + "new");
-    File tempo = context.getFileStreamPath(prefix + "old");
+      // Step 3
+      if (!tempn.renameTo(existing)) {
+        Log.d(LOG_TAG, "FileUtils.saveSecrets: could not move new file");
+        tempo.renameTo(existing);
+        tempn.delete();
+        return R.string.error_cannot_move_new;
+      }
 
-    for (int i = 0; tempn.exists() || tempo.exists(); ++i) {
-      tempn = context.getFileStreamPath(prefix + "new" + i);
-      tempo = context.getFileStreamPath(prefix + "old" + i);
+      // Step 4
+      if (!tempo.delete()) {
+        // Won't consider this a real error, but will log.
+        Log.d(LOG_TAG, "FileUtils.saveSecrets: could not delete old file");
+      }
+
+      Log.d(LOG_TAG, "FileUtils.saveSecrets: done");
+      return 0;
     }
-
-    // Step 1
-    ObjectOutputStream output = null;
-    try {
-      output = new ObjectOutputStream(
-          new CipherOutputStream(context.openFileOutput(tempn.getName(),
-                                                        Context.MODE_PRIVATE),
-                                 cipher));
-      output.writeObject(secrets);
-    } catch (Exception ex) {
-      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not write secrets file");
-      // NOTE: this delete() works, even though the file is still open.
-      tempn.delete();
-      return R.string.error_save_secrets;
-    } finally {
-      try {if (null != output) output.close();} catch (IOException ex) {}
-    }
-
-    // Step 2
-    if (existing.exists() && !existing.renameTo(tempo)) {
-      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not move existing file");
-      tempn.delete();
-      return R.string.error_cannot_move_existing;
-    }
-
-    // Step 3
-    if (!tempn.renameTo(existing)) {
-      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not move new file");
-      tempo.renameTo(existing);
-      tempn.delete();
-      return R.string.error_cannot_move_new;
-    }
-    
-    // Step 4
-    if (!tempo.delete()) {
-      // Won't consider this a real error, but will log.
-      Log.d(LOG_TAG, "FileUtils.saveSecrets: could not delete old file");
-    }
-
-    return 0;
   }
 
   /**
@@ -231,31 +241,32 @@ public class FileUtils {
   // TODO(rogerta): the readObject() method does not support generics.
   @SuppressWarnings("unchecked")
   public static ArrayList<Secret> loadSecrets(Context context) {
-    Log.d(LOG_TAG, "FileUtils.loadSecrets");
+    synchronized (lock) {
+      Log.d(LOG_TAG, "FileUtils.loadSecrets");
 
-    SecurityUtils.ExecutionTimer timer = new SecurityUtils.ExecutionTimer();
+      SecurityUtils.ExecutionTimer timer = new SecurityUtils.ExecutionTimer();
+      Cipher cipher = SecurityUtils.getDecryptionCipher();
+      if (null == cipher)
+        return null;
 
-    Cipher cipher = SecurityUtils.getDecryptionCipher();
-    if (null == cipher)
-      return null;
+      ArrayList<Secret> secrets = null;
+      ObjectInputStream input = null;
 
-    ArrayList<Secret> secrets = null;
-    ObjectInputStream input = null;
+      try {
+        input = new ObjectInputStream(
+            new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
+                                  cipher));
+        timer.logElapsed("Time to open file for reading: ");
+        secrets = (ArrayList<Secret>) input.readObject();
+      } catch (Exception ex) {
+        Log.e(LOG_TAG, "loadSecrets", ex);
+      } finally {
+        try {if (null != input) input.close();} catch (IOException ex) {}
+      }
 
-    try {
-      input = new ObjectInputStream(
-          new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
-                                cipher));
-      timer.logElapsed("Time to open file for reading: ");
-      secrets = (ArrayList<Secret>) input.readObject();
-    } catch (Exception ex) {
-      Log.e(LOG_TAG, "loadSecrets", ex);
-    } finally {
-      try {if (null != input) input.close();} catch (IOException ex) {}
+      timer.logElapsed("Time to load: ");
+      return secrets;
     }
-
-    timer.logElapsed("Time to load: ");
-    return secrets;
   }
 
   /**
@@ -290,7 +301,9 @@ public class FileUtils {
 
   /** Deletes all secrets from the phone. */
   public static boolean deleteSecrets(Context context) {
-    return context.deleteFile(SECRETS_FILE_NAME);
+    synchronized (lock) {
+      return context.deleteFile(SECRETS_FILE_NAME);
+    }
   }
 
   /**
