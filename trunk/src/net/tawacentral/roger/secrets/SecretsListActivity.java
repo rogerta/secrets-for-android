@@ -119,25 +119,6 @@ public class SecretsListActivity extends ListActivity {
     root = findViewById(R.id.list_container);
     edit = findViewById(R.id.edit_layout);
 
-    // Show instruction toast auto popup options menu if there are no secrets
-    // in the list.
-    if (0 == secretsList.getAllSecrets().size()) {
-      if (OS.isAndroid15()) {
-        // openOptionsMenu() crashes in Android 1.1, even though this API is
-        // available.  Until I figure that out, I will call this only for
-        // 1.5 and later.
-        showToast(getText(R.string.list_no_data));
-        getListView().post(new Runnable() {
-          @Override
-          public void run() {
-            openOptionsMenu();
-          }
-        });
-      } else {
-        showToast(getText(R.string.list_no_data_1_1));
-      }
-    }
-
     // If there is state information, use it to initialize the activity.
     if (null != state) {
       isEditing = state.getBoolean(STATE_IS_EDITING);
@@ -155,6 +136,25 @@ public class SecretsListActivity extends ListActivity {
 
         getListView().setVisibility(View.GONE);
         edit.setVisibility(View.VISIBLE);
+      }
+    }
+
+    // Show instruction toast auto popup options menu if there are no secrets
+    // in the list.
+    if (0 == secretsList.getAllSecrets().size() && !isEditing) {
+      if (OS.isAndroid15()) {
+        // openOptionsMenu() crashes in Android 1.1, even though this API is
+        // available.  Until I figure that out, I will call this only for
+        // 1.5 and later.
+        showToast(getText(R.string.list_no_data));
+        getListView().post(new Runnable() {
+          @Override
+          public void run() {
+            openOptionsMenu();
+          }
+        });
+      } else {
+        showToast(getText(R.string.list_no_data_1_1));
       }
     }
 
