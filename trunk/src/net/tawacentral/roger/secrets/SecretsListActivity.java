@@ -19,6 +19,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.crypto.Cipher;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -586,13 +589,24 @@ public class SecretsListActivity extends ListActivity {
     if (null != toast)
       toast.cancel();
 
-    // Save everything now.  Saves are only done when the activity is paused
-    // to keep the save time from affecting the user too much.  I'll if this
-    // is a good idea or not, or if there are common scenarios where we might
-    // not pass through this code.
-    int error = FileUtils.saveSecrets(this, secretsList.getAllSecrets()); 
-    if (0 != error)
-      showToast(error);
+    // Do the save in the background, so that we don't block the UI thread.
+    // For people with lots and lots of secrets, it can take a long time to
+    // save, and they may get a "force close" dialog if the save was done in
+    // the UI thread.
+    //
+    // The issue is that we cannot give the user feedback about the save,
+    // unless I use a notification (need to look into that).  Also, because
+    // the process hangs around, this thread should continue running until
+    // completion even if the user switches to another task/application.
+    final List<Secret> secrets = secretsList.getAllSecrets();
+    final Cipher cipher = SecurityUtils.getEncryptionCipher();
+    final File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
+
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        FileUtils.saveSecrets(file, cipher, secrets); 
+      }}, "saveSecrets").start();
 
     super.onPause();
   }
