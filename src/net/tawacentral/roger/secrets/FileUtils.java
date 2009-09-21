@@ -16,8 +16,6 @@ package net.tawacentral.roger.secrets;
 
 import android.content.Context;
 import android.util.Log;
-import android.view.Gravity;
-import android.widget.Toast;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
@@ -246,6 +244,7 @@ public class FileUtils {
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.loadSecrets");
 
+      SecurityUtils.ExecutionTimer timer = new SecurityUtils.ExecutionTimer();
       Cipher cipher = SecurityUtils.getDecryptionCipher();
       if (null == cipher)
         return null;
@@ -253,41 +252,19 @@ public class FileUtils {
       ArrayList<Secret> secrets = null;
       ObjectInputStream input = null;
 
-      // Clear the global loaded secrets array, because we want to populate it
-      // with only the secrets loaded by this call.
-      Secret.clearLoadedSecrets();
-      
       try {
         input = new ObjectInputStream(
             new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
                                   cipher));
+        timer.logElapsed("Time to open file for reading: ");
         secrets = (ArrayList<Secret>) input.readObject();
       } catch (Exception ex) {
         Log.e(LOG_TAG, "loadSecrets", ex);
-        
-        // An error occurred while reading the input file.  Get whatever secrets
-        // were successfully loaded.  That's the best that can be done with
-        List<Secret> loadedSecrets = Secret.getLoadedSecrets();
-        if (null != loadedSecrets) {
-          secrets = new ArrayList<Secret>(loadedSecrets.size());
-          secrets.addAll(loadedSecrets);
-          
-          // Move the file away and tell the user something went wrong.
-          try {if (null != input) input.close();} catch (IOException ex2) {}
-          File existing = context.getFileStreamPath(SECRETS_FILE_NAME);
-          File recover = context.getFileStreamPath("recover." +
-              new Date().getTime());
-          existing.renameTo(recover);
-          Toast toast = Toast.makeText(context, R.string.error_loading,
-              Toast.LENGTH_LONG);
-          toast.setGravity(Gravity.CENTER, 0, 0);
-          toast.show();
-        }
       } finally {
-        Secret.clearLoadedSecrets();
         try {if (null != input) input.close();} catch (IOException ex) {}
       }
-  
+
+      timer.logElapsed("Time to load: ");
       return secrets;
     }
   }
