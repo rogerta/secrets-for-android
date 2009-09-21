@@ -1,0 +1,57 @@
+# Copyright (c) 2009, Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+application: my-secrets
+version: 1
+runtime: python
+api_version: 1
+
+# This is a very simple website (for now).  GET and PUT requests to the URL
+# '/secret' are used to load and save secrets to the online database.  All
+# other URLs show a web page referring back to the open source project page.
+handlers:
+
+# Supports GET, PUT, and DELETE on records.
+- url: /secrets
+  script: main.py
+  secure: always
+
+# Tells the server to send a salt-recovery email for the given record.  
+- url: /send_email
+  script: main.py
+  secure: always
+
+# Enable or disable a record.  Only enabled records respond to GET and PUT.
+- url: /enable
+  script: main.py
+  login: admin
+  secure: always
+
+# Admin console for managing secrets.
+- url: /admin
+  script: main.py
+  login: admin
+  secure: always
+  
+- url: /icon.png
+  static_files: static/icon.png
+  upload: static/icon.png
+
+# This website has no user viewable pages, so just bring up a standard page
+# with a pointer back to the project's website for anything the user might
+# type in.  Note that this rule must be last since appengine looks for a
+# matching rule in the order they appear in this file.
+- url: /.*
+  static_files: static/index.html
+  upload: static/index.html

@@ -1,0 +1,263 @@
+{% comment %}
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+{% endcomment %}
+<html>
+<head>
+<title>Secrets Administrator Console</title>
+  
+{% comment %} ------------------------------------------------ {% endcomment %}
+
+<style type="text/css">
+th {
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
+  background-color:#ffffbb;
+}
+tr.even {
+  background-color: #ffffff;
+}
+tr.odd {
+  background-color: #dddddd;
+}
+span.salt {
+  color: #ff5555;
+  font-weight: bold;
+}
+td {
+  padding: 0px 16px;
+}
+div.logout {
+  font-size: smaller;
+}
+span#status_message {
+  background-color: #ffdd00;
+  font-size: smaller;
+}
+</style>
+
+{% comment %} ------------------------------------------------ {% endcomment %}
+
+<script type="text/javascript">
+/** Timer id of callback used to clear status message. */
+var timer;
+
+/**
+ * Set the message in the status area.  The message will automatically disappear
+ * after a small delay, or if the user clicks on it.
+ */
+function setStatusMessage(message) {
+  if (timer) {
+    clearTimeout(timer);
+    delete timer;
+  }
+  
+  var status = document.getElementById('status_message');
+  if (!status) {
+    alert(message);
+    return;
+  }
+  
+  while (status.firstChild) {
+    status.removeChild(status.firstChild);
+  }
+  
+  if (message.length > 0) {
+    var text = document.createTextNode(message);
+    status.appendChild(text);
+    status.style.padding = "0px 8px";
+    timer = setTimeout(function() {
+      delete timer;
+      setStatusMessage('');
+    }, 5000);
+  } else {
+    status.style.padding = "0px";
+  }
+}
+
+/**
+ *Tell the server to send a salt-recovery email for  record with the
+ * specified email address.
+ */
+function sendEmail(email) {
+  var xhr = new XMLHttpRequest();
+  
+  xhr.onreadystatechange = function() {
+    if (4 != xhr.readyState)
+      return;
+
+    if (200 == xhr.status) {       
+      setStatusMessage(xhr.responseText);
+    } else {
+      setStatusMessage('Error sending email Status=' + xhr.status);
+    }
+  }
+  
+  xhr.open('GET', '/send_email?email=' + email, true);
+  xhr.send(null);
+}
+
+/** Permanently delete a record from the server.  There is no going back. */
+function deleteRecord(email, salt, rowIndex) {
+  var xhr = new XMLHttpRequest();
+  
+  xhr.onreadystatechange = function() {
+    if (4 != xhr.readyState)
+      return;
+      
+    if (200 == xhr.status) {       
+      setStatusMessage(xhr.responseText);
+      {% comment %}
+      // Remove the row with the given index from the table.  We need to add
+      // 1 to the index because the first row is the header, and we need to
+      // ignore it.
+      {% endcomment %}
+      var table = document.getElementById('record-table');
+      if (table)
+        table.deleteRow(rowIndex + 1);
+    } else {
+      setStatusMessage('Error sending email Status=' + xhr.status);
+    }
+  }
+  
+  xhr.open('GET', '/secrets?http_method=DELETE&email=' + email + '&salt=' +
+      salt, true);
+  xhr.send(null);
+}
+
+/** Enable the given record.  Enabled records will respond to GETs and PUTs. */
+function enableRecord(email, salt, rowIndex) {
+  var xhr = new XMLHttpRequest();
+  
+  xhr.onreadystatechange = function() {
+    if (4 != xhr.readyState)
+      return;
+      
+    if (200 == xhr.status) {       
+      setStatusMessage(xhr.responseText);
+      {% comment %}
+      // Change the row with the given index from the table.  We need to add
+      // 1 to the index because the first row is the header, and we need to
+      // ignore it.
+      {% endcomment %}
+      var ae = document.getElementById('data_' + rowIndex + '_enable');
+      var ad = document.getElementById('data_' + rowIndex + '_disable');
+      if (ae)
+        ae.style.visibility = 'hidden';
+      if (ad)
+        ad.style.visibility = 'visible';
+    } else {
+      setStatusMessage('Error enabling Status=' + xhr.status);
+    }
+  }
+  
+  xhr.open('GET', '/enable?&email=' + email + '&salt=' + salt + '&enable=1',
+           true);
+  xhr.send(null);
+}
+
+/** Enable the given record.  Enabled records will respond to GETs and PUTs. */
+function disableRecord(email, salt, rowIndex) {
+  var xhr = new XMLHttpRequest();
+  
+  xhr.onreadystatechange = function() {
+    if (4 != xhr.readyState)
+      return;
+      
+    if (200 == xhr.status) {       
+      setStatusMessage(xhr.responseText);
+      {% comment %}
+      // Change the row with the given index from the table.  We need to add
+      // 1 to the index because the first row is the header, and we need to
+      // ignore it.
+      {% endcomment %}
+      var ae = document.getElementById('data_' + rowIndex + '_enable');
+      var ad = document.getElementById('data_' + rowIndex + '_disable');
+      if (ae)
+        //ae.style.display  = 'inline';
+        ae.style.visibility = 'visible';
+      if (ad)
+        //ad.style.display  = 'none';
+        ad.style.visibility = 'hidden';
+    } else {
+      setStatusMessage('Error disabling Status=' + xhr.status);
+    }
+  }
+  
+  xhr.open('GET', '/enable?&email=' + email + '&salt=' + salt + '&enable=0',
+           true);
+  xhr.send(null);
+}
+
+</script>
+
+{% comment %} ------------------------------------------------ {% endcomment %}
+
+</head>
+<body>
+<h2>Secrets Administrator Console</h2>
+<table border="0">
+  <tr><td>
+    <div align="right" class="logout"><a href="{{ logout_url }}">Logout</a>
+    </div>
+  </td></tr>
+  <tr><td>
+    <table id="record-table" border="3" frame="hsides" rules="groups"
+        cellpadding="2" cellspacing="0">
+      <thead>
+        <tr class="head">
+          <th>Email</th>
+          <th>Salt</th>
+          <th>Created</th>
+          <th>Last Modified</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      {% for r in records %}
+        <tr id="row_{{ forloop.counter0 }}"
+            class="{% cycle even,even,even,odd,odd,odd %}">
+          <td id="data_{{ forloop.counter0 }}_email">{{ r.email }}</td>
+          <td><span class="salt">{{ r.salt }}</span></td>
+          <td>{{ r.created }}</td>
+          <td>{{ r.last_modified }}</td>
+          <td>
+            <a id="data_{{ forloop.counter0 }}_enable"
+               href="javascript:enableRecord('{{ r.email }}', '{{ r.salt }}', {{ forloop.counter0 }})"
+               style="visibility: {% if r.enabled %}hidden{% else %}visible{% endif %}">Enable</a>
+            &nbsp;
+            <a  id="data_{{ forloop.counter0 }}_disable"
+                href="javascript:disableRecord('{{ r.email }}', '{{ r.salt }}', {{ forloop.counter0 }})"
+                style="visibility: {% if r.enabled %}visible{% else %}hidden{% endif %}">Disable</a>
+            &nbsp;
+            <a href="javascript:sendEmail('{{ r.email }}')">Email</a>
+            &nbsp;
+            <a href="javascript:deleteRecord('{{ r.email }}', '{{ r.salt }}', {{ forloop.counter0 }})">Delete</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  </td></tr>
+  <tr><td>
+    <br/>  
+    <div align="center">
+      <span id="status_message" onclick="setStatusMessage('')"></span>
+    </div>
+  </td></tr>
+</table>
+  
+<a target="_blank" href="http://code.google.com/appengine/"><img border="0"
+   src="http://code.google.com/appengine/images/appengine-noborder-120x30.gif"
+   alt="Powered by Google App Engine" /></a>
+</body>
+</html>
