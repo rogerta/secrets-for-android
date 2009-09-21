@@ -16,6 +16,8 @@ package net.tawacentral.roger.secrets;
 
 import android.content.Context;
 import android.util.Log;
+import android.view.Gravity;
+import android.widget.Toast;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
@@ -269,6 +271,17 @@ public class FileUtils {
         if (null != loadedSecrets) {
           secrets = new ArrayList<Secret>(loadedSecrets.size());
           secrets.addAll(loadedSecrets);
+          
+          // Move the file away and tell the user something went wrong.
+          try {if (null != input) input.close();} catch (IOException ex2) {}
+          File existing = context.getFileStreamPath(SECRETS_FILE_NAME);
+          File recover = context.getFileStreamPath("recover." +
+              new Date().getTime());
+          existing.renameTo(recover);
+          Toast toast = Toast.makeText(context, R.string.error_loading,
+              Toast.LENGTH_LONG);
+          toast.setGravity(Gravity.CENTER, 0, 0);
+          toast.show();
         }
       } finally {
         Secret.clearLoadedSecrets();
