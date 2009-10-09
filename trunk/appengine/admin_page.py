@@ -14,6 +14,7 @@
 
 import logging
 import os
+
 from google.appengine.api import users
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
@@ -21,14 +22,10 @@ from google.appengine.ext.webapp import template
 from user_record import UserRecord
 
 class AdminPage(webapp.RequestHandler):
-  """
-  Handler for the '/admin' URL.
-  """
+  """Handler for the '/admin' URL."""
 
   def get(self):
-    """
-    HTTP GET handler.  Shows a list of all Emails and salts saved on the server. 
-    """
+    """Shows a list of all Emails and salts saved on the server."""
     path = os.path.join(os.path.dirname(__file__), 'static/admin.html')
 
     # Builds a list of all records.  Need to see how scalable this is.  Put
@@ -36,14 +33,11 @@ class AdminPage(webapp.RequestHandler):
     query = UserRecord.all()
     records = []
     records.extend(query)
-    
     template_values = {
       'records': records,
       'logout_url': users.create_logout_url('/admin')
     }
-    
     res = self.response
-    
     # Make sure no one tries to cache this page, neither the browser nor any
     # intermediate proxies.
     res.headers.add_header('Cache-Control', 'no-cache')

@@ -19,24 +19,23 @@ class UserRecord(db.Model):
   This class holds information about one Secrets for Android user.  The email
   member uniquely identifies a user, while the salt is used to authenticate
   that user, much like a password.
-  
+
   For now only a blob (base64 encoded) with the user's secrets is stored.  Later
   on other information may be added.  Note that the secrets blob is encoded
   with the user's master password, which we don't know here.  This is treated
   as an opaque blob from this app engine site.
   """
-  
+
   # The email and salt are used to identify the user.  The email acts like a
   # unique id, and the salt is like a password.
   email = db.StringProperty(required=True)
   salt = db.StringProperty(required=True)
-  
+
   # Track when the record was first created and last modified.
   created = db.DateTimeProperty(auto_now_add=True)
   last_modified = db.DateTimeProperty(auto_now=True)
-  
+
   # Properties of the record,  For now, the actual secrets (encrypted form)
   # and whether the record is enabled or not.
   secrets = db.TextProperty()
   enabled = db.BooleanProperty()
- 
