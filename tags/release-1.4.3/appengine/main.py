@@ -12,22 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from google.appengine.api import users
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 
-from user_record import UserRecord
 from secret_page import SecretsPage
 from admin_page import AdminPage
 from send_email_page import SendEmailPage
 from enable_page import EnablePage
 
-application = webapp.WSGIApplication([('/secrets', SecretsPage),
-                                      ('/admin', AdminPage),
-                                      ('/send_email', SendEmailPage),
-                                      ('/enable', EnablePage),
-                                     ],
-                                     debug=True)
+URLS = [
+  ('/secrets', SecretsPage),
+  ('/admin', AdminPage),
+  ('/send_email', SendEmailPage),
+  ('/enable', EnablePage),
+]
+
+application = webapp.WSGIApplication(URLS, debug=True)
+
 
 def main():
   """
@@ -35,6 +36,7 @@ def main():
   using a main function for this purpose.
   """
   run_wsgi_app(application)
+
 
 if __name__ == "__main__":
   main()
