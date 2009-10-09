@@ -28,13 +28,13 @@ class SecretsPage(webapp.RequestHandler):
   """
   Handler for the '/secret' URL.
   """
-  
+
   def get(self):
     """
     HTTP GET handler.  Gets the secret for the given user from the database.
     Both the email and salt must match, otherwise the request is rejected. 
     """
-    
+
     # If the request has a 'http_method' request parameter, handle it as if
     # that were the actual method of the request.  This is to get around
     # situations where we cannot directly do that method.  For now, this only
@@ -48,13 +48,13 @@ class SecretsPage(webapp.RequestHandler):
         res = self.response
         res.set_status(403)
         res.out.write('Invalid credentials')
-        
+
     else:
       res = self.response
       res.headers['Content-Type'] = 'text/plain'
-  
+
       (email, salt) = GetHeaderFields(self.request)
-  
+
       status = 403
       (record, exact) = FindEnabledUserRecord(email, salt)
       if record and exact:
@@ -63,9 +63,9 @@ class SecretsPage(webapp.RequestHandler):
       else:
         res.set_status(status)
         res.out.write('Invalid credentials')
-        
+
       logging.info('GET email=%s salt=%s status=%d' % (email, salt, status))
-    
+
   def put(self):
     """
     HTTP PUT  handler.  Saves the secrets for the given user into the database.
@@ -76,10 +76,10 @@ class SecretsPage(webapp.RequestHandler):
     req = self.request
     res = self.response
     res.headers['Content-Type'] = 'text/plain'
-    
+
     (email, salt) = GetHeaderFields(self.request)
     length = len(req.body)
-    
+
     # If the length is greater than some (small) maximum, then reject the
     # put.  This is to prevent abuse of the server's storage.
     if length > MAX_SIZE:
@@ -107,11 +107,11 @@ class SecretsPage(webapp.RequestHandler):
         record.enabled = True
         record.put()
         status = 200
-        
+
     if 403 == status:
       res.set_status(status)
       res.out.write('Invalid credentials')
-      
+
     logging.info('PUT email=%s salt=%s status=%d' % (email, salt, status))
 
   def delete(self):
@@ -120,14 +120,14 @@ class SecretsPage(webapp.RequestHandler):
     database.  If no record exists with the given email address, then the delete
     is ignored.  If a record does exist, then the salt in the record must match
     the salt of the request, otherwise the delete is ignored.
-    
+
     The email and salt are first extracted from the HTTP headers.  If not
     present, then they will be extracted from the request parameters.  This
     latter case is used for handling delete from the admin page.
     """
     res = self.response
     res.headers['Content-Type'] = 'text/plain'
-    
+
     (email, salt) = GetHeaderFields(self.request)
     if not email:
       email = self.request.get('email', '')
@@ -142,5 +142,5 @@ class SecretsPage(webapp.RequestHandler):
       status = 403
       res.set_status(status)
       res.out.write('Invalid credentials')
-      
+
     logging.info('DELETE email=%s salt=%s status=%d' % (email, salt, status))
