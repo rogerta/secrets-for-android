@@ -34,12 +34,12 @@ class TestGET(unittest.TestCase):
   """
   Unit test for getting secrets.
   """
-  
+
   def setUp(self):
     """
     Setup the GET tests by creating a secret for a well known email address
     and salt, and making sure that a second well known email address does not
-    exist. 
+    exist.
     """
     try:
       conn = CONN_FACTORY(HOSTNAME)
@@ -50,7 +50,7 @@ class TestGET(unittest.TestCase):
       self.assertEquals(200, res.status)
     finally:
       conn.close()
-    
+
   def tearDown(self):
     """
     Delete the well known secret created in the setup.
@@ -62,14 +62,14 @@ class TestGET(unittest.TestCase):
                             HEADER_SALT : TEST_SALT})
       res = conn.getresponse()
       self.assertEquals(200, res.status)
-        
+
     finally:
       conn.close()
 
   def RequestNonSecretsPage(self, url):
     """
     Perform an HTTP GET request for the given URL.
-    
+
     Args:
       url: The URL to request as a string.
     """
@@ -77,7 +77,6 @@ class TestGET(unittest.TestCase):
       conn = httplib.HTTPConnection(HOSTNAME)
       conn.request('GET', url)
       res = conn.getresponse()
-  
       self.assertEquals(200, res.status, 'URL=%s' % url)
       body = res.read()
       self.assertTrue(body)
@@ -86,7 +85,7 @@ class TestGET(unittest.TestCase):
           'http://code.google.com/p/secrets-for-android/'))
     finally:
       conn.close()
-    
+
   def testRandomPages(self):
     """
     Test a randomly generated URL, to make sure it returns the standard
@@ -97,7 +96,7 @@ class TestGET(unittest.TestCase):
     self.RequestNonSecretsPage('/adasdad/ddadaa')
     self.RequestNonSecretsPage('/adasdad/ddadaa/')
     self.RequestNonSecretsPage('/adasdad/ddadaa/?email=fff&salt=40453')
-    
+
   def testNoEmailNoSalt(self):
     """
     Test a secrets URL with neither an email or salt.
@@ -109,7 +108,7 @@ class TestGET(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testNoEmail(self):
     """
     Test a secrets URL with no email.
@@ -122,7 +121,7 @@ class TestGET(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testNoSalt(self):
     """
     Test a secrets URL with no salt.
@@ -135,7 +134,7 @@ class TestGET(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testBadEmail(self):
     """
     Test a secrets URL with an email and salt specified, but the email does
@@ -150,7 +149,7 @@ class TestGET(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testBadSalt(self):
     """
     Test a secrets URL with an email and salt specified, but the salt is
@@ -165,7 +164,7 @@ class TestGET(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testGoodRequest(self):
     """
     Test a valid secrets URL.
@@ -179,13 +178,13 @@ class TestGET(unittest.TestCase):
       self.assertEquals(200, res.status)
     finally:
       conn.close()
-    
+
 
 class TestPUT(unittest.TestCase):
   """
   Unit test for putting secrets.
   """
-  
+
   def setUp(self):
     """
     Setup the PUT tests by making sure a secret for one well known email address
@@ -199,7 +198,7 @@ class TestPUT(unittest.TestCase):
                             HEADER_SALT : TEST_SALT})
       res = conn.getresponse()
       self.assertEquals(200, res.status)
-      
+
       # Make sure a secret does not exists for bar@.
       conn = CONN_FACTORY(HOSTNAME)
       conn.request('DELETE', BASE_SECRETS_URL,
@@ -208,10 +207,10 @@ class TestPUT(unittest.TestCase):
       res = conn.getresponse()
       if 200 != res.status and 403 != res.status:
         self.assertEquals(200, res.status)
-        
+
     finally:
       conn.close()
-    
+
   def tearDown(self):
     """
     Delete the well known secret created in the test.
@@ -224,7 +223,7 @@ class TestPUT(unittest.TestCase):
       res = conn.getresponse()
       if 200 != res.status and 403 != res.status:
         self.assertEquals(200, res.status)
-        
+
       conn = CONN_FACTORY(HOSTNAME)
       conn.request('DELETE', BASE_SECRETS_URL,
                    headers={HEADER_EMAIL : 'barr@gmail.com',
@@ -236,7 +235,7 @@ class TestPUT(unittest.TestCase):
   def RequestNonSecretsPage(self, url):
     """
     Perform an HTTP PUT request for the given URL.
-    
+
     Args:
       url: The URL to request as a string.
     """
@@ -250,7 +249,7 @@ class TestPUT(unittest.TestCase):
       #self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testRandomPages(self):
     """
     Test a randomly generated URL, to make sure it returns a 403 response.
@@ -260,7 +259,7 @@ class TestPUT(unittest.TestCase):
     self.RequestNonSecretsPage('/adasdad/ddadaa')
     self.RequestNonSecretsPage('/adasdad/ddadaa/')
     self.RequestNonSecretsPage('/adasdad/ddadaa/?email=fff&salt=40453')
-    
+
   def testNoEmailNoSalt(self):
     """
     Test a secrets URL with neither an email or salt.
@@ -272,7 +271,7 @@ class TestPUT(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testNoEmail(self):
     """
     Test a secrets URL with no email.
@@ -285,7 +284,7 @@ class TestPUT(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testNoSalt(self):
     """
     Test a secrets URL with no salt.
@@ -298,7 +297,7 @@ class TestPUT(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testNonExistantEmail(self):
     """
     Test a secrets URL with an email and salt specified, but the email does
@@ -313,7 +312,7 @@ class TestPUT(unittest.TestCase):
       self.assertEquals(200, res.status)
     finally:
       conn.close()
-    
+
   def testExistantEmailBadSalt(self):
     """
     Test a secrets URL with an email and salt specified, the email exists,
@@ -328,7 +327,7 @@ class TestPUT(unittest.TestCase):
       self.assertEquals(403, res.status)
     finally:
       conn.close()
-    
+
   def testExistantEmailGoodSalt(self):
     """
     Test a secrets URL with a good email and salt.  This should update the
@@ -341,7 +340,6 @@ class TestPUT(unittest.TestCase):
                             HEADER_SALT : TEST_SALT})
       res = conn.getresponse()
       self.assertEquals(200, res.status)
-      
       # TODO: We are able to put the secret.  Now read it back and make sure
       # its OK.
     finally:
@@ -359,15 +357,12 @@ class TestPUT(unittest.TestCase):
         out.write('                ')
 
       out.write('This is past the maximum allowed')
-      
       conn = CONN_FACTORY(HOSTNAME)
       conn.request('PUT', BASE_SECRETS_URL, out.getvalue(),
                    headers={HEADER_EMAIL : TEST_EMAIL,
                             HEADER_SALT : TEST_SALT})
       res = conn.getresponse()
-      
       self.assertEquals(403, res.status)
-      
     finally:
       conn.close()
 
@@ -376,7 +371,7 @@ class TestDELETE(unittest.TestCase):
   """
   Unit test for DELETE with request attributes.
   """
-  
+
   def setUp(self):
     """
     Setup the tests by making sure a secret for one well known email address
@@ -390,7 +385,6 @@ class TestDELETE(unittest.TestCase):
                             HEADER_SALT : TEST_SALT})
       res = conn.getresponse()
       self.assertEquals(200, res.status)
-      
       # Make sure a secret does not exists for bar@.
       conn = CONN_FACTORY(HOSTNAME)
       conn.request('DELETE', BASE_SECRETS_URL,
@@ -399,10 +393,9 @@ class TestDELETE(unittest.TestCase):
       res = conn.getresponse()
       if 200 != res.status and 403 != res.status:
         self.assertEquals(200, res.status)
-        
     finally:
       conn.close()
-    
+
   def tearDown(self):
     """
     Delete the well known secret created in the test.
@@ -415,7 +408,6 @@ class TestDELETE(unittest.TestCase):
       res = conn.getresponse()
       if 200 != res.status and 403 != res.status:
         self.assertEquals(200, res.status)
-        
     finally:
       conn.close()
 
@@ -480,17 +472,17 @@ class TestDELETE(unittest.TestCase):
     finally:
       conn.close()
 
-  
+
 class TestSendEmail(unittest.TestCase):
   """
   Unit test for sending email for a secret.
   """
-  
+
   def setUp(self):
     """
     Setup the tests by creating a secret for a well known email address
     and salt, and making sure that a second well known email address does not
-    exist. 
+    exist.
     """
     try:
       conn = CONN_FACTORY(HOSTNAME)
@@ -501,7 +493,7 @@ class TestSendEmail(unittest.TestCase):
       self.assertEquals(200, res.status)
     finally:
       conn.close()
-    
+
   def tearDown(self):
     """
     Delete the well known secret created in the setup.
@@ -545,12 +537,11 @@ class TestEnableDisable(unittest.TestCase):
   should fail because we are not logged in as user.  The "failure" will be
   in the form of a 302 redirect, since the server is asking us to login.
   """
-  
   def setUp(self):
     """
     Setup the tests by creating a secret for a well known email address
     and salt, and making sure that a second well known email address does not
-    exist. 
+    exist.
     """
     try:
       conn = CONN_FACTORY(HOSTNAME)
@@ -561,7 +552,7 @@ class TestEnableDisable(unittest.TestCase):
       self.assertEquals(200, res.status)
     finally:
       conn.close()
-    
+
   def tearDown(self):
     """
     Delete the well known secret created in the setup.
@@ -615,7 +606,7 @@ if __name__ == "__main__":
   email = None
   salt = None
   data = None
-  
+
   # Process command line arguments.
   for (o, v) in opts:
     if o in ('-o', '--online'):
@@ -655,7 +646,7 @@ if __name__ == "__main__":
       print '*** Error adding record: %s.' % res.status
       for (k,v) in res.getheaders():
         print '*** Header %s=%s' % (k, v)
-      
+
   elif do_delete:
     conn = CONN_FACTORY(HOSTNAME)
     conn.request('DELETE', BASE_SECRETS_URL,
@@ -674,5 +665,3 @@ if __name__ == "__main__":
     # except for those that it wants, so remove anything we already handled.
     sys.argv[1:] = args
     unittest.main()
-      
-  

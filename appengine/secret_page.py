@@ -25,16 +25,12 @@ from helper import *
 MAX_SIZE = 25 * 1024
 
 class SecretsPage(webapp.RequestHandler):
-  """
-  Handler for the '/secret' URL.
-  """
+  """Handler for the '/secret' URL."""
 
   def get(self):
+    """Gets the secret for the given user from the database.
+    Both the email and salt must match, otherwise the request is rejected.
     """
-    HTTP GET handler.  Gets the secret for the given user from the database.
-    Both the email and salt must match, otherwise the request is rejected. 
-    """
-
     # If the request has a 'http_method' request parameter, handle it as if
     # that were the actual method of the request.  This is to get around
     # situations where we cannot directly do that method.  For now, this only
@@ -48,13 +44,10 @@ class SecretsPage(webapp.RequestHandler):
         res = self.response
         res.set_status(403)
         res.out.write('Invalid credentials')
-
     else:
       res = self.response
       res.headers['Content-Type'] = 'text/plain'
-
       (email, salt) = GetHeaderFields(self.request)
-
       status = 403
       (record, exact) = FindEnabledUserRecord(email, salt)
       if record and exact:

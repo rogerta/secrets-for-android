@@ -20,14 +20,9 @@ from user_record import UserRecord
 from helper import *
 
 class EnablePage(webapp.RequestHandler):
-  """
-  Handler for the '/enable' URL.
-  """
+  """Handler for the '/enable' URL."""
 
   def get(self):
-    """
-    HTTP GET handler. 
-    """
     # Determine whether this record should be eanbled or disabled.
     enabled = int(self.request.get('enable', 0)) != 0
     res = self.response
@@ -39,7 +34,7 @@ class EnablePage(webapp.RequestHandler):
     if not email:
       email = self.request.get('email', '')
       salt = self.request.get('salt', '')
-  
+
     status = 403
     (record, exact) = FindUserRecord(email, salt)
     if record and exact:
@@ -50,9 +45,8 @@ class EnablePage(webapp.RequestHandler):
         res.out.write('User enabled')
       else:
         res.out.write('User disabled')
-        
     else:
       res.set_status(status)
       res.out.write('Invalid credentials')
-      
+
     logging.info('enable email=%s salt=%s enable=%d' % (email, salt, enabled))

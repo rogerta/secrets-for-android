@@ -23,13 +23,13 @@ HEADER_SALT = 'X-Secrets-Salt'
 def GetHeaderFields(req):
   """
   Gets the fields required to identify the user from the HTTP request.
-  
+
   Args:
-    req: The HTTP request received. 
-    
+    req: The HTTP request received.
+
   Returns:
     A tuple of (email,salt) retrieved from the request, where email and
-    salt are both strings.  
+    salt are both strings.
   """
   email = HEADER_EMAIL in req.headers and req.headers[HEADER_EMAIL]
   salt = HEADER_SALT in req.headers and req.headers[HEADER_SALT]
@@ -48,11 +48,11 @@ def FindUserRecord(email, salt):
     salt: the corresponding salt of the user.
   Returns:
     A tuple of (record,exact), where record is of type UserRecord and
-    exact is a boolean.  If not record is found, (None,False) is returned.  
+    exact is a boolean.  If not record is found, (None,False) is returned.
   """
   record = None
   exact = False
-  
+
   # Look for a user record with the given email address.  If we found one,
   # then verify that the salt is correct.  There should be at most one record
   # that matches this email, so don't waste any time/resources looking for
@@ -64,7 +64,7 @@ def FindUserRecord(email, salt):
     if result:
       record = result[0]
       exact = record.salt == salt
-    
+
   return (record, exact)
 
 
@@ -79,10 +79,9 @@ def FindEnabledUserRecord(email, salt):
     salt: the corresponding salt of the user.
   Returns:
     A tuple of (record,exact), where record is of type UserRecord and
-    exact is a boolean.  If not record is found, (None,False) is returned.  
+    exact is a boolean.  If not record is found, (None,False) is returned.
   """
   (record, exact) = FindUserRecord(email, salt)
   if record and record.enabled:
     return (record, exact)
-  
   return (None, False)
