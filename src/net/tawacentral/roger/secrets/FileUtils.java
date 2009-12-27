@@ -43,7 +43,7 @@ import javax.crypto.CipherOutputStream;
  * is encrypted using the ciphers created by the SecurityUtils helper
  * functions.
  * 
- * Methods that touch the main secrets files are thread safe.  This is allows
+ * Methods that touch the main secrets files are thread safe.  This allows
  * the file to be saved in a background thread so that the UI is not blocked
  * in the most common use cases.  Note that stopping the app and restarting
  * it again may still cause the UI to block if the write take a long time. 
@@ -98,7 +98,7 @@ public class FileUtils {
    * - if the secrets file exists, delete all files with "old" in the name.
    *   These are files that were temporarily pushed aside for safty purposes,
    *   but since the secrets file exists, they are no longer required.
-   * - if the secrets file does not exists, the choose the most recent "old"
+   * - if the secrets file does not exists, then choose the most recent "old"
    *   file and rename it to secrets, deleting all the other "old" files.
    *   This restores the secrets to a previous state, which means that mostly
    *   recently added/modified secrets would be lost, but at least we are not
@@ -107,47 +107,85 @@ public class FileUtils {
   public static void cleanupDataFiles(Context context) {
     synchronized (lock) {
       String[] filenames = context.fileList();
+      int oldCount = filenames.length;
       boolean secretsFileExists = secretsExist(context);
-      File mostRecent = null;
-      for (int i = 0; i < filenames.length; ++i) {
-        String filename = filenames[i];
-        if (-1 != filename.indexOf("new")) {
-          context.deleteFile(filename);
-        } else if (-1 != filename.indexOf("old")) {
-          if (secretsFileExists) {
+      
+      // Cleanup any partial saves and find the most recent auto-backup file.
+      {
+        File mostRecent = null;
+        int mostRecentIndex = -1;
+        for (int i = 0; i < filenames.length; ++i) {
+          String filename = filenames[i];
+          if (-1 != filename.indexOf("new")) {
             context.deleteFile(filename);
-          } else {
-            File f = context.getFileStreamPath(filename);
-            if (null == mostRecent) {
-              mostRecent = f;
-            } else if (f.lastModified() > mostRecent.lastModified()) {
-              mostRecent.delete();
-              mostRecent = f;
-            } else {
-              f.delete();
+            --oldCount;
+            filenames[i] = null;
+          } else if (-1 != filename.indexOf("old")) {
+            if (!secretsFileExists) {
+              File f = context.getFileStreamPath(filename);
+              if (null == mostRecent ||
+                  f.lastModified() > mostRecent.lastModified()) {
+                mostRecent = f;
+                mostRecentIndex = i;
+              }
             }
+          } else {
+            --oldCount;
+            filenames[i] = null;
           }
         }
-      }
 
-      if (null != mostRecent)
-        mostRecent.renameTo(context.getFileStreamPath(SECRETS_FILE_NAME));
+        // If we don't have a secrets file but found an auto-backup file,
+        // rename the more recent auto-backup to secrets.
+        if (null != mostRecent) {
+          mostRecent.renameTo(context.getFileStreamPath(SECRETS_FILE_NAME));
+          --oldCount;
+          filenames[mostRecentIndex] = null;
+        }
+      }
+      
+      // If there are too many old files, delete the oldest extra ones.
+      while (oldCount > 5) {
+        File oldest = null;
+        int oldestIndex = -1;
+        
+        for (int i = 0; i < filenames.length; ++i) {
+          String filename = filenames[i];
+          if (null == filename)
+            continue;
+          
+          File f = context.getFileStreamPath(filename);
+          if (null == oldest || f.lastModified() < oldest.lastModified()) {
+            oldest = f;
+            oldestIndex = i;
+          }
+        }
+        
+        if (null != oldest) {
+          oldest.delete();
+          --oldCount;
+          filenames[oldestIndex] = null;
+        }
+      }
     }
   }
   
   /**
    * Saves the secrets to file using the password retrieved from the user.
    *
+   * @param context Avtivity context in which the save is called.
    * @param existing The file to save into.
    * @param cipher The encryption cipher to use with the file.
    * @param secrets The list of secrets to save.
    * @return True if saved successfully.
    */
-  public static int saveSecrets(File existing,
+  public static int saveSecrets(Context context,
+                                File existing,
                                 Cipher cipher,
                                 List<Secret> secrets) {
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.saveSecrets");
+      
       // To be as safe as possible, for example to handle low space conditions,
       // we will save the secrets to a file using the following steps:
       //
@@ -157,9 +195,10 @@ public class FileUtils {
       //     on error: delete tempn
       //  3- rename the new temporary file to the official file name
       //     on error: rename tempo back to existing, delete tempn
-      //  4- delete the old secrets temporary file (tempo)
-      //     on error: do nothing
       //
+      // The old file we hang around for a while.  The cleanupDataFiles()
+      // method, which is called whenever Secrets is re-launched, will make
+      // sure that the old file don't accumulate indefinitely.
       String prefix = MessageFormat.format(
           "t.{0,date,yyyyMMdd}-{0,time,HHmmss}.", new Date(), null);
       File parent = existing.getParentFile();
@@ -199,12 +238,6 @@ public class FileUtils {
         return R.string.error_cannot_move_new;
       }
 
-      // Step 4
-      if (!tempo.delete()) {
-        // Won't consider this a real error, but will log.
-        Log.d(LOG_TAG, "FileUtils.saveSecrets: could not delete old file");
-      }
-
       Log.d(LOG_TAG, "FileUtils.saveSecrets: done");
       return 0;
     }
@@ -213,6 +246,8 @@ public class FileUtils {
   /**
    * Backup the secrets to SD card using the password retrieved from the user.
    *
+   * @param context Avtivity context in which the backup is called.
+   * @param secrets The list of secrets to save.
    * @return True if saved successfully
    */
   public static boolean backupSecrets(Context context, List<Secret> secrets) {
@@ -239,7 +274,12 @@ public class FileUtils {
     return success;
   }
 
-  /** Opens the secrets file using the password retrieved from the user. */
+  /**
+   * Opens the secrets file using the password retrieved from the user.
+   * 
+   * @param context Avtivity context in which the load is called.
+   * @return A list of loaded secrets.
+   */
   // TODO(rogerta): the readObject() method does not support generics.
   @SuppressWarnings("unchecked")
   public static ArrayList<Secret> loadSecrets(Context context) {
@@ -266,18 +306,14 @@ public class FileUtils {
         Log.e(LOG_TAG, "loadSecrets", ex);
         
         // An error occurred while reading the input file.  Get whatever secrets
-        // were successfully loaded.  That's the best that can be done with
+        // were successfully loaded.  That's the best that can be done at this
+        // point.
         List<Secret> loadedSecrets = Secret.getLoadedSecrets();
         if (null != loadedSecrets) {
           secrets = new ArrayList<Secret>(loadedSecrets.size());
           secrets.addAll(loadedSecrets);
           
-          // Move the file away and tell the user something went wrong.
-          try {if (null != input) input.close();} catch (IOException ex2) {}
-          File existing = context.getFileStreamPath(SECRETS_FILE_NAME);
-          File recover = context.getFileStreamPath("recover." +
-              new Date().getTime());
-          existing.renameTo(recover);
+          // Tell the user something went wrong.
           Toast toast = Toast.makeText(context, R.string.error_loading,
               Toast.LENGTH_LONG);
           toast.setGravity(Gravity.CENTER, 0, 0);

@@ -605,7 +605,7 @@ public class SecretsListActivity extends ListActivity {
     new Thread(new Runnable() {
       @Override
       public void run() {
-        FileUtils.saveSecrets(file, cipher, secrets); 
+        FileUtils.saveSecrets(SecretsListActivity.this, file, cipher, secrets); 
       }}, "saveSecrets").start();
 
     super.onPause();
