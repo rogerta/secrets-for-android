@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.text.MessageFormat;
@@ -75,6 +76,7 @@ public class FileUtils {
 
   private static final String EMPTY_STRING = "";
   private static final String INDENT = "   ";
+  private static final String RP_PREFIX = "@";
 
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
@@ -89,20 +91,42 @@ public class FileUtils {
     }
   }
 
+  /** Does the secrets restore file exist on the SD card? */
+  public static boolean restoreFileExist() {
+    File file = new File(SECRETS_FILE_NAME_SDCARD);
+    return file.exists();
+  }
+
+  /**
+   * Get all existing restore points, including the restore file on the SD card
+   * if it exists.
+   * 
+   * @param context Avtivity context in which the save is called.
+   * @return A list of all possible restore points.
+   */
+  public static List<String> getRestorePoints(Context context) {
+    String[] filenames = context.fileList(); 
+    ArrayList<String> list = new ArrayList<String>(filenames.length + 1);
+    if (restoreFileExist())
+      list.add(SECRETS_FILE_NAME_SDCARD);
+    
+    for (String filename : filenames) {
+      if (filename.startsWith(RP_PREFIX))
+        list.add(filename);
+    }
+    
+    return list;
+  }
+  
   /**
    * Cleanup any residual data files from a previous bad run, if any.  The
    * algorithm is as follows:
    * 
    * - delete any file with "new" in the name.  These are possibly partial
    *   writes, so their contents is undefined.
-   * - if the secrets file exists, delete all files with "old" in the name.
-   *   These are files that were temporarily pushed aside for safty purposes,
-   *   but since the secrets file exists, they are no longer required.
-   * - if the secrets file does not exists, then choose the most recent "old"
-   *   file and rename it to secrets, deleting all the other "old" files.
-   *   This restores the secrets to a previous state, which means that mostly
-   *   recently added/modified secrets would be lost, but at least we are not
-   *   loosing all the secrets.
+   * - if no secrets file exists, rename the most recent auto resptore point
+   *   file to secrets.
+   * - if too many auto restore point files exist, delete the extra ones.
    */
   public static void cleanupDataFiles(Context context) {
     synchronized (lock) {
@@ -120,7 +144,7 @@ public class FileUtils {
             context.deleteFile(filename);
             --oldCount;
             filenames[i] = null;
-          } else if (-1 != filename.indexOf("old")) {
+          } else if (filename.startsWith(RP_PREFIX)) {
             if (!secretsFileExists) {
               File f = context.getFileStreamPath(filename);
               if (null == mostRecent ||
@@ -145,7 +169,7 @@ public class FileUtils {
       }
       
       // If there are too many old files, delete the oldest extra ones.
-      while (oldCount > 5) {
+      while (oldCount > 10) {
         File oldest = null;
         int oldestIndex = -1;
         
@@ -199,14 +223,15 @@ public class FileUtils {
       // The old file we hang around for a while.  The cleanupDataFiles()
       // method, which is called whenever Secrets is re-launched, will make
       // sure that the old file don't accumulate indefinitely.
-      String prefix = MessageFormat.format(
-          "t.{0,date,yyyyMMdd}-{0,time,HHmmss}.", new Date(), null);
+      String prefix = MessageFormat.format(RP_PREFIX +
+          "{0,date,yy.MM.dd}-{0,time,HH:mm}", new Date(),
+          null);
       File parent = existing.getParentFile();
-      File tempn = new File(parent, prefix + "new");
-      File tempo = new File(parent, prefix + "old");
+      File tempn = new File(parent, "new");
+      File tempo = new File(parent, prefix);
       for (int i = 0; tempn.exists() || tempo.exists(); ++i) {
-        tempn = new File(parent, prefix + "new" + i);
-        tempo = new File(parent, prefix + "old" + i);
+        tempn = new File(parent, "new" + i);
+        tempo = new File(parent, prefix + i);
       }
       // Step 1
       ObjectOutputStream output = null;
@@ -331,10 +356,14 @@ public class FileUtils {
   /**
    * Restore the secrets from the SD card using the password retrieved from
    * the user.
+   * 
+   * @param context Activity context in which the load is called.
+   * @param rp A restore point name.  This should be one of the strings
+   *     returned by the getRestorePoints() method. 
    */
   // TODO(rogerta): the readObject() method does not support generics.
   @SuppressWarnings("unchecked")
-  public static ArrayList<Secret> restoreSecrets(Context context) {
+  public static ArrayList<Secret> restoreSecrets(Context context, String rp) {
     Log.d(LOG_TAG, "FileUtils.restoreSecrets");
 
     Cipher cipher = SecurityUtils.getDecryptionCipher();
@@ -345,9 +374,10 @@ public class FileUtils {
     ObjectInputStream input = null;
 
     try {
-      input = new ObjectInputStream(
-          new CipherInputStream(new FileInputStream(SECRETS_FILE_NAME_SDCARD),
-                                cipher));
+      InputStream stream = SECRETS_FILE_NAME_SDCARD.equals(rp)
+          ? new FileInputStream(rp)
+          : context.openFileInput(rp);
+      input = new ObjectInputStream( new CipherInputStream(stream, cipher));
       secrets = (ArrayList<Secret>) input.readObject();
     } catch (Exception ex) {
       Log.e(LOG_TAG, "restoreSecrets", ex);
