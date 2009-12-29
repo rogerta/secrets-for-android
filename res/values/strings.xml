@@ -22,7 +22,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.4.7 (c) 2009 Google Inc.</string>
+<string name="copyright">Version 1.4.8 (c) 2009 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="no_password">&lt; No PIN &gt;</string>
@@ -86,10 +86,7 @@ Are you really sure?
 Are you sure you want to delete \'\'{0}\'\'?
 </string>
 
-<string name="edit_menu_restore_secrets_message">
-Restoring secrets from the backup will overwrite all current secrets.
-Continue anyway?
-</string>
+<string name="dialog_restore_title">Restore from:</string>
 
 <string name="edit_menu_import_secrets_message">Import successful.  Delete \'\'{0}\'\' now?</string>
 

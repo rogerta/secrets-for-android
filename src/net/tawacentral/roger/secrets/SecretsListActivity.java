@@ -388,9 +388,10 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
-  private void restoreSecrets() {
+  /** Restore secrets from the given restore point. */
+  private void restoreSecrets(String rp) {
     // Restore everything to the SD card.
-    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this);
+    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp);
     if (null != secrets) {
       LoginActivity.restoreSecrets(secrets);
       secretsList.notifyDataSetInvalidated();
@@ -410,6 +411,22 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
+  /** Holds the currently chosen item in the restore dialog. */
+  private class RestoreDialogState {
+    public int selected = 0;
+    private List<String> restorePoints; 
+    
+    /** Get an array of choices for the restore dialog. */
+    public CharSequence[] getRestoreChoices() {
+      restorePoints = FileUtils.getRestorePoints(SecretsListActivity.this);
+      return restorePoints.toArray(new CharSequence[restorePoints.size()]);
+    }
+    
+    public String getSelectedRestorePoint() {
+      return restorePoints.get(selected);
+    }
+  }
+  
   @Override
   public Dialog onCreateDialog(int id) {
     Dialog dialog = null;
@@ -443,23 +460,31 @@ public class SecretsListActivity extends ListActivity {
         break;
       }
       case DIALOG_CONFIRM_RESTORE: {
-        CharSequence msg = getText(R.string.edit_menu_restore_secrets_message);
-
-        DialogInterface.OnClickListener listener =
+        final RestoreDialogState state = new RestoreDialogState();
+        
+        DialogInterface.OnClickListener yesListener =
           new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-              if (DialogInterface.BUTTON1 == which) {
-                restoreSecrets();
-              }
+              restoreSecrets(state.getSelectedRestorePoint());
             }
           };
 
+          DialogInterface.OnClickListener itemListener =
+            new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int which) {
+                state.selected = which;
+              }
+            };
+
         dialog = new AlertDialog.Builder(this)
-            .setTitle(R.string.list_menu_restore)
+            .setTitle(R.string.dialog_restore_title)
             .setIcon(android.R.drawable.ic_dialog_alert)
-            .setMessage(msg)
-            .setPositiveButton(R.string.login_reset_password_pos, listener)
+            .setSingleChoiceItems(state.getRestoreChoices(),
+                                  state.selected,
+                                  itemListener)
+            .setPositiveButton(R.string.login_reset_password_pos, yesListener)
             .setNegativeButton(R.string.login_reset_password_neg, null)
             .create();
         break;
