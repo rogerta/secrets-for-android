@@ -101,6 +101,13 @@ public class SecretsListActivity extends ListActivity {
     super.onCreate(state);
     setContentView(R.layout.list);
 
+    // If for any reason we get here and there is no secrets list, then we
+    // cannot continue.  Finish the activity and return.
+    if (null == LoginActivity.getSecrets()) {
+      finish();
+      return;
+    }
+    
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
 
@@ -623,16 +630,9 @@ public class SecretsListActivity extends ListActivity {
     // unless I use a notification (need to look into that).  Also, because
     // the process hangs around, this thread should continue running until
     // completion even if the user switches to another task/application.
-    final List<Secret> secrets = secretsList.getAllSecrets();
-    final Cipher cipher = SecurityUtils.getEncryptionCipher();
-    final File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
-
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        FileUtils.saveSecrets(SecretsListActivity.this, file, cipher, secrets); 
-      }}, "saveSecrets").start();
-
+    List<Secret> secrets = secretsList.getAllSecrets();
+    Cipher cipher = SecurityUtils.getEncryptionCipher();
+    SaveService.execute(this, secrets, cipher);
     super.onPause();
   }
 
