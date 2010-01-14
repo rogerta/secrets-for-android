@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<resources>
+<string name="app_name">密码箱</string>
+<string name="login_first_line">欢迎使用密码箱</string>
+<string name="login_second_line">输入密码并继续</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">版本号 1.4.9 (c) 2010 Google Inc.</string>
+
+<string name="invalid_password">密码不对，请再试一次。</string>
+<string name="no_password">&lt; 没有PIN &gt;</string>
+<string name="error_reset_password">无法重设密码。</string>
+<string name="error_save_secrets">无法保存。</string>
+
+<string name="backup_succeeded">备份成功。</string>
+<string name="restore_succeeded">恢复成功。</string>
+<string name="restore_failed">无法恢复。请确认输入的密码与之前备份时设置的密码一致。</string>
+
+<string name="export_succeeded">成功导出文件到SD卡。\n\n注意: 导出的文件不受密码保护！</string>
+<string name="export_failed">无法导出。</string>
+
+<string name="import_not_found">没有在SD卡上找到CSV文件。\n\n可从以下文件导入:\n\n{0}</string>
+<string name="import_partial">只有部分导入成功。请检查秘密文件和\'\'{0}\'\'文件并进行核对。</string>
+<string name="import_failed">无法从\'\'{0}\'\'导入。</string>
+
+<string name="login_instruction_1">请创建一个密码，对秘密信息进行保护。可使用字母,数字和标点组合加强密码强度。\n输入密码后, 按回车（enter）。</string>
+<string name="login_instruction_2">请再次输入新密码使之生效。如发生错误, 将重新来过。</string>
+<string name="edit_instructions"> 所有信息都为选填项, 请根据实际情况尽可能多（或少）地输入内容。完成后,按后退键, 或者按菜单键查看更多选项。</string>
+
+<string name="friendly_id_format"> {0}, {1,date,short} {1,time,short} </string>
+<string name="friendly_id_format_2"> {1,date,short} {1,time,short} </string>
+
+<string name="list_name">秘密</string>
+<string name="list_no_data_1_1">按菜单键中的\"添加\"按钮即可开始。</string>
+<string name="list_no_data">按\"添加\"开始。</string>
+<string name="list_descption_label">网址/描述</string>
+<string name="list_username_label">用户名/Id</string>
+<string name="list_password_label">密码/PIN</string>
+<string name="list_email_label">Email</string>
+<string name="list_notes_label">记录</string>
+<string name="list_add_secret">新增秘密</string>
+<string name="list_instructions">点击秘密可查看PIN。按住不放可进行编辑。</string>
+
+<string name="login_menu_reset_password">重设密码</string>
+<string name="login_menu_reset_password_message">重设密码将删除所有秘密！确定吗? </string>
+<string name="login_reset_password_pos">是</string>
+<string name="login_reset_password_neg">否</string>
+
+<string name="edit_menu_delete_secret_message"> 确定删除\'\'{0}\'\'? </string>
+<string name="dialog_restore_title">恢复自:</string>
+<string name="edit_menu_import_secrets_message">导入成功。现在删除\'\'{0}\'\'?</string>
+<string name="copied_to_clipboard">{0}的PIN已被复制到剪贴板。</string>
+
+<string name="list_menu_add">添加</string>
+<string name="list_menu_edit">编辑</string>
+<string name="list_menu_save">保存</string>
+<string name="list_menu_discard">放弃</string>
+<string name="list_menu_delete">删除</string>
+<string name="list_menu_access">历史</string>
+<string name="list_menu_backup">备份</string>
+<string name="list_menu_restore">恢复</string>
+<string name="list_menu_import">导入</string>
+<string name="list_menu_export">导出</string>
+<string name="list_menu_copy_password_to_clipoboard">发送至剪贴板</string>
+<string name="list_menu_generate_password">生成</string>
+
+<string name="log_name">访问日志</string>
+<string name="log_name_format">{0}访问日志</string>
+<string name="log_sec">刚刚</string>
+<string name="log_min">{0}分钟前</string>
+<string name="log_today">今天{0,time,short}</string>
+<string name="log_yesterday">昨天{0,time,short}</string>
+<string name="log_created">创建:</string>
+<string name="log_changed">修改:</string>
+<string name="log_viewed">查看:</string>
+<string name="log_exported">导出:</string>
+</resources> 
