@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/list_container"
+	android:measureAllChildren="true"
+	android:layout_width="fill_parent" 
+	android:layout_height="fill_parent"
+    >
+	<ListView android:id="@android:id/list"
+		android:layout_width="fill_parent" 
+		android:layout_height="fill_parent"
+		android:drawSelectorOnTop="false"
+		android:focusableInTouchMode="true"
+		/>
+
+	<ScrollView android:id="@+id/edit_layout"
+		android:layout_width="fill_parent" 
+		android:layout_height="fill_parent"
+	    android:visibility="gone"
+		>		
+		<LinearLayout
+		    android:orientation="vertical"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+		    android:paddingTop="5sp"
+		    android:paddingLeft="10sp"
+		    android:paddingRight="15sp"
+			>
+			<TextView
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content"
+			    android:text="@string/list_descption_label"
+			    android:gravity="left"
+			/>
+			<EditText  
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content" 
+			    android:clickable="true"
+			    android:singleLine="true"
+			    android:id="@+id/list_description"
+			    />
+			<TextView
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content"
+			    android:text="@string/list_username_label"
+			    android:gravity="left"
+			/>
+			<AutoCompleteTextView  
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content" 
+			    android:singleLine="true"
+			    android:id="@+id/list_username"
+			    />
+			<TextView
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content"
+			    android:text="@string/list_password_label"
+			    android:gravity="left"
+			/>
+			<EditText  
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content" 
+			    android:singleLine="true"
+			    android:id="@+id/list_password"
+			    />
+			<TextView
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content"
+			    android:text="@string/list_email_label"
+			    android:gravity="left"
+			/>
+			<AutoCompleteTextView  
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content" 
+			    android:singleLine="true"
+			    android:id="@+id/list_email"
+			    />
+			<TextView
+			    android:layout_width="fill_parent" 
+			    android:layout_height="wrap_content"
+			    android:text="@string/list_notes_label"
+			    android:gravity="left"
+			/>
+			<EditText  
+			    android:layout_width="fill_parent" 
+			    android:layout_height="fill_parent"
+			    android:gravity="top|left"
+			    android:minLines="5" 
+			    android:id="@+id/list_notes"
+			    />
+		</LinearLayout>
+	</ScrollView>
+</FrameLayout>

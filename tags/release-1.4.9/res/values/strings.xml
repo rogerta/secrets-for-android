@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<resources>
+<string name="app_name">Secrets</string>
+
+<string name="login_first_line">Welcome to your Secrets</string>
+<string name="login_second_line">Enter password to continue</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">Version 1.4.9 (c) 2010 Google Inc.</string>
+
+<string name="invalid_password">Oops! The password is invalid, please try again.</string>
+<string name="no_password">&lt; No PIN &gt;</string>
+<string name="error_reset_password">Uh oh.  Unable to reset your password.</string>
+<string name="error_save_secrets">Uh oh.  Unable to save your secrets.</string>
+
+<string name="backup_succeeded">Backup succeeded.</string>
+<string name="restore_succeeded">Restore succeeded.</string>
+<string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
+<string name="restore_file_too_old">Time to backup your secrets?</string>
+
+<string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
+<string name="export_failed">Uh oh.  Unable to export your secrets.</string>
+
+<string name="import_not_found">No CSV file found on the SD card.\n\nSecrets can be imported from the following files:\n\n{0}</string>
+<string name="import_partial">Hmmm, only some secrets were imported successfully.  Check your secrets and the \'\'{0}\'\' file for correctness.</string>
+<string name="import_failed">Uh oh.  Unable to import your secrets from \'\'{0}\'\'.</string>
+
+<string name="login_instruction_1">
+Create a password to protect your secrets.  Use letters, numbers, and
+punctuation to make the password difficult to guess.\nAfter typing the password,
+press enter. 
+</string>
+<string name="login_instruction_2">
+Validate your new password by typing it again.  If there is a
+problem, you\'ll start over. 
+</string>
+<string name="edit_instructions">
+All information is optional, enter as much or as little as needed.
+
+When done, press the Back button, or MENU for more options.
+</string>
+
+<string name="friendly_id_format">
+{0}, {1,date,short} {1,time,short}
+</string>
+<string name="friendly_id_format_2">
+{1,date,short} {1,time,short}
+</string>
+
+<string name="list_name">Secrets</string>
+<string name="list_no_data_1_1">Press MENU then \"Add\" to begin.</string>
+<string name="list_no_data">Press \"Add\" to begin.</string>
+<string name="list_descption_label">Web site/Description</string>
+<string name="list_username_label">Username/Id</string>
+<string name="list_password_label">Password/PIN</string>
+<string name="list_email_label">Email</string>
+<string name="list_notes_label">Notes</string>
+<string name="list_add_secret">Add secret</string>
+<string name="list_instructions">Tap secret to reveal its PIN.  Tap and hold
+to change it.</string>
+
+<string name="login_menu_reset_password">Reset password</string>
+<string name="login_menu_reset_password_message">
+Resetting your password will delete all of your secrets!
+Are you really sure?
+</string>
+<string name="login_reset_password_pos">Yes</string>
+<string name="login_reset_password_neg">No</string>
+
+<string name="edit_menu_delete_secret_message">
+Are you sure you want to delete \'\'{0}\'\'?
+</string>
+
+<string name="dialog_restore_title">Restore from:</string>
+
+<string name="edit_menu_import_secrets_message">Import successful.  Delete \'\'{0}\'\' now?</string>
+
+<string name="copied_to_clipboard">{0}\'\'s PIN has been copied to the clipboard.</string>
+
+<string name="list_menu_add">Add</string>
+<string name="list_menu_edit">Edit</string>
+<string name="list_menu_save">Save</string>
+<string name="list_menu_discard">Discard</string>
+<string name="list_menu_delete">Delete</string>
+<string name="list_menu_access">History</string>
+<string name="list_menu_backup">Backup</string>
+<string name="list_menu_restore">Restore</string>
+<string name="list_menu_import">Import</string>
+<string name="list_menu_export">Export</string>
+<string name="list_menu_copy_password_to_clipoboard">To clip</string>
+<string name="list_menu_generate_password">Generate</string>
+
+<string name="log_name">Access log</string>
+<string name="log_name_format">Access log for {0}</string>
+<string name="log_sec">moments ago</string>
+<string name="log_min">{0} minutes ago</string>
+<string name="log_today">today at {0,time,short}</string>
+<string name="log_yesterday">yesterday at {0,time,short}</string>
+<string name="log_created">Created</string>
+<string name="log_changed">Modified</string>
+<string name="log_viewed">Viewed</string>
+<string name="log_exported">Exported</string>
+
+<string name="error_missing_ciphers">Uh oh: can't save, password is invalid.</string>
+<string name="error_cannot_move_existing">Uh oh: can't move existing file out of the way.</string>
+<string name="error_cannot_move_new">Uh oh: can't rename new file.</string>
+
+</resources>
