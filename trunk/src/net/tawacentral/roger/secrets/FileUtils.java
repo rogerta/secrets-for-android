@@ -168,7 +168,8 @@ public class FileUtils {
     synchronized (lock) {
       String[] filenames = context.fileList();
       int oldCount = filenames.length;
-      boolean secretsFileExists = secretsExist(context);
+      boolean secretsFileExists = context.getFileStreamPath(SECRETS_FILE_NAME)
+          .exists();
       
       // Cleanup any partial saves and find the most recent auto-backup file.
       {
@@ -419,8 +420,13 @@ public class FileUtils {
   public static boolean deleteSecrets(Context context) {
     Log.d(LOG_TAG, "FileUtils.deleteSecrets");
     synchronized (lock) {
-      return context.deleteFile(SECRETS_FILE_NAME);
+      String filenames[] = context.fileList();
+      for (String filename : filenames) {
+        context.deleteFile(filename);
+      }
     }
+    
+    return true;
   }
 
   /**
