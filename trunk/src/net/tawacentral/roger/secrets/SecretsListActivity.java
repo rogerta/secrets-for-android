@@ -166,6 +166,19 @@ public class SecretsListActivity extends ListActivity {
       } else {
         showToast(getText(R.string.list_no_data_1_1));
       }
+    } else if (FileUtils.isRestoreFileTooOld()) {
+      if (OS.isAndroid15()) {
+        // openOptionsMenu() crashes in Android 1.1, even though this API is
+        // available.  Until I figure that out, I will call this only for
+        // 1.5 and later.
+        getListView().post(new Runnable() {
+          @Override
+          public void run() {
+            showToast(getText(R.string.restore_file_too_old));
+            openOptionsMenu();
+          }
+        });
+      }
     }
 
     // Hook up interactions.
@@ -201,7 +214,7 @@ public class SecretsListActivity extends ListActivity {
   private void checkKeyguard() {
     // If the keyguard has been displayed, exit this activity.  This returns
     // us to the login page requiring the user to enter his password again
-    // before get access again to his secrets.
+    // before getting access again to his secrets.
     KeyguardManager key_guard = (KeyguardManager) getSystemService(
         KEYGUARD_SERVICE);
     boolean isInputRestricted = key_guard.inKeyguardRestrictedInputMode();
@@ -411,7 +424,8 @@ public class SecretsListActivity extends ListActivity {
 
   private void backupSecrets() {
     // Backup everything to the SD card.
-    if (FileUtils.backupSecrets(this, secretsList.getAllSecrets())) {
+    Cipher cipher = SecurityUtils.getEncryptionCipher();
+    if (FileUtils.backupSecrets(this, cipher, secretsList.getAllSecrets())) {
       showToast(R.string.backup_succeeded);
     } else {
       showToast(R.string.error_save_secrets);
@@ -431,6 +445,10 @@ public class SecretsListActivity extends ListActivity {
     
     public String getSelectedRestorePoint() {
       return restorePoints.get(selected);
+    }
+    
+    public boolean hasRestorePoints() {
+      return restorePoints.size() > 0;
     }
   }
   
@@ -469,21 +487,15 @@ public class SecretsListActivity extends ListActivity {
       case DIALOG_CONFIRM_RESTORE: {
         final RestoreDialogState state = new RestoreDialogState();
         
-        DialogInterface.OnClickListener yesListener =
+        DialogInterface.OnClickListener itemListener =
           new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+              state.selected = which;
+              dialog.dismiss();
               restoreSecrets(state.getSelectedRestorePoint());
             }
           };
-
-          DialogInterface.OnClickListener itemListener =
-            new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int which) {
-                state.selected = which;
-              }
-            };
 
         dialog = new AlertDialog.Builder(this)
             .setTitle(R.string.dialog_restore_title)
@@ -491,8 +503,6 @@ public class SecretsListActivity extends ListActivity {
             .setSingleChoiceItems(state.getRestoreChoices(),
                                   state.selected,
                                   itemListener)
-            .setPositiveButton(R.string.login_reset_password_pos, yesListener)
-            .setNegativeButton(R.string.login_reset_password_neg, null)
             .create();
         break;
       }
@@ -885,7 +895,7 @@ public class SecretsListActivity extends ListActivity {
 
         setTitle();
 
-        if (1 == secretsList.getCount()) {
+        if (1 == secretsList.getAllSecrets().size()) {
           showToast(getText(R.string.list_instructions));
         }
       }

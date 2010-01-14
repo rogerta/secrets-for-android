@@ -16,8 +16,6 @@ package net.tawacentral.roger.secrets;
 
 import android.content.Context;
 import android.util.Log;
-import android.view.Gravity;
-import android.widget.Toast;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
@@ -86,9 +84,23 @@ public class FileUtils {
   
   /** Does the secrets file exist? */
   public static boolean secretsExist(Context context) {
-    synchronized (lock) {
-      return context.getFileStreamPath(SECRETS_FILE_NAME).exists();
-    }
+    // Instead of just checking for the existence of the secrets file
+    // explicitly, I will check for the existence of any file in the
+    // application's data directory.  This check is valid because:
+    //
+    //  - when the user runs the app for the first time, an empty secrets file
+    //    is always written
+    //  - there is at least one file in existences even during the save
+    //    operation
+    //
+    // The benefit of making this assumption is that I don't need to acquire
+    // the file lock in order to test for the existence of the secrets file.
+    // This speeds up leaving the secrets list activity since the test for
+    // existence does not need to wait for the save to finish.  This also
+    // speeds the wake time when secrets was active at the time the phone
+    // went to sleep.
+    String[] filenames = context.fileList();
+    return filenames.length > 0;
   }
 
   /** Does the secrets restore file exist on the SD card? */
@@ -97,6 +109,28 @@ public class FileUtils {
     return file.exists();
   }
 
+  /** Is the restore file too old? */
+  public static boolean isRestoreFileTooOld() {
+    File file = new File(SECRETS_FILE_NAME_SDCARD);
+    if (!file.exists())
+      return false;
+    
+    long lastModified = file.lastModified();
+    long now = System.currentTimeMillis();
+    long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week.
+    
+    return (now - lastModified) > oneWeeks;
+  }
+  
+  /** Is the restore point too old? */
+  private static boolean isRestorePointTooOld(File file) {
+    long lastModified = file.lastModified();
+    long now = System.currentTimeMillis();
+    long twoDays = 2 * 24 * 60 * 60 * 1000;  // 2 days.
+    
+    return (now - lastModified) > twoDays;
+  }
+  
   /**
    * Get all existing restore points, including the restore file on the SD card
    * if it exists.
@@ -127,8 +161,10 @@ public class FileUtils {
    * - if no secrets file exists, rename the most recent auto resptore point
    *   file to secrets.
    * - if too many auto restore point files exist, delete the extra ones.
+   *   However, don't delete any auto-backups younger than 48 hours.
    */
   public static void cleanupDataFiles(Context context) {
+    Log.d(LOG_TAG, "FileUtils.cleanupDataFiles");
     synchronized (lock) {
       String[] filenames = context.fileList();
       int oldCount = filenames.length;
@@ -186,6 +222,12 @@ public class FileUtils {
         }
         
         if (null != oldest) {
+          // If the oldest file is not too old, then just break out of the
+          // loop.  We don't want to delete any "old" files that are too
+          // recent.
+          if (!FileUtils.isRestorePointTooOld(oldest))
+            break;
+          
           oldest.delete();
           --oldCount;
           filenames[oldestIndex] = null;
@@ -207,8 +249,9 @@ public class FileUtils {
                                 File existing,
                                 Cipher cipher,
                                 List<Secret> secrets) {
+    Log.d(LOG_TAG, "FileUtils.saveSecrets");
     synchronized (lock) {
-      Log.d(LOG_TAG, "FileUtils.saveSecrets");
+      Log.d(LOG_TAG, "FileUtils.saveSecrets: got lock");
       
       // To be as safe as possible, for example to handle low space conditions,
       // we will save the secrets to a file using the following steps:
@@ -272,13 +315,15 @@ public class FileUtils {
    * Backup the secrets to SD card using the password retrieved from the user.
    *
    * @param context Avtivity context in which the backup is called.
+   * @param cipher The encryption cipher to use with the file.
    * @param secrets The list of secrets to save.
    * @return True if saved successfully
    */
-  public static boolean backupSecrets(Context context, List<Secret> secrets) {
+  public static boolean backupSecrets(Context context,
+                                      Cipher cipher,
+                                      List<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.backupSecrets");
 
-    Cipher cipher = SecurityUtils.getEncryptionCipher();
     if (null == cipher)
       return false;
 
@@ -308,8 +353,9 @@ public class FileUtils {
   // TODO(rogerta): the readObject() method does not support generics.
   @SuppressWarnings("unchecked")
   public static ArrayList<Secret> loadSecrets(Context context) {
+    Log.d(LOG_TAG, "FileUtils.loadSecrets");
     synchronized (lock) {
-      Log.d(LOG_TAG, "FileUtils.loadSecrets");
+      Log.d(LOG_TAG, "FileUtils.loadSecrets: got lock");
 
       Cipher cipher = SecurityUtils.getDecryptionCipher();
       if (null == cipher)
@@ -318,10 +364,6 @@ public class FileUtils {
       ArrayList<Secret> secrets = null;
       ObjectInputStream input = null;
 
-      // Clear the global loaded secrets array, because we want to populate it
-      // with only the secrets loaded by this call.
-      Secret.clearLoadedSecrets();
-      
       try {
         input = new ObjectInputStream(
             new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
@@ -329,26 +371,11 @@ public class FileUtils {
         secrets = (ArrayList<Secret>) input.readObject();
       } catch (Exception ex) {
         Log.e(LOG_TAG, "loadSecrets", ex);
-        
-        // An error occurred while reading the input file.  Get whatever secrets
-        // were successfully loaded.  That's the best that can be done at this
-        // point.
-        List<Secret> loadedSecrets = Secret.getLoadedSecrets();
-        if (null != loadedSecrets) {
-          secrets = new ArrayList<Secret>(loadedSecrets.size());
-          secrets.addAll(loadedSecrets);
-          
-          // Tell the user something went wrong.
-          Toast toast = Toast.makeText(context, R.string.error_loading,
-              Toast.LENGTH_LONG);
-          toast.setGravity(Gravity.CENTER, 0, 0);
-          toast.show();
-        }
       } finally {
-        Secret.clearLoadedSecrets();
         try {if (null != input) input.close();} catch (IOException ex) {}
       }
   
+      Log.d(LOG_TAG, "FileUtils.loadSecrets: done");
       return secrets;
     }
   }
@@ -390,6 +417,7 @@ public class FileUtils {
 
   /** Deletes all secrets from the phone. */
   public static boolean deleteSecrets(Context context) {
+    Log.d(LOG_TAG, "FileUtils.deleteSecrets");
     synchronized (lock) {
       return context.deleteFile(SECRETS_FILE_NAME);
     }

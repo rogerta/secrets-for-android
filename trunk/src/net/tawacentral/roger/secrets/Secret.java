@@ -33,8 +33,6 @@ public class Secret implements Serializable {
   private static final int TIMEOUT_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
 
-  private static ArrayList<Secret> loadedSecrets; 
-  
   private String description;
   private String username;
   private String password;
@@ -42,20 +40,6 @@ public class Secret implements Serializable {
   private String note;
   private ArrayList<LogEntry> access_log;
 
-  /**
-   * Remove all entries from the loaded secrets array, in preparation for
-   * loading from the persistence.
-   */
-  public static void clearLoadedSecrets() {
-    if (loadedSecrets != null)
-      loadedSecrets.clear();
-  }
-  
-  /** Get the array containing the loaded secrets. */
-  public static ArrayList<Secret> getLoadedSecrets() {
-    return loadedSecrets;
-  }
-  
   /**
    * An immutable class that represents one entry in the access log.  Each
    * time the password is viewed or modified, the access log is updated with
@@ -137,16 +121,6 @@ public class Secret implements Serializable {
   private void readObject(ObjectInputStream stream)
       throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
-
-    // To handle potential problems with the input stream, like a truncation
-    // because the app force closed, we remember each successfully read secret
-    // in a global list.  If there are no errors in the input stream, then
-    // this list is just ignored.  If there are errors, then this list will
-    // contain all the secrets that were successfully read.
-    if (null == loadedSecrets)
-      loadedSecrets = new ArrayList<Secret>();
-    
-    loadedSecrets.add(this);
   }
   
   public void setDescription(String description) {
