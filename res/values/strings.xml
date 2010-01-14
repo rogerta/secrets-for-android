@@ -32,6 +32,7 @@ limitations under the License.
 <string name="backup_succeeded">Backup succeeded.</string>
 <string name="restore_succeeded">Restore succeeded.</string>
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
+<string name="restore_file_too_old">Time to backup your secrets?</string>
 
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
 <string name="export_failed">Uh oh.  Unable to export your secrets.</string>
@@ -116,9 +117,8 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_viewed">Viewed</string>
 <string name="log_exported">Exported</string>
 
-<string name="error_missing_ciphers">Uh oh: can't save password is invalid.</string>
+<string name="error_missing_ciphers">Uh oh: can't save, password is invalid.</string>
 <string name="error_cannot_move_existing">Uh oh: can't move existing file out of the way.</string>
 <string name="error_cannot_move_new">Uh oh: can't rename new file.</string>
-<string name="error_loading">Uh oh: a problem was encountered while loading your secrets.  Some data may be lost.</string>
 
 </resources>

@@ -89,7 +89,12 @@ public class SaveService extends Service {
         new Thread(new Runnable() {
           @Override
           public void run() {
-            FileUtils.saveSecrets(SaveService.this, file, cipher, secrets); 
+            FileUtils.saveSecrets(SaveService.this, file, cipher, secrets);
+            
+            // If no SD card backup exists, save it now.
+            if (!FileUtils.restoreFileExist())
+              FileUtils.backupSecrets(SaveService.this, cipher, secrets);
+
             stopSelf(startId);
           }}, "saveSecrets").start();
       } else {

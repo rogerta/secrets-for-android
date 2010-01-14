@@ -14,7 +14,10 @@
 
 package net.tawacentral.roger.secrets;
 
+import java.io.File;
 import java.util.ArrayList;
+
+import javax.crypto.Cipher;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -284,6 +287,15 @@ public class LoginActivity extends Activity {
 
     if (isFirstRun) {
       secrets = new ArrayList<Secret>();
+      
+      // Immediately save an empty file to hold the secrets.
+      Cipher cipher = SecurityUtils.getEncryptionCipher();
+      File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
+      int err = FileUtils.saveSecrets(this, file, cipher, secrets); 
+      if (0 != err) {
+        showToast(err, Toast.LENGTH_LONG);
+        return;
+      }
     } else {
       secrets = FileUtils.loadSecrets(this);
       if (null == secrets) {
