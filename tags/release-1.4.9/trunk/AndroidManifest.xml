@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!-- Whenever the version changes here, it must also be changed in
+     the strings.xml file -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="net.tawacentral.roger.secrets"
+    android:versionName="1.4.9" android:versionCode="19">
+  <!--For maximum compatibility with all Android devices, I am going to leave
+      the min sdk to 2, and check at runtime the actual version of the phone
+      before making API calls that are limited to newer versions -->
+  <uses-sdk android:minSdkVersion="2"></uses-sdk>
+  <application android:icon="@drawable/icon" android:label="@string/app_name">
+    <!-- I set the clearTaskOnLaunch so that when the user restarts
+         secrets, they start with the login page.  Without this flag set,
+         if the user starts secrets, logs in, presses the HOME button and
+         then the BACK button, they go straight to the secrets list
+         activity, bypassing login. -->
+    <activity android:name=".LoginActivity"
+        android:label="@string/app_name"
+        android:excludeFromRecents="true"
+        android:stateNotNeeded="true"
+        android:clearTaskOnLaunch="true"
+        android:launchMode="singleTask">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+    <!-- I set the excludeFromRecents flags so that when the device goes
+         to sleep or the user changes apps, these two activity do not
+         remain on the activity stack, and the user cannot come back to
+         them at some later point.  This is to make sure the user always
+         goes through the login activity after the device wakes up or the
+         user changes to another apps and returns to secrets. -->
+    <activity android:name=".SecretsListActivity"
+        android:label="@string/list_name"
+        android:excludeFromRecents="true"
+        android:finishOnTaskLaunch="true"></activity>
+    <activity android:name=".AccessLogActivity"
+        android:label="@string/log_name"
+        android:excludeFromRecents="true"
+        android:stateNotNeeded="true"
+        android:finishOnTaskLaunch="true"></activity>
+  <service android:name=".SaveService"></service>
+</application>
+</manifest>
+ 
