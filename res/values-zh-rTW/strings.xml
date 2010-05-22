@@ -18,7 +18,8 @@ limitations under the License.
 <string name="app_name">密碼箱</string>
 
 <string name="login_first_line">歡迎使用密碼箱</string>
-<string name="login_second_line">輸入密碼并繼續</string>
+<string name="login_enter_password">輸入密碼</string>
+<string name="login_validate_password">驗證密碼</string>
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->

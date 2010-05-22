@@ -18,7 +18,8 @@ limitations under the License.
 <string name="app_name">Secrets</string>
 
 <string name="login_first_line">Welcome to your Secrets</string>
-<string name="login_second_line">Enter password to continue</string>
+<string name="login_enter_password">Enter password</string>
+<string name="login_validate_password">Validate password</string>
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
@@ -117,8 +118,8 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_viewed">Viewed</string>
 <string name="log_exported">Exported</string>
 
-<string name="error_missing_ciphers">Uh oh: can't save, password is invalid.</string>
-<string name="error_cannot_move_existing">Uh oh: can't move existing file out of the way.</string>
-<string name="error_cannot_move_new">Uh oh: can't rename new file.</string>
+<string name="error_missing_ciphers">Uh oh: can\'t save, password is invalid.</string>
+<string name="error_cannot_move_existing">Uh oh: can\'t move existing file out of the way.</string>
+<string name="error_cannot_move_new">Uh oh: can\'t rename new file.</string>
 
 </resources>

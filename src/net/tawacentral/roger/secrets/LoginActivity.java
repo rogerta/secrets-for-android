@@ -134,19 +134,16 @@ public class LoginActivity extends Activity {
     if (isFirstRun) {
       TextView text = (TextView)findViewById(R.id.login_instructions);
       text.setText(R.string.login_instruction_1);
-      text = (TextView)findViewById(R.id.login_second_line);
-      text.setText("");
     } else {
       TextView text = (TextView)findViewById(R.id.login_instructions);
       text.setText("");
-      text = (TextView)findViewById(R.id.login_second_line);
-      text.setText(R.string.login_second_line);
     }
 
     // Clear the password.  The user always needs to type it again when this
     // activity is started.
     TextView password = (TextView) findViewById(R.id.login_password);
     password.setText("");
+    password.setHint(R.string.login_enter_password);
     Log.d(LOG_TAG, "LoginActivity.onResume done");
   }
 
@@ -248,8 +245,12 @@ public class LoginActivity extends Activity {
     // is held in memory.  The password edit field is cleared immediately
     // after getting the value, and the password string is held only as long as
     // required to generated the ciphers.
+    //
+    // It seems that to get the hint to appear properly inthe on screen
+    // keyboard, the hint text must be set before before clearing the password
+    // from the edit view.  So the clearing of the edit text is done in the
+    // various code paths below, after setting the hint as needed.
     String passwordString = passwordView.getText().toString();
-    passwordView.setText("");
 
     if (isFirstRun) {
       TextView instructions = (TextView)findViewById(R.id.login_instructions);
@@ -260,7 +261,8 @@ public class LoginActivity extends Activity {
         // set of instructions, remember the password, clear the password field,
         // and wait for him to enter it again.
         instructions.setText(R.string.login_instruction_2);
-
+        passwordView.setHint(R.string.login_validate_password);
+        passwordView.setText("");
         this.passwordString = passwordString;
         isValidatingPassword = true;
         return;
@@ -271,6 +273,8 @@ public class LoginActivity extends Activity {
         // password.
         if (!passwordString.equals(this.passwordString)) {
           instructions.setText(R.string.login_instruction_1);
+          passwordView.setHint(R.string.login_enter_password);
+          passwordView.setText("");
           showToast(R.string.invalid_password, Toast.LENGTH_SHORT);
 
           this.passwordString = null;
@@ -280,6 +284,8 @@ public class LoginActivity extends Activity {
       }
     }
 
+    passwordView.setText("");
+    
     // Lets not save the password in memory anywhere.  Create all the ciphers
     // we will need based on the password and save those.
     SecurityUtils.createCiphers(passwordString);

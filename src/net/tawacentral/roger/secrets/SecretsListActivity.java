@@ -149,38 +149,6 @@ public class SecretsListActivity extends ListActivity {
       }
     }
 
-    // Show instruction toast auto popup options menu if there are no secrets
-    // in the list.
-    if (0 == secretsList.getAllSecrets().size() && !isEditing) {
-      if (OS.isAndroid15()) {
-        // openOptionsMenu() crashes in Android 1.1, even though this API is
-        // available.  Until I figure that out, I will call this only for
-        // 1.5 and later.
-        showToast(getText(R.string.list_no_data));
-        getListView().post(new Runnable() {
-          @Override
-          public void run() {
-            openOptionsMenu();
-          }
-        });
-      } else {
-        showToast(getText(R.string.list_no_data_1_1));
-      }
-    } else if (FileUtils.isRestoreFileTooOld()) {
-      if (OS.isAndroid15()) {
-        // openOptionsMenu() crashes in Android 1.1, even though this API is
-        // available.  Until I figure that out, I will call this only for
-        // 1.5 and later.
-        getListView().post(new Runnable() {
-          @Override
-          public void run() {
-            showToast(getText(R.string.restore_file_too_old));
-            openOptionsMenu();
-          }
-        });
-      }
-    }
-
     // Hook up interactions.
     getListView().setOnItemClickListener(new OnItemClickListener() {
       @Override
@@ -211,7 +179,14 @@ public class SecretsListActivity extends ListActivity {
     });
   }
 
-  private void checkKeyguard() {
+  /**
+   * Check to see if the keyguard is enabled.  If so, its means the device
+   * probably went to sleep due to inactivity.  If this is the case, this
+   * activity is finished().
+   * 
+   * @return True if the activity is finished, false otherwise. 
+   */
+  private boolean checkKeyguard() {
     // If the keyguard has been displayed, exit this activity.  This returns
     // us to the login page requiring the user to enter his password again
     // before getting access again to his secrets.
@@ -222,6 +197,8 @@ public class SecretsListActivity extends ListActivity {
       Log.d(LOG_TAG, "SecretsListActivity.checkKeyguard finishing");
       finish();
     }
+    
+    return isInputRestricted;
   }
 
   /** Set the title for this activity. */
@@ -245,7 +222,47 @@ public class SecretsListActivity extends ListActivity {
   protected void onResume() {
     Log.d(LOG_TAG, "SecretsListActivity.onResume");
     super.onResume();
-    checkKeyguard();
+    
+    // If checkKeyguard() returns true, then this activity has been finished.
+    // We don't want to execute any more in this function.
+    if (checkKeyguard())
+      return;
+
+    // Show instruction toast auto popup options menu if there are no secrets
+    // in the list.  This check used to be done in the onCreate() method above,
+    // that could occasionally cause a crash when changing layout from
+    // portrait to landscape, or back.  Not sure why exactly, but I suspect
+    // its becaue the UI elements are not actually ready to be rendered until
+    // onResume() is called.
+    if (0 == secretsList.getAllSecrets().size() && !isEditing) {
+      if (OS.isAndroid15()) {
+        // openOptionsMenu() crashes in Android 1.1, even though this API is
+        // available.  Until I figure that out, I will call this only for
+        // 1.5 and later.
+        showToast(getText(R.string.list_no_data));
+        getListView().post(new Runnable() {
+          @Override
+          public void run() {
+            openOptionsMenu();
+          }
+        });
+      } else {
+        showToast(getText(R.string.list_no_data_1_1));
+      }
+    } else if (FileUtils.isRestoreFileTooOld()) {
+      if (OS.isAndroid15()) {
+        // openOptionsMenu() crashes in Android 1.1, even though this API is
+        // available.  Until I figure that out, I will call this only for
+        // 1.5 and later.
+        getListView().post(new Runnable() {
+          @Override
+          public void run() {
+            showToast(getText(R.string.restore_file_too_old));
+            openOptionsMenu();
+          }
+        });
+      }
+    }
   }
 
   @Override
@@ -907,6 +924,40 @@ public class SecretsListActivity extends ListActivity {
       }
     });
     root.startAnimation(animation);
+  }
+
+  @Override
+  public boolean onKeyUp(int keyCode, KeyEvent event) {
+    if (super.onKeyUp(keyCode, event))
+      return true;
+    
+    // There is a bug in Android 1.5 to 2.1 wrt AutoCompleteTextView and the
+    // on screen keyboard.  When focus is on an AutoCompleteTextView and the
+    // users tabs the next button, nothing happens.  I found a workaround for
+    // this here:
+    //
+    // http://groups.google.com/group/android-developers/browse_thread/thread/
+    //     e53e40bfe255ecaf
+    //
+    // Unfortunately, this hardcodes some UX in the code here.
+    
+    if (keyCode == KeyEvent.KEYCODE_ENTER) {
+      // Depending on which auto complete text has focus, if any, set the focus
+      // to the next edit view.
+      View v = findViewById(R.id.list_username);
+      if (v.hasFocus()) {
+        v = findViewById(R.id.list_password);
+        v.requestFocus();
+      } else {
+        v = findViewById(R.id.list_email);
+        if (v.hasFocus()) {
+          v = findViewById(R.id.list_notes);
+          v.requestFocus();
+        }
+      }
+    }
+    
+    return false;
   }
 
   /** Generate and return a difficult to guess password. */

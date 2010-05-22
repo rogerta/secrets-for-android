@@ -29,16 +29,10 @@ limitations under the License.
     android:paddingBottom="20sp"
     android:textSize="20sp"
     />
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content"
-    android:text="@string/login_second_line"
-    android:gravity="center_horizontal"
-    android:id="@+id/login_second_line"
-    />
 <EditText  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
+    android:hint="@string/login_enter_password"
     android:password="true"
     android:clickable="true"
     android:singleLine="true"
