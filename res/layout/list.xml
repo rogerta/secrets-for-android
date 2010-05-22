@@ -53,6 +53,7 @@ limitations under the License.
 			    android:singleLine="true"
 			    android:hint="@string/list_descption_label"
 			    android:id="@+id/list_description"
+			    android:inputType="textUri"
 			    />
 			<TextView
 			    android:layout_width="fill_parent" 
@@ -79,6 +80,7 @@ limitations under the License.
 			    android:singleLine="true"
 			    android:hint="@string/list_password_label"
 			    android:id="@+id/list_password"
+			    android:inputType="textVisiblePassword"
 			    />
 			<TextView
 			    android:layout_width="fill_parent" 
@@ -92,6 +94,7 @@ limitations under the License.
 			    android:singleLine="true"
 			    android:hint="@string/list_email_label"
 			    android:id="@+id/list_email"
+			    android:inputType="textEmailAddress"
 			    />
 			<TextView
 			    android:layout_width="fill_parent" 
@@ -106,6 +109,7 @@ limitations under the License.
 			    android:minLines="5" 
 			    android:hint="@string/list_notes_label"
 			    android:id="@+id/list_notes"
+			    android:inputType="textMultiLine"
 			    />
 		</LinearLayout>
 	</ScrollView>
