@@ -17,7 +17,8 @@ limitations under the License.
 <resources>
 <string name="app_name">密码箱</string>
 <string name="login_first_line">欢迎使用密码箱</string>
-<string name="login_second_line">输入密码并继续</string>
+<string name="login_enter_password">输入密码</string>
+<string name="login_validate_password">验证密码</string>
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
