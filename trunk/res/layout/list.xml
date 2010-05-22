@@ -67,6 +67,7 @@ limitations under the License.
 			    android:singleLine="true"
 			    android:hint="@string/list_username_label"
 			    android:id="@+id/list_username"
+			    android:imeOptions="actionNext"
 			    />
 			<TextView
 			    android:layout_width="fill_parent" 
@@ -95,6 +96,7 @@ limitations under the License.
 			    android:hint="@string/list_email_label"
 			    android:id="@+id/list_email"
 			    android:inputType="textEmailAddress"
+			    android:imeOptions="actionNext"
 			    />
 			<TextView
 			    android:layout_width="fill_parent" 
