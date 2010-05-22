@@ -926,40 +926,6 @@ public class SecretsListActivity extends ListActivity {
     root.startAnimation(animation);
   }
 
-  @Override
-  public boolean onKeyUp(int keyCode, KeyEvent event) {
-    if (super.onKeyUp(keyCode, event))
-      return true;
-    
-    // There is a bug in Android 1.5 to 2.1 wrt AutoCompleteTextView and the
-    // on screen keyboard.  When focus is on an AutoCompleteTextView and the
-    // users tabs the next button, nothing happens.  I found a workaround for
-    // this here:
-    //
-    // http://groups.google.com/group/android-developers/browse_thread/thread/
-    //     e53e40bfe255ecaf
-    //
-    // Unfortunately, this hardcodes some UX in the code here.
-    
-    if (keyCode == KeyEvent.KEYCODE_ENTER) {
-      // Depending on which auto complete text has focus, if any, set the focus
-      // to the next edit view.
-      View v = findViewById(R.id.list_username);
-      if (v.hasFocus()) {
-        v = findViewById(R.id.list_password);
-        v.requestFocus();
-      } else {
-        v = findViewById(R.id.list_email);
-        if (v.hasFocus()) {
-          v = findViewById(R.id.list_notes);
-          v.requestFocus();
-        }
-      }
-    }
-    
-    return false;
-  }
-
   /** Generate and return a difficult to guess password. */
   private String generatePassword() {
     StringBuilder builder = new StringBuilder(8);
