@@ -41,7 +41,7 @@ limitations under the License.
 <string name="import_partial">只有部分導入成功。請檢查秘密文件和\'\'{0}\'\'文件并進行核對。</string>
 <string name="import_failed">無法從\'\'{0}\'\'導入。</string>
 
-<string name="login_instruction_1">請創建一個密碼，對秘密信息進行保護。可使用字母,數字和標點組合加強密碼強度。\n輸入密碼后, 按回車（enter）。</string>
+<string name="login_instruction_1">請創建一個密碼，對秘密信息進行保護。可使用字母,數字和標點組合加強密碼強度。\n輸入密碼后, 按完成（\u21b5）。</string>
 <string name="login_instruction_2">請再次輸入新密碼使之生效。如發生錯誤, 將重新來過。</string>
 <string name="edit_instructions"> 所有信息都為選填項, 請根據實際情況盡可能多（或少）地輸入內容。完成后,按后退鍵, 或者按菜單鍵查看更多選項。</string>
 

@@ -40,7 +40,7 @@ limitations under the License.
 <string name="import_partial">只有部分导入成功。请检查秘密文件和\'\'{0}\'\'文件并进行核对。</string>
 <string name="import_failed">无法从\'\'{0}\'\'导入。</string>
 
-<string name="login_instruction_1">请创建一个密码，对秘密信息进行保护。可使用字母,数字和标点组合加强密码强度。\n输入密码后, 按回车（enter）。</string>
+<string name="login_instruction_1">请创建一个密码，对秘密信息进行保护。可使用字母,数字和标点组合加强密码强度。\n输入密码后, 按完成（\u21b5）。</string>
 <string name="login_instruction_2">请再次输入新密码使之生效。如发生错误, 将重新来过。</string>
 <string name="edit_instructions"> 所有信息都为选填项, 请根据实际情况尽可能多（或少）地输入内容。完成后,按后退键, 或者按菜单键查看更多选项。</string>
 
