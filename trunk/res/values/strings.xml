@@ -45,7 +45,7 @@ limitations under the License.
 <string name="login_instruction_1">
 Create a password to protect your secrets.  Use letters, numbers, and
 punctuation to make the password difficult to guess.\nAfter typing the password,
-press enter. 
+press \u21b5 or Done.
 </string>
 <string name="login_instruction_2">
 Validate your new password by typing it again.  If there is a
