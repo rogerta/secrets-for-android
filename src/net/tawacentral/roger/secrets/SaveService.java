@@ -38,6 +38,9 @@ public class SaveService extends Service {
   private static List<Secret> secrets;
   private static Cipher cipher;
 
+  /** Backup manager for Android 2.2. */
+  Object backupManager;
+  
   /**
    * Queue a background save of the secrets.
    * 
@@ -66,6 +69,10 @@ public class SaveService extends Service {
   @Override
   public void onCreate() {
     super.onCreate();
+
+    // Create a backup manager.  Will be null for versions of Android before
+    // 2.2.
+    backupManager = OS.createBackupManager(this);
   }
 
   @Override
@@ -89,7 +96,12 @@ public class SaveService extends Service {
         new Thread(new Runnable() {
           @Override
           public void run() {
-            FileUtils.saveSecrets(SaveService.this, file, cipher, secrets);
+            int r = FileUtils.saveSecrets(SaveService.this, file, cipher,
+                                          secrets);
+            
+            // If the save was successful, schedule a backup. 
+            if (0 == r)
+              OS.backupManagerDataChanged(backupManager);
             
             // If no SD card backup exists, save it now.
             if (!FileUtils.restoreFileExist())

@@ -16,6 +16,7 @@ package net.tawacentral.roger.secrets;
 
 import java.lang.reflect.Method;
 
+import android.app.backup.BackupManager;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
@@ -55,15 +56,9 @@ public class OS {
     return sdkVersion >= 3;
   }
   
-  /** Show the soft keyboard if not visible. */
-  public static void showSoftKeyboard(Context ctx, View view) {
-    /*if (isAndroid15()) {
-      InputMethodManager manager = (InputMethodManager)
-          ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
-      if (!manager.isActive()) {
-        manager.showSoftInput(view, 0);
-      }
-    }*/
+  /** Does the device support the froyo (Android 2.2) APIs? */
+  public static boolean isAndroid22() {
+    return sdkVersion >= 8;
   }
   
   /** Hide the soft keyboard if visible. */
@@ -94,6 +89,37 @@ public class OS {
       // This exception is normal in pre-cupcake devices.
       if (isAndroid15())
         Log.d(LOG_TAG, "hideSoftKeyboard", ex);
+    }
+  }
+  
+  /**
+   * Creates a backup manager for handling app backup in Android 2.2 and later.
+   * Returns an Object so that that this function can be called from any
+   * version of Android. 
+   * 
+   * @param context Application context for the backup manager.
+   * @return A backup manager on Android 2.2 and later, null otherwise. 
+   */
+  public static Object createBackupManager(Context context) {
+    Object bm = null;
+    
+    if (isAndroid22()) {
+      bm = new BackupManager(context); 
+    }
+    
+    return bm;
+  }
+  
+  /**
+   * Calls dataChanged() on the backup manager on Android 2.2 and later, or
+   * does nothing on previous versions of Android.
+   * 
+   * @param bm Backup manager.  Can be null.
+   */
+  public static void backupManagerDataChanged(Object bm) {
+    if (isAndroid22() && bm != null) {
+      BackupManager bm2 = (BackupManager) bm;
+      bm2.dataChanged();
     }
   }
 }

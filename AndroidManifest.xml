@@ -19,12 +19,17 @@ limitations under the License.
      the strings.xml file -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.tawacentral.roger.secrets"
-    android:versionName="1.5" android:versionCode="20">
+    android:versionName="1.6"
+    android:versionCode="21"
+    android:installLocation="auto">
   <!--For maximum compatibility with all Android devices, I am going to leave
       the min sdk to 2, and check at runtime the actual version of the phone
       before making API calls that are limited to newer versions -->
   <uses-sdk android:minSdkVersion="2"></uses-sdk>
-  <application android:icon="@drawable/icon" android:label="@string/app_name">
+  <application android:icon="@drawable/icon"
+      android:label="@string/app_name"
+      android:allowBackup="true"
+      android:backupAgent="FileUtils$SecretsBackupAgent">
     <!-- I set the clearTaskOnLaunch so that when the user restarts
          secrets, they start with the login page.  Without this flag set,
          if the user starts secrets, logs in, presses the HOME button and

@@ -463,10 +463,6 @@ public class SecretsListActivity extends ListActivity {
     public String getSelectedRestorePoint() {
       return restorePoints.get(selected);
     }
-    
-    public boolean hasRestorePoints() {
-      return restorePoints.size() > 0;
-    }
   }
   
   @Override

@@ -14,7 +14,12 @@
 
 package net.tawacentral.roger.secrets;
 
+import android.app.backup.BackupAgentHelper;
+import android.app.backup.BackupDataInput;
+import android.app.backup.BackupDataOutput;
+import android.app.backup.FileBackupHelper;
 import android.content.Context;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
@@ -79,7 +84,7 @@ public class FileUtils {
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
 
-  /** Lock for main secrets file. */
+  /** Lock for accessing main secrets file. */
   private static final Object lock = new Object();
   
   /** Does the secrets file exist? */
@@ -240,7 +245,7 @@ public class FileUtils {
   /**
    * Saves the secrets to file using the password retrieved from the user.
    *
-   * @param context Avtivity context in which the save is called.
+   * @param context Activity context in which the save is called.
    * @param existing The file to save into.
    * @param cipher The encryption cipher to use with the file.
    * @param secrets The list of secrets to save.
@@ -624,5 +629,42 @@ public class FileUtils {
     builder.append(INDENT).append(OI_SAFE_FILE_CSV.getName());
 
     return builder.toString();
+  }
+
+  static class SecretsBackupAgent extends BackupAgentHelper {
+    /** Tag for logging purposes. */
+    public static final String LOG_TAG = "Secrets";
+    
+    /** Key in backup set for file data. */
+    private static final String KEY ="file";
+    
+    @Override
+    public void onCreate() {
+      Log.d(LOG_TAG, "onCreate");
+      
+      FileBackupHelper helper = new FileBackupHelper(this,
+          FileUtils.SECRETS_FILE_NAME);
+      addHelper(KEY, helper);
+    }
+    
+    @Override
+    public void onBackup(ParcelFileDescriptor oldState,
+                         BackupDataOutput data,
+                         ParcelFileDescriptor newState) throws IOException {
+      Log.d(LOG_TAG, "onBackup");
+      synchronized (lock) {
+        super.onBackup(oldState, data, newState);
+      }
+    }
+    
+    @Override
+    public void onRestore(BackupDataInput data,
+                          int appVersionCode,
+                          ParcelFileDescriptor newState)  throws IOException {    
+      Log.d(LOG_TAG, "onRestore");
+      synchronized (lock) {
+        super.onRestore(data, appVersionCode, newState);
+      }
+    }
   }
 }
