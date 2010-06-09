@@ -14,9 +14,9 @@
 
 package net.tawacentral.roger.secrets;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
-import android.app.backup.BackupManager;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
@@ -104,8 +104,14 @@ public class OS {
     Object bm = null;
     
     if (isAndroid22()) {
-      bm = new BackupManager(context);
-      Log.d(LOG_TAG, "createBackupManager");
+      try {
+        Class<?> clazz = Class.forName("android.app.backup.BackupManager");
+        Constructor<?> c = clazz.getConstructor(Context.class);
+        bm = c.newInstance(context);
+        Log.d(LOG_TAG, "createBackupManager");
+      } catch (Exception ex) {
+        Log.e(LOG_TAG, "Should have found backup manager", ex);
+      }
     }
     
     return bm;
@@ -119,9 +125,14 @@ public class OS {
    */
   public static void backupManagerDataChanged(Object bm) {
     if (isAndroid22() && bm != null) {
-      BackupManager bm2 = (BackupManager) bm;
-      bm2.dataChanged();
-      Log.d(LOG_TAG, "backupManagerDataChanged");
+      try {
+        Class<?> clazz = Class.forName("android.app.backup.BackupManager");
+        Method m = clazz.getMethod("dataChanged");
+        m.invoke(bm);
+        Log.d(LOG_TAG, "backupManagerDataChanged");
+      } catch (Exception ex) {
+        Log.e(LOG_TAG, "backupManagerDataChanged", ex);
+      }
     }
   }
 }
