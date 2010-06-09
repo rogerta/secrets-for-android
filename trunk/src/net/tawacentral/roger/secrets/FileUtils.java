@@ -631,7 +631,7 @@ public class FileUtils {
     return builder.toString();
   }
 
-  static class SecretsBackupAgent extends BackupAgentHelper {
+  static public class SecretsBackupAgent extends BackupAgentHelper {
     /** Tag for logging purposes. */
     public static final String LOG_TAG = "Secrets";
     

@@ -104,7 +104,8 @@ public class OS {
     Object bm = null;
     
     if (isAndroid22()) {
-      bm = new BackupManager(context); 
+      bm = new BackupManager(context);
+      Log.d(LOG_TAG, "createBackupManager");
     }
     
     return bm;
@@ -120,6 +121,7 @@ public class OS {
     if (isAndroid22() && bm != null) {
       BackupManager bm2 = (BackupManager) bm;
       bm2.dataChanged();
+      Log.d(LOG_TAG, "backupManagerDataChanged");
     }
   }
 }
