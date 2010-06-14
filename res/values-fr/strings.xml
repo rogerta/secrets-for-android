@@ -26,7 +26,7 @@ limitations under the License.
 <string name="copyright">Version 1.7 (c) 2010 Google Inc.</string>
 
 <string name="invalid_password">Oops! Le mot do passe n\'est pas valid, s\'il vous plaît essayer de nouveau.</string>
-<string name="no_password">&lt; Pas de PIN &gt;</string>
+<string name="no_password">&lt; Pas de NIP &gt;</string>
 <string name="error_reset_password">Uh oh.  Impossible de réinitialiser votre mot de passe.</string>
 <string name="error_save_secrets">Uh oh.  Impossible d\'enregistrer vos secrets.</string>
 
@@ -68,11 +68,11 @@ Lorsque vous aurez terminé, appuyez sur le bouton "Retour" ou MENU pour plus d\
 <string name="list_no_data">Appuyez sur \"Ajouter\" pour commencer.</string>
 <string name="list_descption_label">Site web/Description</string>
 <string name="list_username_label">Nom d\'utilisateur / Id</string>
-<string name="list_password_label">Mot de passe/PIN</string>
-<string name="list_email_label">Email</string>
+<string name="list_password_label">Mot de passe/NIP</string>
+<string name="list_email_label">Courriel</string>
 <string name="list_notes_label">Notes</string>
 <string name="list_add_secret">Ajouter secret</string>
-<string name="list_instructions">Appuyez sur le secret pour révéler son code PIN. Tapez et maintenez pour le changer.</string>
+<string name="list_instructions">Appuyez sur le secret pour révéler son code NIP. Tapez et maintenez pour le changer.</string>
 
 <string name="login_menu_reset_password">Réinitialiser mot de passe</string>
 <string name="login_menu_reset_password_message">
@@ -88,19 +88,19 @@ Etes-vous sûr de vouloir supprimer \'\'{0}\'\'?
 
 <string name="edit_menu_import_secrets_message">Importation réussie. Supprimer \'\'{0}\'\' maintenant?</string>
 
-<string name="copied_to_clipboard">Le PIN de \'\'{0}\'\' a été copié.</string>
+<string name="copied_to_clipboard">Le NIP de \'\'{0}\'\' a été copié.</string>
 
 <string name="list_menu_add">Ajouter</string>
 <string name="list_menu_edit">Modifier</string>
 <string name="list_menu_save">Sauver</string>
-<string name="list_menu_discard">Discard</string>
+<string name="list_menu_discard">Abandonner</string>
 <string name="list_menu_delete">Supprimer</string>
 <string name="list_menu_access">Journal</string>
 <string name="list_menu_backup">Backup</string>
 <string name="list_menu_restore">Restorer</string>
 <string name="list_menu_import">Importer</string>
 <string name="list_menu_export">Exporter</string>
-<string name="list_menu_copy_password_to_clipoboard">To clip</string>
+<string name="list_menu_copy_password_to_clipoboard">Copier NIP</string>
 <string name="list_menu_generate_password">Générer</string>
 
 <string name="log_name">Journal d\'accès</string>
