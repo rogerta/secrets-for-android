@@ -19,40 +19,40 @@ limitations under the License.
 
 <string name="login_first_line">Bienvenue à vos Secrets</string>
 <string name="login_enter_password">Mot de passe</string>
-<string name="login_validate_password">Valider mot de passe</string>
+<string name="login_validate_password">Validez mot de passe</string>
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
 <string name="copyright">Version 1.7 (c) 2010 Google Inc.</string>
 
-<string name="invalid_password">Oops! Le mot do passe n\'est pas valid, s\'il vous plaît essayer de nouveau.</string>
+<string name="invalid_password">Le mot de passe n\'est pas valid, veuillez ressayer.</string>
 <string name="no_password">&lt; Pas de NIP &gt;</string>
-<string name="error_reset_password">Uh oh.  Impossible de réinitialiser votre mot de passe.</string>
-<string name="error_save_secrets">Uh oh.  Impossible d\'enregistrer vos secrets.</string>
+<string name="error_reset_password">Impossible de réinitialiser votre mot de passe.</string>
+<string name="error_save_secrets">Impossible d\'enregistrer vos secrets.</string>
 
 <string name="backup_succeeded">Backup réussi.</string>
-<string name="restore_succeeded">Restauration réussi.</string>
-<string name="restore_failed">Uh oh.  Impossible de restaurer vos secrets. Assurez-vous que votre mot de passe est le même que celui utilisé pour créer le backup.</string>
-<string name="restore_file_too_old">Est-il temps de créer un backup vos secrets?</string>
+<string name="restore_succeeded">Restauration réussie.</string>
+<string name="restore_failed">Impossible de restaurer vos secrets. Assurez-vous que votre mot de passe est le même que celui utilisé pour créer le backup.</string>
+<string name="restore_file_too_old">Est-il temps de créer un backup de vos secrets?</string>
 
-<string name="export_succeeded">L\'exportation a réussi.\n\nATTENTION: Le fichier exporté n\'est pas protégé par votre mot de passe!</string>
-<string name="export_failed">Uh oh.  Impossible d\'exporter vos secrets.</string>
+<string name="export_succeeded">L\'export a réussi.\n\nATTENTION: Le fichier exporté n\'est pas protégé par votre mot de passe!</string>
+<string name="export_failed">Impossible d\'exporter vos secrets.</string>
 
-<string name="import_not_found">Aucun fichier CSV trouver sur la carte SD.\n\nLes secrets peuvent être importés depuis les fichiers suivants:\n\n{0}</string>
-<string name="import_partial">Hmmm, seuls certains secrets ont été importées correctement.  Vérifiez vos secrets et le fichier \'\'{0}\'\' pour l\'exactitude.</string>
-<string name="import_failed">Uh oh.  Impossible d\'importer vos secrets du fichier \'\'{0}\'\'.</string>
+<string name="import_not_found">Aucun fichier CSV trouvé sur la carte SD.\n\nLes secrets peuvent être importés depuis les fichiers suivants:\n\n{0}</string>
+<string name="import_partial">Seuls certains secrets ont été importés correctement.  Vérifiez que vos secrets et le fichier \'\'{0}\'\' sont exactes.</string>
+<string name="import_failed">Impossible d\'importer vos secrets du fichier \'\'{0}\'\'.</string>
 
 <string name="login_instruction_1">
-Créer un mot de passe pour protéger vos secrets. Utilisez des lettres, des chiffres et
-la ponctuation pour rendre le mot de passe difficile à deviner.\nAprès avoir tapé le mot de passe,
-Appuyez sur \u21b5 ou OK.
+Créez un mot de passe pour protéger vos secrets. Utilisez des lettres, des chiffres et
+des symboles de ponctuation pour rendre le mot de passe difficile à deviner.\nAprès avoir tapé le mot de passe,
+appuyez sur \u21b5 ou OK.
 </string>
 <string name="login_instruction_2">
-Validez votre nouveau mot de passe en le tapant à nouveau. Si il ya un
-problème, vous recommencerez. 
+Validez votre nouveau mot de passe en le tapant à nouveau. S'il y a un
+problème, vous devrez recommencer. 
 </string>
 <string name="edit_instructions">
-Toutes les informations sont facultatives, entrez autant ou aussi peu que nécessaire.
+Tous les champs sont facultatifs, ne remplissez que ceux qui sont nécessaires.
 
 Lorsque vous aurez terminé, appuyez sur le bouton "Retour" ou MENU pour plus d\'options.</string>
 
@@ -72,21 +72,21 @@ Lorsque vous aurez terminé, appuyez sur le bouton "Retour" ou MENU pour plus d\
 <string name="list_email_label">Courriel</string>
 <string name="list_notes_label">Notes</string>
 <string name="list_add_secret">Ajouter secret</string>
-<string name="list_instructions">Appuyez sur le secret pour révéler son code NIP. Tapez et maintenez pour le changer.</string>
+<string name="list_instructions">Appuyez sur le secret pour révéler son code NIP. Tapez et maintenez appuyé pour le changer.</string>
 
 <string name="login_menu_reset_password">Réinitialiser mot de passe</string>
 <string name="login_menu_reset_password_message">
-La réinitialisation de votre mot de passe supprimera tous vos secrets! Etes-vous vraiment sûr?</string>
+La réinitialisation de votre mot de passe supprimera tous vos secrets! Êtes-vous vraiment sûr?</string>
 <string name="login_reset_password_pos">Oui</string>
 <string name="login_reset_password_neg">Non</string>
 
 <string name="edit_menu_delete_secret_message">
-Etes-vous sûr de vouloir supprimer \'\'{0}\'\'?
+Êtes-vous sûr de vouloir supprimer \'\'{0}\'\'?
 </string>
 
 <string name="dialog_restore_title">Restaurer à partir de:</string>
 
-<string name="edit_menu_import_secrets_message">Importation réussie. Supprimer \'\'{0}\'\' maintenant?</string>
+<string name="edit_menu_import_secrets_message">Import réussi. Supprimer \'\'{0}\'\' maintenant?</string>
 
 <string name="copied_to_clipboard">Le NIP de \'\'{0}\'\' a été copié.</string>
 
@@ -112,10 +112,10 @@ Etes-vous sûr de vouloir supprimer \'\'{0}\'\'?
 <string name="log_created">Créé</string>
 <string name="log_changed">Modifié</string>
 <string name="log_viewed">Consulté</string>
-<string name="log_exported">Exportés</string>
+<string name="log_exported">Exporté</string>
 
-<string name="error_missing_ciphers">Uh oh: ne peut pas enregistrer, mot de passe est invalide.</string>
-<string name="error_cannot_move_existing">Uh oh: ne pouvez pas renommer l\'ancien fichier.</string>
-<string name="error_cannot_move_new">Uh oh: ne pouvez pas renommer le nouveau fichier.</string>
+<string name="error_missing_ciphers">Impossible d\'enregistrer, mot de passe invalide.</string>
+<string name="error_cannot_move_existing">Impossible de renommer l\'ancien fichier.</string>
+<string name="error_cannot_move_new">Impossible de renommer le nouveau fichier.</string>
 
 </resources>
