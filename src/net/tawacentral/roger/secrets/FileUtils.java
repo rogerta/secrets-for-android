@@ -23,16 +23,10 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
+import org.json.JSONArray;
+import org.json.JSONException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -348,6 +342,76 @@ public class FileUtils {
     }
 
     return success;
+  }
+
+
+  public static ArrayList<Secret> restoreSecretsStream(Context context, byte[] secrets) {
+    Cipher cipher = SecurityUtils.getDecryptionCipher();
+
+    if(cipher == null || secrets == null || secrets.length == 0) return null;
+
+    CipherInputStream cis = new CipherInputStream(new ByteArrayInputStream(secrets), cipher);
+    BufferedInputStream bis = new BufferedInputStream(cis);
+    byte[] secretStrBytes = new byte[secrets.length];
+    int offset = 0;
+    int read = 0;
+    try {
+      while (offset < secretStrBytes.length
+          && (read = bis.read(secretStrBytes, offset, secretStrBytes.length - offset)) >= 0) {
+        offset += read;
+      }
+      String jsonString = new String(secretStrBytes, "UTF-8");
+      JSONArray jsonSecrets = new JSONArray(jsonString);
+      ArrayList<Secret> secretList = new ArrayList<Secret>();
+      for(int i = 0; i < jsonSecrets.length(); i++) {
+        secretList.add(Secret.fromJSONString(jsonSecrets.getString(i)));
+      }
+      return secretList;
+    } catch (IOException e) {
+      Log.e(LOG_TAG, "Error restoring secret stream from OBA", e);
+    } catch (JSONException e) {
+      Log.e(LOG_TAG, "Error restoring secret stream from OBA", e);
+    }
+    return null;
+  }
+
+  /**
+   * Returns an encrypted json stream representing the user's secrets.
+   *
+   * @param context Avtivity context in which the backup is called.
+   * @param cipher The encryption cipher to use with the file.
+   * @param secrets The list of secrets to save.
+   * @return byte array of secrets
+   */
+  public static byte[] secretsStream(Context context,
+                                      Cipher cipher,
+                                      List<Secret> secrets) {
+    Log.d(LOG_TAG, "FileUtils.backupSecrets");
+
+    if (null == cipher)
+      return null;
+
+    CipherOutputStream output = null;
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    boolean success = false;
+    try {
+      output = new CipherOutputStream(baos,
+                                 cipher);
+      JSONArray jsonArray = new JSONArray();
+      for(Secret secret : secrets) {
+        jsonArray.put(secret.toJSONString());
+      }
+      output.write(jsonArray.toString().getBytes("UTF-8"));
+      success = true;
+    } catch (Exception ex) {
+    } finally {
+      try {if (null != output) output.close();} catch (IOException ex) {}
+    }
+
+    if(!success) {
+      throw new RuntimeException("Failed writing secrets!");
+    }
+    return baos.toByteArray();
   }
 
   /**

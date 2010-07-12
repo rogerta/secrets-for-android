@@ -84,6 +84,10 @@ public class SecurityUtils {
     return decryptCipher;
   }
 
+  public static byte[] getSalt() {
+    return salt;
+  }
+
   /**
    * Create a pair of encryption and decryption ciphers based on the given
    * password string.  The string is not stored internally.  This function
