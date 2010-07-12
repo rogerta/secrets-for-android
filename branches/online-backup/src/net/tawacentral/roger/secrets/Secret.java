@@ -14,12 +14,19 @@
 
 package net.tawacentral.roger.secrets;
 
+import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * Represents one secret.  The assumption is that each secret is describable,
@@ -32,6 +39,7 @@ public class Secret implements Serializable {
   private static final long serialVersionUID = -116450416616138469L;
   private static final int TIMEOUT_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
+  private static final String LOG_TAG = "Secret";
 
   private String description;
   private String username;
@@ -102,6 +110,7 @@ public class Secret implements Serializable {
   public Secret() {
     access_log = new ArrayList<LogEntry>();
     access_log.add(new LogEntry());
+    note = new JSONObject().toString();
   }
 
   /**
@@ -212,11 +221,132 @@ public class Secret implements Serializable {
   }
 
   public void setNote(String note) {
-    this.note = note;
+    try {
+      if(this.note == null || this.note.equals(""))
+        this.note = new JSONObject().put("note", note).toString();
+      else
+        this.note = new JSONObject(this.note).put("note", note).toString();
+    } catch (JSONException e) {
+      Log.e(LOG_TAG,"JSON error", e);
+    }
   }
 
   public String getNote() {
+    String note = null;
+    try {
+      note = (String)new JSONObject(this.note).get("note");
+    } catch (JSONException e) {
+      Log.e(LOG_TAG,"JSON error",e);
+    }
     return note;
+  }
+
+  public String getNoteJSON() {
+    return note;
+  }
+
+  public void addOBA(OnlineBackupApplication oba) {
+    try {
+      JSONObject jsonOBA = new JSONObject();
+      jsonOBA.put("classid", oba.getClassId());
+      this.note = new JSONObject(this.note).accumulate("oba", jsonOBA).toString();
+    } catch (JSONException e) {
+      Log.e(LOG_TAG, "JSON error", e);
+      //TODO (rdearing) if we get here, it probably makes sense to just clear the oba field and start fresh
+    }
+  }
+
+  /**
+   * Helper method that will always return an array of OBAs even if this secret only has 1
+   * @return JSONArray of OBAs assigned to this secret
+   */
+  private JSONArray getOBAArray() {
+    JSONArray curObas = new JSONArray();
+    try {
+      JSONObject noteObject = new JSONObject(this.note);
+      // test to see if the oba is an array (there is more than 1 oba)
+      curObas = noteObject.optJSONArray("oba");
+      // if it was not an array, then there is either 0 or 1 obas
+      if(curObas == null) {
+        JSONObject oba = noteObject.optJSONObject("oba");
+        curObas = new JSONArray();
+        // if oba is null we do not have an oba for this secret
+        if(oba != null)
+          curObas.put(oba);
+      }
+    } catch (JSONException e) {
+      Log.e(LOG_TAG, "JSON error", e);
+    }
+    return curObas;
+  }
+
+  /**
+   * Removes the OBA from this secret
+   * @param app
+   */
+  public void removeOBA(OnlineBackupApplication app) {
+    try {
+      JSONObject noteObject = new JSONObject(this.note);
+      // the removal happens by building a new JSONArray with the app missing
+      JSONArray newObas = new JSONArray();
+      JSONArray curObas = getOBAArray();
+      for(int i = 0; i < curObas.length(); i++) {
+        JSONObject jsonOBA = curObas.getJSONObject(i);
+        // this will check if the classid matches, or if the oba JSON oba
+        // has no classid (which should not happen, but this provides a cleanup
+        // mechanism
+        String classid = jsonOBA.optString("classid", "");
+        if(!classid.equals(app.getClassId()) && !classid.equals("")) {
+          newObas.put(jsonOBA);
+        }
+      }
+      this.note = new JSONObject(this.note).put("oba", newObas).toString();
+    } catch (JSONException e) {
+      Log.e(LOG_TAG, "JSON error", e);
+      //TODO (rdearing) if we get here, it probably makes sense to just clear the oba field and start fresh
+    }
+  }
+
+  /**
+   * Returns a Set of OBAs that this secret is used for
+   * @return Set of OBA classids
+   */
+  public Set<String> getOBAs() {
+    // avoid NPE
+    Set<String> obaSet = Collections.emptySet();
+    try {
+      JSONArray curObas = getOBAArray();
+      obaSet = new HashSet<String>(curObas.length());
+      for(int i = 0; i < curObas.length(); i++) {
+        JSONObject jsonOBA = curObas.getJSONObject(i);
+        obaSet.add(jsonOBA.optString("classid", ""));
+      }
+    } catch (JSONException e) {
+      Log.e(LOG_TAG, "JSON error", e);
+    }
+    return obaSet;
+  }
+
+  public String toJSONString() throws JSONException {
+    JSONObject jsonSecret = new JSONObject();
+    jsonSecret.put("username", username);
+    jsonSecret.put("password", password);
+    jsonSecret.put("email", email);
+    jsonSecret.put("note", new JSONObject(this.note));
+    jsonSecret.put("description", description);
+    Log.d(LOG_TAG, "JSON: " + jsonSecret.toString());
+    return jsonSecret.toString();
+  }
+
+  public static Secret fromJSONString(String json) throws JSONException {
+    Secret secret = new Secret();
+    JSONObject jsonSecret = new JSONObject(json);
+    secret.username = jsonSecret.getString("username");
+    secret.password = jsonSecret.getString("password");
+    secret.email = jsonSecret.getString("email");
+    secret.description = jsonSecret.getString("description");
+    secret.note = jsonSecret.getJSONObject("note").toString();
+    return secret;
   }
 
   /**

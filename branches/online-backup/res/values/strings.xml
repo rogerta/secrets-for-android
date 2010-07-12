@@ -16,6 +16,11 @@ limitations under the License.
 -->
 <resources>
 <string name="app_name">Secrets</string>
+<string name="sd_card">SD Card</string>
+
+
+<string name="permission_oba_label">Uses Secrets</string>
+<string name="permission_oba_desc">Accesses encrypted Secrets</string>    
 
 <string name="login_first_line">Welcome to your Secrets</string>
 <string name="login_enter_password">Enter password</string>
@@ -29,11 +34,14 @@ limitations under the License.
 <string name="no_password">&lt; No PIN &gt;</string>
 <string name="error_reset_password">Uh oh.  Unable to reset your password.</string>
 <string name="error_save_secrets">Uh oh.  Unable to save your secrets.</string>
+<string name="error_oba_backup_secrets">Unable to backup your secrets.</string>    
 
 <string name="backup_succeeded">Backup succeeded.</string>
 <string name="restore_succeeded">Restore succeeded.</string>
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
 <string name="restore_file_too_old">Time to backup your secrets?</string>
+<string name="oba_configured">{0} configured to use {1}</string>
+<string name="oba_sent">Secrets sent to {0} application</string>
 
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
 <string name="export_failed">Uh oh.  Unable to export your secrets.</string>
@@ -63,6 +71,7 @@ When done, press the Back button, or MENU for more options.
 <string name="friendly_id_format_2">
 {1,date,short} {1,time,short}
 </string>
+<string name="oba_config_instructions">Please select the secret to use for this backup application.</string>
 
 <string name="list_name">Secrets</string>
 <string name="list_no_data_1_1">Press MENU then \"Add\" to begin.</string>
@@ -75,6 +84,7 @@ When done, press the Back button, or MENU for more options.
 <string name="list_add_secret">Add secret</string>
 <string name="list_instructions">Tap secret to reveal its PIN.  Tap and hold
 to change it.</string>
+<string name="list_oba_configure">Configure OBA</string>
 
 <string name="login_menu_reset_password">Reset password</string>
 <string name="login_menu_reset_password_message">
@@ -89,12 +99,16 @@ Are you sure you want to delete \'\'{0}\'\'?
 </string>
 
 <string name="dialog_restore_title">Restore from:</string>
+<string name="dialog_backup_title">Backup to:</string>
+<string name="dialog_configure_title">Select OBA to configure:</string>
+
 
 <string name="edit_menu_import_secrets_message">Import successful.  Delete \'\'{0}\'\' now?</string>
 
 <string name="copied_to_clipboard">{0}\'\'s PIN has been copied to the clipboard.</string>
 
 <string name="list_menu_add">Add</string>
+<string name="list_menu_config_oba">Config OBA</string>
 <string name="list_menu_edit">Edit</string>
 <string name="list_menu_save">Save</string>
 <string name="list_menu_discard">Discard</string>

@@ -27,10 +27,12 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.KeyguardManager;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.Gravity;
@@ -41,12 +43,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
-import android.widget.AdapterView;
-import android.widget.AutoCompleteTextView;
-import android.widget.EditText;
-import android.widget.ListView;
-import android.widget.ScrollView;
-import android.widget.Toast;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
@@ -68,6 +65,8 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_DELETE_SECRET = 1;
   private static final int DIALOG_CONFIRM_RESTORE = 2;
   private static final int DIALOG_IMPORT_SUCCESS = 3;
+  private static final int DIALOG_CONFIG_ONLINE_BACKUP_APP = 4;
+  private static final int DIALOG_BACKUP = 5;
 
   private static final String EMPTY_STRING = "";
 
@@ -93,6 +92,9 @@ public class SecretsListActivity extends ListActivity {
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
   private boolean isConfigChange;  // being destroyed for config change?
+  private boolean isConfigOBA; // is the user selecing a secret for an OBA?
+  private OnlineBackupApplication selectedOBA; // currently selected oba
+  private Handler obaHandler; // handler used when waiting for an OBA to send secrets for restore
   
   /** Called when the activity is first created. */
   @Override
@@ -107,6 +109,8 @@ public class SecretsListActivity extends ListActivity {
       finish();
       return;
     }
+
+    obaHandler = new Handler();
     
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
@@ -155,16 +159,27 @@ public class SecretsListActivity extends ListActivity {
       public void onItemClick(AdapterView<?> parent, View view, int position,
                               long id) {
         Secret secret = getSecret(position);
-        CharSequence password = secret.getPassword(false);
-        if (password.length() == 0)
-          password = getText(R.string.no_password);
-        
-        showToast(password);
-        // TODO(rogerta): to reliably record "view" access, we would want to
-        // checkpoint the secrets and save them here.  But doing so causes
-        // unacceptable delays is displaying the toast.
-        //FileUtils.saveSecrets(SecretsListActivity.this,
-        //                      secretsList_.getAllSecrets());
+        // are we configuring an OBA? if so they are picking which secret to use for that OBA
+        if(isConfigOBA) {
+          isConfigOBA = false;
+          OnlineBackupUtil.configureOBA(selectedOBA, secret, secretsList.getAllSecrets());
+
+          String template = getText(R.string.oba_configured).toString();
+          String msg = MessageFormat.format(template, selectedOBA.getDisplayName(),secret.getDescription());
+          showToast(msg);
+        } else {
+
+          CharSequence password = secret.getPassword(false);
+          if (password.length() == 0)
+            password = getText(R.string.no_password);
+
+          showToast(password);
+          // TODO(rogerta): to reliably record "view" access, we would want to
+          // checkpoint the secrets and save them here.  But doing so causes
+          // unacceptable delays is displaying the toast.
+          //FileUtils.saveSecrets(SecretsListActivity.this,
+          //                      secretsList_.getAllSecrets());
+        }
       }
     });
 
@@ -222,6 +237,8 @@ public class SecretsListActivity extends ListActivity {
   protected void onResume() {
     Log.d(LOG_TAG, "SecretsListActivity.onResume");
     super.onResume();
+    // send roll call for OBAs
+    OnlineBackupReceiver.sendRollCallBroadcast(this);
     
     // If checkKeyguard() returns true, then this activity has been finished.
     // We don't want to execute any more in this function.
@@ -337,7 +354,7 @@ public class SecretsListActivity extends ListActivity {
         }
         break;
       case R.id.list_backup:
-        backupSecrets();
+        showDialog(DIALOG_BACKUP);
         break;
       case R.id.list_restore:
         showDialog(DIALOG_CONFIRM_RESTORE);
@@ -449,24 +466,80 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
-  /** Holds the currently chosen item in the restore dialog. */
-  private class RestoreDialogState {
-    public int selected = 0;
-    private List<String> restorePoints; 
-    
-    /** Get an array of choices for the restore dialog. */
-    public CharSequence[] getRestoreChoices() {
-      restorePoints = FileUtils.getRestorePoints(SecretsListActivity.this);
-      return restorePoints.toArray(new CharSequence[restorePoints.size()]);
+  /**
+   * This is used for backup and restore dialogs
+   */
+  private class OnlineBackupAdapter extends ArrayAdapter<OnlineBackupApplication> {
+    private boolean configureApps; // true if all apps should be shown so that they can be selected for configuring
+                                   // otherwise only configured apps will be shown
+    private boolean restore; // true if the adapter is being used for a restore dialog
+
+    /**
+     * Creates a new adapter.
+     * @param context
+     * @param resource
+     * @param textViewResourceId
+     * @param configureApps true if all apps should be shown (even unconfigured apps)
+     * @param restore true if this adapter will be used for a restore dialog
+     */
+    public OnlineBackupAdapter(Context context, int resource, int textViewResourceId, boolean configureApps, boolean restore) {
+      super(context, resource, textViewResourceId);
+      this.configureApps = configureApps;
+      this.restore = restore;
+      updateAppList();
     }
-    
-    public String getSelectedRestorePoint() {
-      return restorePoints.get(selected);
+
+    /**
+     * Updates the list of Apps
+     */
+    public void updateAppList() {
+      clear();
+      // if we are not configuring apps, then only show the already configured obas
+      if(!configureApps) {
+        // this is slightly hackish
+        // if this is used for restore, we add the local restore points 1st
+        // then we add all the configured obas
+        if(restore) {
+          Log.d(LOG_TAG, "restore adapter");
+          addLocalRestoreOptions();
+        // not a restore, so show the sd card as a backup option
+        } else {
+          add(new OnlineBackupApplication(getString(R.string.sd_card),"secrets-sd-card"));
+        }
+        // for restore or backup we always add the configured OBAs to the list
+        for(OnlineBackupApplication app : OnlineBackupUtil.getConfiguredApps(secretsList.getAllSecrets())) {
+          add(app);
+        }
+        // only show the configure option if atleast 1 OBA is installed, and this is used for a backup dialog
+        if(!restore && OnlineBackupReceiver.getInstalledBackupApps().size() > 0)
+          add(new OnlineBackupApplication(getString(R.string.list_oba_configure), "configure"));
+      // else show all the installed obas that can be configured
+      } else {
+        addInstalledApps();
+      }
+    }
+
+    /**
+     * Adds all the installed apps to the list
+     */
+    private void addInstalledApps() {
+      for (OnlineBackupApplication app : OnlineBackupReceiver.getInstalledBackupApps()) {
+        add(app);
+      }
+    }
+
+    /**
+     * Adds all the local restore options
+     */
+    private void addLocalRestoreOptions() {
+      for (String localRestorePoint : FileUtils.getRestorePoints(SecretsListActivity.this)) {
+        add(new OnlineBackupApplication(localRestorePoint, "localrp"));
+      }
     }
   }
-  
+
   @Override
-  public Dialog onCreateDialog(int id) {
+  public Dialog onCreateDialog(final int id) {
     Dialog dialog = null;
 
     switch (id) {
@@ -498,23 +571,44 @@ public class SecretsListActivity extends ListActivity {
         break;
       }
       case DIALOG_CONFIRM_RESTORE: {
-        final RestoreDialogState state = new RestoreDialogState();
-        
-        DialogInterface.OnClickListener itemListener =
-          new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              state.selected = which;
-              dialog.dismiss();
-              restoreSecrets(state.getSelectedRestorePoint());
-            }
-          };
 
+        DialogInterface.OnClickListener itemListener =
+            new DialogInterface.OnClickListener() {
+
+              public void onClick(DialogInterface dialog, int which) {
+                AlertDialog alertDialog = (AlertDialog) dialog;
+                selectedOBA = (OnlineBackupApplication) alertDialog.getListView().getItemAtPosition(which);
+                Log.d(LOG_TAG, "Selected restore app: " + selectedOBA.getDisplayName() + ":" + selectedOBA.getClassId());
+                dialog.dismiss();
+                if (selectedOBA.getClassId().equals("localrp")) {
+                  restoreSecrets(selectedOBA.getDisplayName());
+                } else {
+                  OnlineBackupReceiver.sendRestoreRequest(selectedOBA, secretsList.getAllSecrets(),
+                      SecretsListActivity.this, obaHandler, new OnlineBackupReceiver.SecretsReceivedListener() {
+                        @Override
+                        public void run() {
+                          Log.d(LOG_TAG, "Secret received listener called " + this.secrets);
+                          if (this.secrets != null) {
+                            LoginActivity.restoreSecrets(this.secrets);
+                            secretsList.notifyDataSetInvalidated();
+                            setTitle();
+                            showToast(R.string.restore_succeeded);
+                          } else {
+                            showToast(R.string.restore_failed);
+                          }
+                        }
+                      });
+                }
+              }
+            };
+
+        OnlineBackupAdapter adapter = new OnlineBackupAdapter(SecretsListActivity.this, android.R.layout.select_dialog_singlechoice,
+          android.R.id.text1, false, true);
         dialog = new AlertDialog.Builder(this)
             .setTitle(R.string.dialog_restore_title)
             .setIcon(android.R.drawable.ic_dialog_alert)
-            .setSingleChoiceItems(state.getRestoreChoices(),
-                                  state.selected,
+            .setSingleChoiceItems(adapter,
+                                  0,
                                   itemListener)
             .create();
         break;
@@ -539,6 +633,56 @@ public class SecretsListActivity extends ListActivity {
             .setPositiveButton(R.string.login_reset_password_pos, listener)
             .setNegativeButton(R.string.login_reset_password_neg, null)
             .create();
+        break;
+      }
+
+      case DIALOG_BACKUP:
+      case DIALOG_CONFIG_ONLINE_BACKUP_APP: {
+        Log.d(LOG_TAG, "Showing backup/config dialog");
+
+        DialogInterface.OnClickListener itemListener =
+          new DialogInterface.OnClickListener() {
+            
+            public void onClick(DialogInterface dialog, int which) {
+              AlertDialog alertDialog = (AlertDialog) dialog;
+              selectedOBA = (OnlineBackupApplication)alertDialog.getListView().getItemAtPosition(which);
+              Log.d(LOG_TAG, "Selected app: " + selectedOBA.getDisplayName());
+              dialog.dismiss();
+              
+              if(id == DIALOG_CONFIG_ONLINE_BACKUP_APP) {
+                showToast(R.string.oba_config_instructions);
+                isConfigOBA = true;
+              } else {
+                  if(selectedOBA.getClassId().equals("secrets-sd-card")) {
+                      backupSecrets();
+                  } else if(selectedOBA.getClassId().equals("configure")) {
+                    showDialog(DIALOG_CONFIG_ONLINE_BACKUP_APP);
+                  } else {
+                    // send to the OBA
+                    if(OnlineBackupReceiver.sendSecrets(selectedOBA, secretsList.getAllSecrets(), SecretsListActivity.this)) {
+                      String template = getText(R.string.oba_sent).toString();
+                      String msg = MessageFormat.format(template, selectedOBA.getDisplayName());
+                      showToast(msg);
+                    } else {
+                      showToast(R.string.error_oba_backup_secrets);
+                    }
+                  }
+              }
+            }
+          };
+
+        OnlineBackupAdapter adapter = new OnlineBackupAdapter(SecretsListActivity.this, android.R.layout.select_dialog_singlechoice,
+          android.R.id.text1, id == DIALOG_CONFIG_ONLINE_BACKUP_APP, false);
+        adapter.notifyDataSetChanged();
+        String title = id == DIALOG_BACKUP ? getString(R.string.dialog_backup_title) : getString(R.string.dialog_configure_title);
+        dialog = new AlertDialog.Builder(this)
+            .setTitle(title)
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .setSingleChoiceItems(adapter,
+                                  0,
+                                  itemListener)
+            .create();
+        
         break;
       }
 
@@ -571,6 +715,14 @@ public class SecretsListActivity extends ListActivity {
         String msg = MessageFormat.format(template, importedFile.getName());
         alert.setMessage(msg);
         break;
+      }
+      case DIALOG_BACKUP:
+      case DIALOG_CONFIRM_RESTORE:
+      case DIALOG_CONFIG_ONLINE_BACKUP_APP: {
+        AlertDialog alert = (AlertDialog) dialog;
+        OnlineBackupAdapter adapter = (OnlineBackupAdapter)alert.getListView().getAdapter();
+        adapter.updateAppList();
+		break;
       }
     }
   }
