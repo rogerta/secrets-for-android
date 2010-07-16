@@ -23,7 +23,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.8 (c) 2010 Google Inc.</string>
+<string name="copyright">Version 1.7 (c) 2010 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="no_password">&lt; No PIN &gt;</string>
