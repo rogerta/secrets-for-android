@@ -15,7 +15,7 @@ Italian: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/va
 Chinese: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/values-zh-rCN/strings.xml<br>
 Chinese: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/values-zh-rTW/strings.xml<br>
 
-To translate into a new language, [http://secrets-for-android.googlecode.com/svn/trunk/res/values-fr/strings.xml download] the English version and then modify it as needed.  Each string that requires translation looks like this:
+To translate into a new language, [http://secrets-for-android.googlecode.com/svn/trunk/res/values/strings.xml download] the English version and then modify it as needed.  Each string that requires translation looks like this:
 
 {{{
   <string name="XXX">YYYY</string>
