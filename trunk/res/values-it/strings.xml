@@ -17,42 +17,42 @@ limitations under the License.
 <resources>
 <string name="app_name">Secrets</string>
 
-<string name="login_first_line">Benvenuti ai vostri segreti</string>
-<string name="login_enter_password">Entrate il password</string>
-<string name="login_validate_password">Ri-entrate il password</string>
+<string name="login_first_line">Benvenuto nei tuoi Secrets</string>
+<string name="login_enter_password">Inserire la password</string>
+<string name="login_validate_password">Re-inserire la password</string>
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
 <string name="copyright">Versione 1.7 (c) 2010 Google Inc.</string>
 
-<string name="invalid_password">Opla! Il password non e valido, per favore riprovate.</string>
-<string name="no_password">&lt; No PIN &gt;</string>
-<string name="error_reset_password">Ahi.  Non posso risettare il password.</string>
-<string name="error_save_secrets">Ahi.  Non posso salvare I vostri segreti.</string>
+<string name="invalid_password">Ops! La password non é valida, per favore riprova.</string>
+<string name="no_password">&lt; Nessun PIN &gt;</string>
+<string name="error_reset_password">Ahi.  Non posso resettare la password.</string>
+<string name="error_save_secrets">Ahi.  Non posso salvare i tuoi Secrets.</string>
 
 <string name="backup_succeeded">Copia di sicurezza riuscita.</string>
-<string name="restore_succeeded">Restituzione riuscita.</string>
-<string name="restore_failed">Ahi.  Non posso restituire i vostri segreti.  Asicurarvi che il vostro password e l\'ho stesso di quello usato per creare la copia de sicurezza.</string>
-<string name="restore_file_too_old">E tempo di fare una copia di sicurezza dei vostri segreti?</string>
+<string name="restore_succeeded">Ripristino riuscito.</string>
+<string name="restore_failed">Ahi.  Non posso ripristinare i tuoi Secrets.  Assicurarsi che la password sia la stessa usata per creare la copia di sicurezza.</string>
+<string name="restore_file_too_old">E\' tempo di fare una copia di sicurezza dei tuoi Secrets?</string>
 
-<string name="export_succeeded">Esportazione del file sulla scheda SD e riuscita.\n\nATTENZIONE: Il file salvato sulla scheda SD non et protetto con un password!</string>
-<string name="export_failed">Ahi.  Non ho potuto fare una esportazione dei vostri segreti.</string>
+<string name="export_succeeded">Esportazione del file sulla scheda SD riuscita.\n\nATTENZIONE: Il file salvato sulla scheda SD non é protetto con una password!</string>
+<string name="export_failed">Ahi.  Non ho potuto fare un\' esportazione dei tuoi Secrets.</string>
 
-<string name="import_not_found">Il file CSV non e stato trovato sulla scheda SD.\n\nSegreti possono essere importati dai file seguenti:\n\n{0}</string>
-<string name="import_partial">Hmmm, solo qualche segreti sono stati importati con successo.  Verificate i vostri segreti e che il \'\'{0}\'\' file sia buono.</string>
-<string name="import_failed">Ahi.  Non posso fare l\'importazione dei vostri segreti dal \'\'{0}\'\'.</string>
+<string name="import_not_found">Il file CSV non è stato trovato sulla scheda SD.\n\nSecrets possono essere importati dai file seguenti:\n\n{0}</string>
+<string name="import_partial">Hmmm, solo qualche Secrets é stato importato con successo.  Verifica i tuoi Secrets e che il \'\'{0}\'\' file sia corretto.</string>
+<string name="import_failed">Ahi.  Non posso fare l\'importazione dei tuoi Secrets dal \'\'{0}\'\'.</string>
 
 <string name="login_instruction_1">
-Creare un password per proteggere i vostri segreti.  Usate lettere, numeri, e 
-punteggiature pur che il vostro password sia difficile a indovinare.\nDopo avere entrato il password,
+Crea una password per proteggere i tuoi Secrets.  Usa lettere, numeri, e 
+punteggiatura affinché la tua password sia difficile da indovinare.\nDopo aver inserito la password,
 premere \u21b5 o Fine.
 </string>
 <string name="login_instruction_2">
-Ri-entrate il vostro password per confermarlo. Se ce un problema, ricomincerete. 
+Ri-inserire la password per confermarla. Se c\'è un problema, ricomincerete. 
 </string>
 <string name="edit_instructions">
-Tutte le informazioni sono facoltativi, entrate quelle che avete bisogno.
-Una volta finiti, premere il bottone per tornare dietro, o MENU per altre scelte.
+Tutte le informazioni sono facoltative, inserisci quelle di cui hai bisogno.
+Una volta finito, premere il bottone per tornare indietro, o MENU per altre scelte.
 </string>
 
 <string name="friendly_id_format">
@@ -63,45 +63,45 @@ Una volta finiti, premere il bottone per tornare dietro, o MENU per altre scelte
 </string>
 
 <string name="list_name">Segreti</string>
-<string name="list_no_data_1_1">Premere MENU puoi \"Aggiungere\" per cominciare.</string>
-<string name="list_no_data">Premere \"Aggiungere\" per cominciare.</string>
+<string name="list_no_data_1_1">Premere MENU poi \"Aggiungi\" per cominciare.</string>
+<string name="list_no_data">Premere \"Aggiungi\" per cominciare.</string>
 <string name="list_descption_label">Sito Internet/Descrizione</string>
-<string name="list_username_label">Nome d\'utilizzatore/Id</string>
+<string name="list_username_label">Nome dell\' utilizzatore/Id</string>
 <string name="list_password_label">Password/PIN</string>
-<string name="list_email_label">Corriere electronico</string>
+<string name="list_email_label">Posta elettronica</string>
 <string name="list_notes_label">Nota</string>
-<string name="list_add_secret">Aggiungere segreto</string>
-<string name="list_instructions">Toccare il segreto per rivelare il suo PIN.  Toccare et tenete il dito per cambiarlo.</string>
-<string name="login_menu_reset_password">Risettare password</string>
+<string name="list_add_secret">Aggiungi Secrets</string>
+<string name="list_instructions">Selezionare il Secrets per rivelare il suo PIN.  Selezionare e tenere premuto per cambiarlo.</string>
+<string name="login_menu_reset_password">Resetta password</string>
 <string name="login_menu_reset_password_message">
-Risettare il vostro password cancellerà tutti i vostri segreti!
-Siete sicuri?
+Resettare la tua password cancellerà tutti i tuoi Secrets!
+Sei sicuro?
 </string>
 <string name="login_reset_password_pos">Si</string>
-<string name="login_reset_password_neg">Non</string>
+<string name="login_reset_password_neg">No</string>
 
 <string name="edit_menu_delete_secret_message">
-Siete sicuri di volere cancellare \'\'{0}\'\'?
+Sei sicuro di voler cancellare \'\'{0}\'\'?
 </string>
 
-<string name="dialog_restore_title">Fare una ristorazione da:</string>
+<string name="dialog_restore_title">Ripristino da:</string>
 
 <string name="edit_menu_import_secrets_message">Importazione riuscita.  Cancellare \'\'{0}\'\' ora?</string>
 
-<string name="copied_to_clipboard">{0}\'\'s PIN e stato copiato al clipboard.</string>
+<string name="copied_to_clipboard">Il PIN di {0} é stato copiato negli Appunti.</string>
 
-<string name="list_menu_add">Aggiungere</string>
-<string name="list_menu_edit">Editare</string>
-<string name="list_menu_save">Salvare</string>
-<string name="list_menu_discard">Eliminare</string>
-<string name="list_menu_delete">Cancellare</string>
-<string name="list_menu_access">Historia</string>
+<string name="list_menu_add">Aggiungi</string>
+<string name="list_menu_edit">Edita</string>
+<string name="list_menu_save">Salva</string>
+<string name="list_menu_discard">Elimina</string>
+<string name="list_menu_delete">Cancella</string>
+<string name="list_menu_access">Storico</string>
 <string name="list_menu_backup">Copia di sicurezza</string>
-<string name="list_menu_restore">Ristorazione</string>
+<string name="list_menu_restore">Ripristino</string>
 <string name="list_menu_import">Importazione</string>
 <string name="list_menu_export">Esportazione</string>
-<string name="list_menu_copy_password_to_clipoboard">Al clipboard</string>
-<string name="list_menu_generate_password">Generazione</string>
+<string name="list_menu_copy_password_to_clipoboard">Agli appunti</string>
+<string name="list_menu_generate_password">Genera PIN</string>
 
 <string name="log_name">Accesso ai log</string>
 <string name="log_name_format">Accesso ai log per {0}</string>
@@ -114,8 +114,8 @@ Siete sicuri di volere cancellare \'\'{0}\'\'?
 <string name="log_viewed">Consultato</string>
 <string name="log_exported">Esportato</string>
 
-<string name="error_missing_ciphers">Opla! Il password non e valido, non posso salvare.</string>
-<string name="error_cannot_move_existing">Opla! Non posso muovere il file esistente.</string>
-<string name="error_cannot_move_new">Opla! Non posso rinominare il nuovo file.</string>
+<string name="error_missing_ciphers">Ops! La password non è valida, non posso salvare.</string>
+<string name="error_cannot_move_existing">Ops! Non posso muovere il file esistente.</string>
+<string name="error_cannot_move_new">Ops! Non posso rinominare il nuovo file.</string>
 
 </resources>
