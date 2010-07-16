@@ -9,13 +9,13 @@ _*Secrets for Android*_ was initially available only in English because that is 
 
 If you would like to see *_Secrets for Android*_ available in your favourite language, why don't you help out?  Its quite easy.  Each language is structured as a simple text file, you can see some examples here:
 
-English: http://secrets-for-android.googlecode.com/svn/trunk/res/values/strings.xml<br>
-French: http://secrets-for-android.googlecode.com/svn/trunk/res/values-fr/strings.xml<br>
-Italian: http://secrets-for-android.googlecode.com/svn/trunk/res/values-it/strings.xml<br>
-Chinese: http://secrets-for-android.googlecode.com/svn/trunk/res/values-zh-rCN/strings.xml<br>
-Chinese: http://secrets-for-android.googlecode.com/svn/trunk/res/values-zh-rTW/strings.xml<br>
+English: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/values/strings.xml<br>
+French: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/values-fr/strings.xml<br>
+Italian: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/values-it/strings.xml<br>
+Chinese: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/values-zh-rCN/strings.xml<br>
+Chinese: http://code.google.com/p/secrets-for-android/source/browse/trunk/res/values-zh-rTW/strings.xml<br>
 
-To translate into a new language, download the English version and then modify it as needed.  Each string that requires translation looks like this:
+To translate into a new language, [http://secrets-for-android.googlecode.com/svn/trunk/res/values-fr/strings.xml download] the English version and then modify it as needed.  Each string that requires translation looks like this:
 
 {{{
   <string name="XXX">YYYY</string>
