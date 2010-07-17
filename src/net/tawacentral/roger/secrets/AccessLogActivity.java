@@ -22,7 +22,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 
-import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -120,41 +119,44 @@ public class AccessLogActivity extends ListActivity {
 
     long time = entry.getTime();
     long diff = (now - time) / 1000;
-    String s;
-
+    String verb;
+    
     switch(entry.getType()) {
       case LogEntry.CREATED:
-        s = context.getText(R.string.log_created).toString() + " ";
+        verb = context.getText(R.string.log_created).toString();
         break;
       case LogEntry.CHANGED:
-        s = context.getText(R.string.log_changed).toString() + " ";
+        verb = context.getText(R.string.log_changed).toString();
         break;
       case LogEntry.VIEWED:
-        s = context.getText(R.string.log_viewed).toString() + " ";
+        verb = context.getText(R.string.log_viewed).toString();
         break;
       case LogEntry.EXPORTED:
-        s = context.getText(R.string.log_exported).toString() + " ";
+        verb = context.getText(R.string.log_exported).toString();
         break;
       default:
-        s = "";
+        // Should never really get here.
+        verb = "?";
     }
 
+    String s;
     if (diff < ONE_MINUTE_IN_SECS) {
-      s += context.getText(R.string.log_sec).toString();
-      //String pattern = context.getText(R.string.log_sec).toString();
-      // s += MessageFormat.format(pattern, diff);
+      String pattern = context.getText(R.string.log_sec).toString();
+       s = MessageFormat.format(pattern, verb);
     } else if (diff < ONE_HOUR_IN_SECS) {
       String pattern = context.getText(R.string.log_min).toString();
-      s += MessageFormat.format(pattern, diff / 60);
-    } else if (time > midnight) {
-      String pattern = context.getText(R.string.log_today).toString();
-      s += MessageFormat.format(pattern, new Date(time));
-    } else if (time > yesterdayMidnight) {
-      String pattern = context.getText(R.string.log_yesterday).toString();
-      s += MessageFormat.format(pattern, new Date(time));
+      s = MessageFormat.format(pattern, verb, diff / 60);
     } else {
-      Date d = new Date(time);
-      s += DateFormat.getDateInstance(DateFormat.MEDIUM).format(d);
+      String pattern;
+      if (time > midnight) {
+        pattern = context.getText(R.string.log_today).toString();
+      } else if (time > yesterdayMidnight) {
+        pattern = context.getText(R.string.log_yesterday).toString();
+      } else {
+        pattern = context.getText(R.string.log_date).toString();
+      }
+
+      s = MessageFormat.format(pattern, verb, new Date(time));
     }
 
     return s;

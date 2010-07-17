@@ -109,10 +109,20 @@ Are you sure you want to delete \'\'{0}\'\'?
 
 <string name="log_name">Access log</string>
 <string name="log_name_format">Access log for {0}</string>
-<string name="log_sec">moments ago</string>
-<string name="log_min">{0} minutes ago</string>
-<string name="log_today">today at {0,time,short}</string>
-<string name="log_yesterday">yesterday at {0,time,short}</string>
+
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">{0} moments ago</string>
+<string name="log_min">{0} {1} minutes ago</string>
+<string name="log_today">{0} today at {1,time,short}</string>
+<string name="log_yesterday">{0} yesterday at {1,time,short}</string>
+<string name="log_date">{0} {1,date,medium}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
 <string name="log_created">Created</string>
 <string name="log_changed">Modified</string>
 <string name="log_viewed">Viewed</string>

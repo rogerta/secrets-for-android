@@ -84,10 +84,20 @@ limitations under the License.
 
 <string name="log_name">訪問日志</string>
 <string name="log_name_format">{0}訪問日志</string>
-<string name="log_sec">剛剛</string>
-<string name="log_min">{0}分鐘前</string>
-<string name="log_today">今天{0,time,short}</string>
-<string name="log_yesterday">昨天{0,time,short}</string>
+
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">{0}剛剛</string>
+<string name="log_min">{0}{1}分鐘前</string>
+<string name="log_today">{0}今天{1,time,short}</string>
+<string name="log_yesterday">{0}昨天{1,time,short}</string>
+<string name="log_date">{0}{1,date,medium}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
 <string name="log_created">創建:</string>
 <string name="log_changed">修改:</string>
 <string name="log_viewed">查看:</string>
