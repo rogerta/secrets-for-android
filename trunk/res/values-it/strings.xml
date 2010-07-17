@@ -105,10 +105,20 @@ Sei sicuro di voler cancellare \'\'{0}\'\'?
 
 <string name="log_name">Accesso ai log</string>
 <string name="log_name_format">Accesso ai log per {0}</string>
-<string name="log_sec">un attimo fa</string>
-<string name="log_min">{0} minuti fa</string>
-<string name="log_today">oggi a {0,time,short}</string>
-<string name="log_yesterday">ieri a {0,time,short}</string>
+
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">{0} un attimo fa</string>
+<string name="log_min">{0} {1} minuti fa</string>
+<string name="log_today">{0} oggi a {1,time,short}</string>
+<string name="log_yesterday">{0} ieri a {1,time,short}</string>
+<string name="log_date">{0} {1,date,medium}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
 <string name="log_created">Creato</string>
 <string name="log_changed">Modificato</string>
 <string name="log_viewed">Consultato</string>
