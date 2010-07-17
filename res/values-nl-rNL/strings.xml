@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<resources>
+<string name="app_name">Geheimen</string>
+
+<string name="login_first_line">Welkom bij je Geheimen</string>
+<string name="login_enter_password">Voer wachtwoord in</string>
+<string name="login_validate_password">Valideer wachtwoord</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">Version 1.8 (c) 2010 Google Inc.</string>
+
+<string name="invalid_password">Oeps! Het wachtwoord is onjuist, probeer alstublieft opnieuw.</string>
+<string name="no_password">&lt; Geen PIN &gt;</string>
+<string name="error_reset_password">Oh jee.  Niet in staat om uw wachtwoord te resetten.</string>
+<string name="error_save_secrets">Oh jee.  Niet in staat om uw geheimen op te slaan.</string>
+
+<string name="backup_succeeded">Backup succesvol.</string>
+<string name="restore_succeeded">Terugzetten succesvol.</string>
+<string name="restore_failed">Oh jee.  Niet in staat om uw gegevens terug te halen.  Controleer of uw wachtwoord hetzelfde is als het wachtwoord wat werd gebruikt om de backup te maken.</string>
+<string name="restore_file_too_old">Tijd om uw geheimen op te slaan?</string>
+
+<string name="export_succeeded">Bestand succesvol opgeslagen op de SD-kaart.\n\nVOORZICHTIG: Het geëxporteerde bestand is niet met een wachtwoord beveiligd!</string>
+<string name="export_failed">Oh jee.  Niet in staat om uw geheimen te exporteren.</string>
+
+<string name="import_not_found">Geen CSV bestand gevonden op de SD-kaart.\n\nGeheimen kunnen uit de volgende bestanden worden geïmporteerd:\n\n{0}</string>
+<string name="import_partial">Hmmm, slechts sommige geheimen zijn goed geïmporteerd.  Controleer uw geheimen en het \'\'{0}\'\' bestand op correctheid.</string>
+<string name="import_failed">Oh jee. Niet in staat om uw geheimen te importeren vanuit \'\'{0}\'\'.</string>
+
+<string name="login_instruction_1">
+Maak een wachtwoord aan om uw geheimen te beschermen.  Gebruik letters, nummers en
+lettertekens om het wachtwoord moeilijk raadbaar te maken.\nWanneer u klaar bent met 
+typen druk \u21b5 of Gereed.
+</string>
+<string name="login_instruction_2">
+Valideer uw nieuwe wachtwoord door het opnieuw te typen.  Als er iets misgaat kunt
+u het nogmaals proberen. 
+</string>
+<string name="edit_instructions">
+Alle informatie is optioneel, voer zo veel of weinig in als u nodig heeft.
+
+Wanneer u klaar bent, druk op de TERUG knop of MENU voor meer opties.
+</string>
+
+<string name="friendly_id_format">
+{0}, {1,date,short} {1,time,short}
+</string>
+<string name="friendly_id_format_2">
+{1,date,short} {1,time,short}
+</string>
+
+<string name="list_name">Geheimen</string>
+<string name="list_no_data_1_1">Druk op MENU, vervolgens \"Voeg toe\" om te beginnen.</string>
+<string name="list_no_data">Druk op \"Voeg toe\" om te beginnen.</string>
+<string name="list_descption_label">Website/Beschrijving</string>
+<string name="list_username_label">Gebruikersnaam/ID</string>
+<string name="list_password_label">Wachtwoord/PIN</string>
+<string name="list_email_label">Email</string>
+<string name="list_notes_label">Notities</string>
+<string name="list_add_secret">Voeg geheim toe</string>
+<string name="list_instructions">Klik op geheim om het wachtwoord te tonen. Klik en hou vast om te veranderen.</string>
+
+<string name="login_menu_reset_password">Reset wachtwoord</string>
+<string name="login_menu_reset_password_message">
+Het resetten van je wachtwoord verwijderd al je geheimen!
+Weet je het heel zeker?
+</string>
+<string name="login_reset_password_pos">Ja</string>
+<string name="login_reset_password_neg">Nee</string>
+
+<string name="edit_menu_delete_secret_message">
+Weet je zeker dat je \'\'{0}\'\' wil wissen?
+</string>
+
+<string name="dialog_restore_title">Zet terug van:</string>
+
+<string name="edit_menu_import_secrets_message">Import succesvol. \'\'{0}\'\' nu wissen?</string>
+
+<string name="copied_to_clipboard">{0}\'\'s PIN is gekopiëerd naar het klembord.</string>
+
+<string name="list_menu_add">Voeg toe</string>
+<string name="list_menu_edit">Pas aan</string>
+<string name="list_menu_save">Sla op</string>
+<string name="list_menu_discard">Annuleer</string>
+<string name="list_menu_delete">Wis</string>
+<string name="list_menu_access">Geschiedenis</string>
+<string name="list_menu_backup">Backup</string>
+<string name="list_menu_restore">Zet terug</string>
+<string name="list_menu_import">Importeer</string>
+<string name="list_menu_export">Exporteer</string>
+<string name="list_menu_copy_password_to_clipoboard">Naar klembord</string>
+<string name="list_menu_generate_password">Genereer</string>
+
+<string name="log_name">Toegangslog</string>
+<string name="log_name_format">Toegangslog voor {0}</string>
+
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">pas geleden {0}</string>
+<string name="log_min">{1} minuten geleden {0}</string>
+<string name="log_today">vandaag om {1,time,short} {0}</string>
+<string name="log_yesterday">gisteren om {1,time,short} {0}</string>
+<string name="log_date">{1,date,medium} {0}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
+<string name="log_created">gemaakt</string>
+<string name="log_changed">aangepast</string>
+<string name="log_viewed">bekeken</string>
+<string name="log_exported">geëxporteerd</string>
+
+<string name="error_missing_ciphers">Oh jee: opslaan onmogelijk, wachtwoord incorrect.</string>
+<string name="error_cannot_move_existing">Oh jee: bestaand bestand kan niet weggehaald worden.</string>
+<string name="error_cannot_move_new">Oh jee: kan nieuw bestand niet hernoemen.</string>
+
+</resources>
