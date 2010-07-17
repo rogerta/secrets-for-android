@@ -24,7 +24,9 @@ limitations under the License.
     android:installLocation="auto">
   <!--For maximum compatibility with all Android devices, I am going to leave
       the min sdk to 2, and check at runtime the actual version of the phone
-      before making API calls that are limited to newer versions -->
+      before making API calls that are limited to newer versions.  If the
+      min sdk is ever changed to 4 or higher, the support-screens element
+      below can probably be removed -->
   <uses-sdk android:minSdkVersion="2"></uses-sdk>
   <application android:icon="@drawable/icon"
       android:label="@string/app_name"
@@ -61,7 +63,11 @@ limitations under the License.
         android:excludeFromRecents="true"
         android:stateNotNeeded="true"
         android:finishOnTaskLaunch="true"></activity>
-  <service android:name=".SaveService"></service>
-</application>
+    <service android:name=".SaveService"></service>
+  </application>
+  <!-- the supports-screens element is needed for now only because min sdk is 2.
+       if this value is increased in the future, should re-evaluate whether
+       this element is still needed.  -->
+  <supports-screens android:smallScreens="true"></supports-screens>
 </manifest>
  
