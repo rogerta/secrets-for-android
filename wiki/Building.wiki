@@ -1,11 +1,8 @@
 #summary Build environments
 #labels Phase-Implementation
 
-The source tree includes project files for building the Android application and the accompanying !AppEngine backup service with Eclipse.
+The source tree includes project files for building the Android application with Eclipse.
 
-<wiki:toc max_depth="3" />
-
-<br/>
 =Supported Platforms for Android Development=
 
 ==Linux-based Environment==
@@ -43,29 +40,3 @@ Make sure that the project is set to target JDK 1.6, otherwise the @Override tag
   * choose menu item Project / Properties
   * click on Java Compiler along the left-hand side
   * make sure that the Compiler compliance level is set to 1.6
-
-<br/>
-=Supported Platforms for !AppEngine Development=
-
-==Linux-based Environment==
-  * Ubuntu 8.10 Intrepid Ibex
-  * Python 2.5.2
-  * Eclipse 3.4.2, Build id: M20090211-1700
-  * Google !AppEngine SDK 1.2.2
-  * {{{[Optional]}}} Aptana Pydev Python Development Environment 1.4.4.2636
-
-==Building==
-
-To run a the backup server locally on your machine, run the following commands:
-
-{{{
-  $ cd ${SECRETS_HOME}
-  $ ${APPENGINE_HOME}/dev_appserver.py appengine/
-}}}
-
-After making any changes to the server, run the unit tests in another shell prompt with the commands:
-
-{{{
-  $ cd ${SECRETS_HOME}
-  $ python appengine/tests.py
-}}}
