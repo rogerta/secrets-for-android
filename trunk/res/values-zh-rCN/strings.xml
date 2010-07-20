@@ -22,7 +22,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">版本号 1.9 (c) 2010 Google Inc.</string>
+<string name="copyright">版本号 1.9.1 (c) 2010 Google Inc.</string>
 
 <string name="invalid_password">密码不对，请再试一次。</string>
 <string name="no_password">&lt; 没有PIN &gt;</string>
