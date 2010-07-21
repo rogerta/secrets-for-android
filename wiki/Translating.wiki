@@ -21,7 +21,7 @@ To translate into a new language, [http://secrets-for-android.googlecode.com/svn
   <string name="XXX">YYYY</string>
 }}}
 
-Only change the YYYY part, leave the rest as is.
+Only change the YYYY part, leave the rest as is, with one exception: Inside the YYYY part, you may see strings of the form `{0}`, or `{1,date,short}`.  Please do not translate these parts.
 
 Once the translation is complete, either send me an email with the translated {{{strings.xml}}} file, or open a new [http://code.google.com/p/secrets-for-android/issues/entry issue] and attach the translation to it.
 
