@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<resources>
+<string name="app_name">Secrets (Geheimnisse)</string>
+
+<string name="login_first_line">Willkommen zu Ihren Geheimnissen</string>
+<string name="login_enter_password">Passwort eingeben</string>
+<string name="login_validate_password">Passwort wiederholen</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">Version 1.9 (c) 2010 Google Inc.</string>
+
+<string name="invalid_password">Oops! Das Passwort ist falsch, bitte noch einmal versuchen.</string>
+<string name="no_password">&lt; keine PIN &gt;</string>
+<string name="error_reset_password">Uh oh.  Passwort konnte nicht zurückgesetzt werden.</string>
+<string name="error_save_secrets">Uh oh.  Ihre Geheimnisse konnten nicht gespeichert werden.</string>
+
+<string name="backup_succeeded">Datensicherung erfolgreich.</string>
+<string name="restore_succeeded">Datenwiederherstellung erfolgreich.</string>
+<string name="restore_failed">Uh oh.  Ihre Geheimnisse konnten nicht wiederhergestellt werden.  Stellen Sie sicher, dass das Passwort das Selbe ist, mit dem die Datensicherung erstellt wurde.</string>
+<string name="restore_file_too_old">Zeit ihre Geheimnisse zu sichern?</string>
+
+<string name="export_succeeded">Datei erfolgreich auf der SD-Karte gespeichert.\n\nACHTUNG: Die exportierte Datei ist nicht mit einem Passwort geschützt!</string>
+<string name="export_failed">Uh oh.  Ihre Geheimnisse konnten nicht exportiert werden.</string>
+
+<string name="import_not_found">Keine CSV-Datei auf der SD-Karte gefunden.\n\nGeheimnisse können nur aus folgenden Dateien importiert werden:\n\n{0}</string>
+<string name="import_partial">Hmmm, nur einige Geheimnisse konnten erfolgreich importiert werden.  Überprüfen Sie ihre Geheimnisse und die Datei \'\'{0}\'\' auf Richtigkeit.</string>
+<string name="import_failed">Uh oh.  Ihre Geheimnisse konnten nicht aus der Datei \'\'{0}\'\' importiert werden.</string>
+
+<string name="login_instruction_1">
+Erstellen Sie ein Passwort um Ihre Geheimnisse zu schützen.  Verwenden Sie Buchstaben, Ziffern und
+Satzzeichen um ein Erraten des Passworts zu erschweren.\nNach der Eingabe des Passworts drücken Sie
+\u21b5 oder Fertig.
+</string>
+<string name="login_instruction_2">
+Geben Sie zur Bestätigung Ihr Passwort erneut ein.  Sollten Sie sich vertippt haben,
+dann starten Sie die Eingabe erneut. 
+</string>
+<string name="edit_instructions">
+Alle Informationen sind optional, geben Sie so viel oder so wenig wie benötigt wird ein.
+
+Wenn Sie fertig sind drücken Sie auf den Zurück-Knopf oder auf MENU für mehr Optionen.
+</string>
+
+<string name="friendly_id_format">
+{0}, {1,date,short} {1,time,short}
+</string>
+<string name="friendly_id_format_2">
+{1,date,short} {1,time,short}
+</string>
+
+<string name="list_name">Geheimniss(e)</string>
+<string name="list_no_data_1_1">Drücken Sie MENU und anschließen \"Hinzufügen\" um zu beginnen.</string>
+<string name="list_no_data">Drücken Sie \"Hinzufügen\" um zu beginnen.</string>
+<string name="list_descption_label">Webseite/Beschreibung</string>
+<string name="list_username_label">Benutzername/ID</string>
+<string name="list_password_label">Passwort/PIN</string>
+<string name="list_email_label">E-Mailadresse</string>
+<string name="list_notes_label">Notizen</string>
+<string name="list_add_secret">Geheimnis hinzufügen</string>
+<string name="list_instructions">Tippen Sie kurz auf ein Geheimnis um den PIN angezeigt zu bekommen.  Tippen Sie länger darauf,
+um es zu ändern.</string>
+
+<string name="login_menu_reset_password">Passwort zurücksetzen</string>
+<string name="login_menu_reset_password_message">
+Wenn Sie das Passwort zurücksetzen, dann werden auch alle Ihre Geheimnisse gelöscht!
+Sind Sie sich wirklich sicher?
+</string>
+<string name="login_reset_password_pos">Ja</string>
+<string name="login_reset_password_neg">Nein</string>
+
+<string name="edit_menu_delete_secret_message">
+Sind Sie sicher, dass Sie Geheimnis \'\'{0}\'\' löschen wollen?
+</string>
+
+<string name="dialog_restore_title">Wiederherstellen von:</string>
+
+<string name="edit_menu_import_secrets_message">Datei erfolgreich importiert.  Soll die Datei \'\'{0}\'\' jetzt gelöscht werden?</string>
+
+<string name="copied_to_clipboard">Die PIN von \'\'{0}\'\' wurde in die Zwischenablage kopiert.</string>
+
+<string name="list_menu_add">Hinzufügen</string>
+<string name="list_menu_edit">Editieren</string>
+<string name="list_menu_save">Speichern</string>
+<string name="list_menu_discard">Verwerfen</string>
+<string name="list_menu_delete">Löschen</string>
+<string name="list_menu_access">Verlauf</string>
+<string name="list_menu_backup">Datensicherung</string>
+<string name="list_menu_restore">Datenwiederherstellung</string>
+<string name="list_menu_import">Import</string>
+<string name="list_menu_export">Export</string>
+<string name="list_menu_copy_password_to_clipoboard">In die Zwischenablage</string>
+<string name="list_menu_generate_password">Generieren</string>
+
+<string name="log_name">Zugriffsprotokoll</string>
+<string name="log_name_format">Zugriffsprotokoll für \'\'{0}\'\'</string>
+
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">{0} vor wenigen Augenblicken</string>
+<string name="log_min">{0} vor {1} Minute(n)</string>
+<string name="log_today">{0} heute um {1,time,short}</string>
+<string name="log_yesterday">{0} gestern um {1,time,short}</string>
+<string name="log_date">{0} {1,date,medium}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
+<string name="log_created">Erstellt</string>
+<string name="log_changed">Geändert</string>
+<string name="log_viewed">Angesehen</string>
+<string name="log_exported">Exportiert</string>
+
+<string name="error_missing_ciphers">Uh oh: Speichern nicht möglich, das Passwort ist ungültig.</string>
+<string name="error_cannot_move_existing">Uh oh: Kann die bestehende Datei nicht überschreiben.</string>
+<string name="error_cannot_move_new">Uh oh: Die neue Datei konnte nicht umbenannt werden.</string>
+
+</resources>
