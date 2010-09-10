@@ -596,7 +596,9 @@ public class SecretsListActivity extends ListActivity {
       saveSecret();
       animateFromEditView();
       return true;
-    } else if (KeyEvent.KEYCODE_MENU == keyCode) {
+    } else if (KeyEvent.KEYCODE_SEARCH == keyCode) {
+      OS.showSoftKeyboard(this, getListView());
+      return true;
     }
 
     return super.onKeyDown(keyCode, event);
