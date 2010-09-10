@@ -50,6 +50,7 @@ public class OS {
   }
 
   private static Method mHideSoftInputFromWindow;
+  private static Method mShowSoftInput;
   
   /** Does the device support the cupcake (Android 1.5) APIs? */
   public static boolean isAndroid15() {
@@ -89,6 +90,38 @@ public class OS {
       // This exception is normal in pre-cupcake devices.
       if (isAndroid15())
         Log.d(LOG_TAG, "hideSoftKeyboard", ex);
+    }
+  }
+  
+  /** Show the soft keyboard if not visible. */
+  public static void showSoftKeyboard(Context ctx, View view) {
+    /*if (isAndroid15()) {
+      InputMethodManager manager = (InputMethodManager)
+          ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
+      if (manager.isActive()) {
+        manager.showSoftInput(view, 0, null);
+      }
+    }*/
+    try {
+      if (null == mShowSoftInput) {
+        Class<?> clazz = (Class<?>) Class.forName(
+            "android.view.inputmethod.InputMethodManager");
+        if (null != clazz) {
+          Class<?> clazzRR = (Class<?>) Class.forName(
+              "android.os.ResultReceiver");
+          mShowSoftInput = clazz.getMethod("showSoftInput", View.class,
+                                           int.class, clazzRR);
+        }
+      }
+      
+      if (null != mShowSoftInput) {
+        Object manager = ctx.getSystemService("input_method");
+        mShowSoftInput.invoke(manager, view, new Integer(0), null);
+      }
+    } catch (Exception ex) {
+      // This exception is normal in pre-cupcake devices.
+      if (isAndroid15())
+        Log.d(LOG_TAG, "showSoftKeyboard", ex);
     }
   }
   
