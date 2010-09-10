@@ -19,8 +19,8 @@ limitations under the License.
      the strings.xml file -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.tawacentral.roger.secrets"
-    android:versionName="1.9.2"
-    android:versionCode="26"
+    android:versionName="1.9.3"
+    android:versionCode="27"
     android:installLocation="auto">
   <!--For maximum compatibility with all Android devices, I am going to leave
       the min sdk to 2, and check at runtime the actual version of the phone
