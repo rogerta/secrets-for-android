@@ -36,7 +36,7 @@ import java.util.TreeSet;
  * @author rogerta
  */
 public class SecretsListAdapter extends BaseAdapter implements Filterable {
-  private static final char DOT = '.';
+  public static final char DOT = '.';
 
   // There are two secrets arrays.  secrets represents the array
   // use to implement the Adapter interface of this class (inherited from

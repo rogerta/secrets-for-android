@@ -57,7 +57,14 @@ limitations under the License.
     <activity android:name=".SecretsListActivity"
         android:label="@string/list_name"
         android:excludeFromRecents="true"
-        android:finishOnTaskLaunch="true"></activity>
+        android:finishOnTaskLaunch="true"
+        android:launchMode="singleTop">
+      <intent-filter>
+        <action android:name="android.intent.action.SEARCH" />
+      </intent-filter>
+      <meta-data android:name="android.app.searchable"
+          android:resource="@xml/searchable"/>
+    </activity>
     <activity android:name=".AccessLogActivity"
         android:label="@string/log_name"
         android:excludeFromRecents="true"

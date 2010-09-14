@@ -27,6 +27,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.KeyguardManager;
 import android.app.ListActivity;
+import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -75,7 +76,7 @@ public class SecretsListActivity extends ListActivity {
       "net.tawacentreal.secrets.accesslog";
 
   /** Tag for logging purposes. */
-  public static final String LOG_TAG = "Secrets";
+  public static final String LOG_TAG = "SecretsListActivity";
 
   public static final String STATE_IS_EDITING = "is_editing";
   public static final String STATE_EDITING_POSITION = "editing_position";
@@ -93,7 +94,7 @@ public class SecretsListActivity extends ListActivity {
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
   private boolean isConfigChange;  // being destroyed for config change?
-  
+
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle state) {
@@ -101,13 +102,20 @@ public class SecretsListActivity extends ListActivity {
     super.onCreate(state);
     setContentView(R.layout.list);
 
+    // We should not get a search intent upon launch.
+    if (Intent.ACTION_SEARCH.equals(getIntent().getAction())) {
+      Log.e(LOG_TAG, "onCreate: not expecting a search intent");
+      finish();
+      return;
+    }
+
     // If for any reason we get here and there is no secrets list, then we
     // cannot continue.  Finish the activity and return.
     if (null == LoginActivity.getSecrets()) {
       finish();
       return;
     }
-    
+
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
 
@@ -128,6 +136,10 @@ public class SecretsListActivity extends ListActivity {
     // animation.
     root = findViewById(R.id.list_container);
     edit = findViewById(R.id.edit_layout);
+
+    // When the SEARCH key is pressed, make sure the global search dialog
+    // is displayed.
+    setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
 
     // If there is state information, use it to initialize the activity.
     if (null != state) {
@@ -158,7 +170,7 @@ public class SecretsListActivity extends ListActivity {
         CharSequence password = secret.getPassword(false);
         if (password.length() == 0)
           password = getText(R.string.no_password);
-        
+
         showToast(password);
         // TODO(rogerta): to reliably record "view" access, we would want to
         // checkpoint the secrets and save them here.  But doing so causes
@@ -179,12 +191,36 @@ public class SecretsListActivity extends ListActivity {
     });
   }
 
+  @Override
+  protected void onNewIntent(Intent intent) {
+    // This method is invoked when the user performs a search from the global
+    // search dialog.
+
+    // Get the search string.  Make it a full text search by ensuring the
+    // string begins with a dot.
+    setIntent(intent);
+    String filter = intent.getStringExtra(SearchManager.QUERY);
+    if (filter.charAt(0) != SecretsListAdapter.DOT)
+      filter = SecretsListAdapter.DOT + filter;
+
+    getListView().setFilterText(filter);
+  }
+
+  @Override
+  public boolean onSearchRequested() {
+    // Don't allow search in edit mode.
+    if (isEditing)
+      return true;
+
+    return super.onSearchRequested();
+  }
+
   /**
    * Check to see if the keyguard is enabled.  If so, its means the device
    * probably went to sleep due to inactivity.  If this is the case, this
    * activity is finished().
-   * 
-   * @return True if the activity is finished, false otherwise. 
+   *
+   * @return True if the activity is finished, false otherwise.
    */
   private boolean checkKeyguard() {
     // If the keyguard has been displayed, exit this activity.  This returns
@@ -197,7 +233,7 @@ public class SecretsListActivity extends ListActivity {
       Log.d(LOG_TAG, "SecretsListActivity.checkKeyguard finishing");
       finish();
     }
-    
+
     return isInputRestricted;
   }
 
@@ -214,7 +250,7 @@ public class SecretsListActivity extends ListActivity {
       title = getText(OS.isAndroid15() ? R.string.list_no_data
                                        : R.string.list_no_data_1_1);
     }
-    
+
     setTitle(title);
   }
 
@@ -222,7 +258,7 @@ public class SecretsListActivity extends ListActivity {
   protected void onResume() {
     Log.d(LOG_TAG, "SecretsListActivity.onResume");
     super.onResume();
-    
+
     // If checkKeyguard() returns true, then this activity has been finished.
     // We don't want to execute any more in this function.
     if (checkKeyguard())
@@ -276,8 +312,8 @@ public class SecretsListActivity extends ListActivity {
   public boolean onPrepareOptionsMenu(Menu menu) {
     // Collect information needed to decide the state of the menu buttons.
     int position = getCurrentSecretIndex();
-    boolean isPositionValid = position != AdapterView.INVALID_POSITION; 
-      
+    boolean isPositionValid = position != AdapterView.INVALID_POSITION;
+
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
     menu.findItem(R.id.list_add).setVisible(!isEditing);
@@ -295,7 +331,7 @@ public class SecretsListActivity extends ListActivity {
         !secretsList.isEmpty());
     menu.findItem(R.id.list_copy_password_to_clipboard).setVisible(!isEditing
         && isPositionValid);
-    
+
     // The menu should be shown if we are editing, or if we must show the
     // delete/access menu items.
     return true;
@@ -452,19 +488,19 @@ public class SecretsListActivity extends ListActivity {
   /** Holds the currently chosen item in the restore dialog. */
   private class RestoreDialogState {
     public int selected = 0;
-    private List<String> restorePoints; 
-    
+    private List<String> restorePoints;
+
     /** Get an array of choices for the restore dialog. */
     public CharSequence[] getRestoreChoices() {
       restorePoints = FileUtils.getRestorePoints(SecretsListActivity.this);
       return restorePoints.toArray(new CharSequence[restorePoints.size()]);
     }
-    
+
     public String getSelectedRestorePoint() {
       return restorePoints.get(selected);
     }
   }
-  
+
   @Override
   public Dialog onCreateDialog(int id) {
     Dialog dialog = null;
@@ -499,7 +535,7 @@ public class SecretsListActivity extends ListActivity {
       }
       case DIALOG_CONFIRM_RESTORE: {
         final RestoreDialogState state = new RestoreDialogState();
-        
+
         DialogInterface.OnClickListener itemListener =
           new DialogInterface.OnClickListener() {
             @Override
@@ -596,9 +632,6 @@ public class SecretsListActivity extends ListActivity {
       saveSecret();
       animateFromEditView();
       return true;
-    } else if (KeyEvent.KEYCODE_SEARCH == keyCode) {
-      OS.showSoftKeyboard(this, getListView());
-      return true;
     }
 
     return super.onKeyDown(keyCode, event);
@@ -666,7 +699,7 @@ public class SecretsListActivity extends ListActivity {
    * due to a configuration change, such as the keyboard being opened or closed.
    * Its called after onPause() and onSaveInstanceState(), but before
    * onDestroy().
-   * 
+   *
    * When this is called, I will set a boolean value so that onDestroy() will
    * not clear the secrets data.
    */
@@ -856,7 +889,7 @@ public class SecretsListActivity extends ListActivity {
     // Cancel any toast and soft keyboard that may currently be displayed.
     if (null != toast)
       toast.cancel();
-    
+
     OS.hideSoftKeyboard(this, getListView());
 
     View list = getListView();
@@ -890,7 +923,7 @@ public class SecretsListActivity extends ListActivity {
     isEditing = false;
 
     OS.hideSoftKeyboard(this, getListView());
-    
+
     View list = getListView();
     int cx = root.getWidth() / 2;
     int cy = root.getHeight() / 2;
