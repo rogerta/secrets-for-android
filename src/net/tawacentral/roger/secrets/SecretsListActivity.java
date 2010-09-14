@@ -247,8 +247,7 @@ public class SecretsListActivity extends ListActivity {
       builder.append(getText(R.string.list_name));
       title = builder.toString();
     } else {
-      title = getText(OS.isAndroid15() ? R.string.list_no_data
-                                       : R.string.list_no_data_1_1);
+      title = getText(R.string.list_no_data);
     }
 
     setTitle(title);
@@ -268,36 +267,24 @@ public class SecretsListActivity extends ListActivity {
     // in the list.  This check used to be done in the onCreate() method above,
     // that could occasionally cause a crash when changing layout from
     // portrait to landscape, or back.  Not sure why exactly, but I suspect
-    // its becaue the UI elements are not actually ready to be rendered until
+    // its because the UI elements are not actually ready to be rendered until
     // onResume() is called.
     if (0 == secretsList.getAllSecrets().size() && !isEditing) {
-      if (OS.isAndroid15()) {
-        // openOptionsMenu() crashes in Android 1.1, even though this API is
-        // available.  Until I figure that out, I will call this only for
-        // 1.5 and later.
-        showToast(getText(R.string.list_no_data));
-        getListView().post(new Runnable() {
-          @Override
-          public void run() {
-            openOptionsMenu();
-          }
-        });
-      } else {
-        showToast(getText(R.string.list_no_data_1_1));
-      }
+      showToast(getText(R.string.list_no_data));
+      getListView().post(new Runnable() {
+        @Override
+        public void run() {
+          openOptionsMenu();
+        }
+      });
     } else if (FileUtils.isRestoreFileTooOld()) {
-      if (OS.isAndroid15()) {
-        // openOptionsMenu() crashes in Android 1.1, even though this API is
-        // available.  Until I figure that out, I will call this only for
-        // 1.5 and later.
-        getListView().post(new Runnable() {
-          @Override
-          public void run() {
-            showToast(getText(R.string.restore_file_too_old));
-            openOptionsMenu();
-          }
-        });
-      }
+      getListView().post(new Runnable() {
+        @Override
+        public void run() {
+          showToast(getText(R.string.restore_file_too_old));
+          openOptionsMenu();
+        }
+      });
     }
   }
 

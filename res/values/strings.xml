@@ -67,7 +67,6 @@ When done, press the Back button, or MENU for more options.
 </string>
 
 <string name="list_name">Secrets</string>
-<string name="list_no_data_1_1">Press MENU then \"Add\" to begin.</string>
 <string name="list_no_data">Press \"Add\" to begin.</string>
 <string name="list_descption_label">Web site/Description</string>
 <string name="list_username_label">Username/Id</string>

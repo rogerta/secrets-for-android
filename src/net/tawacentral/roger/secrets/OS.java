@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 /**
  * This class wraps OS-specific APIs behind Java's reflection API so that the
@@ -49,14 +50,6 @@ public class OS {
     }
   }
 
-  private static Method mHideSoftInputFromWindow;
-  private static Method mShowSoftInput;
-  
-  /** Does the device support the cupcake (Android 1.5) APIs? */
-  public static boolean isAndroid15() {
-    return sdkVersion >= 3;
-  }
-  
   /** Does the device support the froyo (Android 2.2) APIs? */
   public static boolean isAndroid22() {
     return sdkVersion >= 8;
@@ -64,65 +57,10 @@ public class OS {
   
   /** Hide the soft keyboard if visible. */
   public static void hideSoftKeyboard(Context ctx, View view) {
-    /*if (isAndroid15()) {
-      InputMethodManager manager = (InputMethodManager)
-          ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
-      if (manager.isActive()) {
-        manager.hideSoftInputFromWindow(binder, 0);
-      }
-    }*/
-    try {
-      if (null == mHideSoftInputFromWindow) {
-        Class<?> clazz = (Class<?>) Class.forName(
-            "android.view.inputmethod.InputMethodManager");
-        if (null != clazz) {
-          mHideSoftInputFromWindow = clazz.getMethod("hideSoftInputFromWindow",
-              android.os.IBinder.class, int.class);
-        }
-      }
-      
-      if (null != mHideSoftInputFromWindow) {
-        Object manager = ctx.getSystemService("input_method");
-        mHideSoftInputFromWindow.invoke(manager, view.getWindowToken(),
-            new Integer(0));
-      }
-    } catch (Exception ex) {
-      // This exception is normal in pre-cupcake devices.
-      if (isAndroid15())
-        Log.d(LOG_TAG, "hideSoftKeyboard", ex);
-    }
-  }
-  
-  /** Show the soft keyboard if not visible. */
-  public static void showSoftKeyboard(Context ctx, View view) {
-    /*if (isAndroid15()) {
-      InputMethodManager manager = (InputMethodManager)
-          ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
-      if (manager.isActive()) {
-        manager.showSoftInput(view, 0, null);
-      }
-    }*/
-    try {
-      if (null == mShowSoftInput) {
-        Class<?> clazz = (Class<?>) Class.forName(
-            "android.view.inputmethod.InputMethodManager");
-        if (null != clazz) {
-          Class<?> clazzRR = (Class<?>) Class.forName(
-              "android.os.ResultReceiver");
-          mShowSoftInput = clazz.getMethod("showSoftInput", View.class,
-                                           int.class, clazzRR);
-        }
-      }
-      
-      if (null != mShowSoftInput) {
-        Object manager = ctx.getSystemService("input_method");
-        mShowSoftInput.invoke(manager, view, new Integer(0), null);
-      }
-    } catch (Exception ex) {
-      // This exception is normal in pre-cupcake devices.
-      if (isAndroid15())
-        Log.d(LOG_TAG, "showSoftKeyboard", ex);
-    }
+    InputMethodManager manager = (InputMethodManager)
+        ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
+    if (null != manager)
+      manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
   }
   
   /**
