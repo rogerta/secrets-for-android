@@ -17,6 +17,8 @@ limitations under the License.
 <resources>
 <string name="app_name">Secrets</string>
 
+<string name="search_hint">Cerca secrets</string>
+
 <string name="login_first_line">Benvenuto nei tuoi Secrets</string>
 <string name="login_enter_password">Inserire la password</string>
 <string name="login_validate_password">Re-inserire la password</string>

@@ -17,6 +17,8 @@ limitations under the License.
 <resources>
 <string name="app_name">Geheimen</string>
 
+<string name="search_hint">Geheimen zoeken</string>
+
 <string name="login_first_line">Welkom bij uw Geheimen</string>
 <string name="login_enter_password">Voer uw wachtwoord in</string>
 <string name="login_validate_password">Valideer uw wachtwoord</string>
