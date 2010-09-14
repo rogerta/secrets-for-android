@@ -48,7 +48,6 @@ limitations under the License.
 <string name="friendly_id_format_2"> {1,date,short} {1,time,short} </string>
 
 <string name="list_name">秘密</string>
-<string name="list_no_data_1_1">按菜单键中的\"添加\"按钮即可开始。</string>
 <string name="list_no_data">按\"添加\"开始。</string>
 <string name="list_descption_label">网址/描述</string>
 <string name="list_username_label">用户名/Id</string>
