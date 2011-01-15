@@ -30,6 +30,8 @@ limitations under the License.
       android:label="@string/app_name"
       android:allowBackup="true"
       android:backupAgent="FileUtils$SecretsBackupAgent">
+    <meta-data android:name="com.google.android.backup.api_key"
+        android:value="AEdPqrEAAAAIiaTKLQX8KGBYlJtm_orjiPGWqNbppxZwGByuGA" />
     <!-- I set the clearTaskOnLaunch so that when the user restarts
          secrets, they start with the login page.  Without this flag set,
          if the user starts secrets, logs in, presses the HOME button and
