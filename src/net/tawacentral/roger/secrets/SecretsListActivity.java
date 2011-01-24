@@ -454,7 +454,7 @@ public class SecretsListActivity extends ListActivity {
     ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp);
     if (null != secrets) {
       LoginActivity.restoreSecrets(secrets);
-      secretsList.notifyDataSetInvalidated();
+      secretsList.notifyDataSetChanged();
       setTitle();
       showToast(R.string.restore_succeeded);
     } else {
