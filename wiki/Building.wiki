@@ -9,7 +9,7 @@ The source tree includes project files for building the Android application with
   * [http://www.ubuntu.com/ Ubuntu 10.04 Lucid Lynx]
   * [http://www.eclipse.org/downloads/ Eclipse 3.5.2, Build id: M20100211-1343]
   * [http://developer.android.com/sdk/eclipse-adt.html Android Development Toolkit 8.0.1v201012062107-92219]
-  * [http://dl.google.com/android/android-sdk_r08-linux_86.tgz android-sdk_r08]
+  * [http://developer.android.com/sdk/index.html android-sdk_r08]
 
 ==Windows-based Environment==
 I no longer use Windows for development, so this information may be out of date.
@@ -17,13 +17,13 @@ I no longer use Windows for development, so this information may be out of date.
   * Microsoft Windows XP SP2
   * [http://www.eclipse.org/downloads/ Eclipse 3.5]
   * [http://developer.android.com/sdk/eclipse-adt.html Android Development Toolkit 8.0.1v201012062107-92219]
-  * [http://dl.google.com/android/installer_r08-windows.exe android-sdk_r08]
+  * [http://developer.android.com/sdk/index.html android-sdk_r08]
 
 ==Mac OSX Environment==
   * OSX 10.5.7
   * [http://www.eclipse.org/downloads/ Eclipse 3.5.0, Build id: 20090619-0625]
   * [http://developer.android.com/sdk/eclipse-adt.html Android Development Toolkit 8.0.1v201012062107-92219]
-  * [http://dl.google.com/android/android-sdk_r08-mac_86.tgz android-sdk_r08]
+  * [http://developer.android.com/sdk/index.html android-sdk_r08]
 
 Other platforms supported by Eclipse and the Android SDK should also work fine, please let me know.  Note that Secrets now uses some 1.5 specific APIs, so it will no longer build with the 1.1 SDK.
 
