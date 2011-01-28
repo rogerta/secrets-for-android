@@ -12,12 +12,10 @@ The source tree includes project files for building the Android application with
   * [http://developer.android.com/sdk/index.html android-sdk_r08]
 
 ==Windows-based Environment==
-I no longer use Windows for development, so this information may be out of date.
-
-  * Microsoft Windows XP SP2
-  * [http://www.eclipse.org/downloads/ Eclipse 3.5]
-  * [http://developer.android.com/sdk/eclipse-adt.html Android Development Toolkit 8.0.1v201012062107-92219]
-  * [http://developer.android.com/sdk/index.html android-sdk_r08]
+  * Microsoft Windows 7
+  * [http://www.eclipse.org/downloads/ Eclipse Helios Service Release 1, Build id: 20100917-0705]
+  * [http://developer.android.com/sdk/eclipse-adt.html Android Development Toolkit 9.0.0.v201101191456-93220]
+  * [http://developer.android.com/sdk/index.html android-sdk_r09]
 
 ==Mac OSX Environment==
   * OSX 10.5.7
