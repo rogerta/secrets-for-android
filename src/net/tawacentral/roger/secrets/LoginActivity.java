@@ -287,8 +287,11 @@ public class LoginActivity extends Activity {
     passwordView.setText("");
     
     // Lets not save the password in memory anywhere.  Create all the ciphers
-    // we will need based on the password and save those.
-    SecurityUtils.createCiphers(passwordString);
+    // we will need based on the password and save those.  First get the salt
+    // that is unique for this device.  If we can't find one, null is returned.
+    byte[] salt = FileUtils.getSalt(this);
+    
+    SecurityUtils.createCiphers(passwordString, salt);
     passwordString = null;
 
     if (isFirstRun) {

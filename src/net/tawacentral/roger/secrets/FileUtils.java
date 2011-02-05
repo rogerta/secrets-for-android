@@ -21,6 +21,7 @@ import android.app.backup.FileBackupHelper;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
@@ -33,8 +34,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -82,10 +85,12 @@ public class FileUtils {
   private static final String RP_PREFIX = "@";
 
   /** Tag for logging purposes. */
-  public static final String LOG_TAG = "Secrets";
+  public static final String LOG_TAG = "Secrets.FileUtils";
 
   /** Lock for accessing main secrets file. */
   private static final Object lock = new Object();
+
+  private static final byte[] SIGNATURE = {0x12, 0x34, 0x56, 0x78};
   
   /** Does the secrets file exist? */
   public static boolean secretsExist(Context context) {
@@ -140,7 +145,7 @@ public class FileUtils {
    * Get all existing restore points, including the restore file on the SD card
    * if it exists.
    * 
-   * @param context Avtivity context in which the save is called.
+   * @param context Activity context in which the save is called.
    * @return A list of all possible restore points.
    */
   public static List<String> getRestorePoints(Context context) {
@@ -163,7 +168,7 @@ public class FileUtils {
    * 
    * - delete any file with "new" in the name.  These are possibly partial
    *   writes, so their contents is undefined.
-   * - if no secrets file exists, rename the most recent auto resptore point
+   * - if no secrets file exists, rename the most recent auto restore point
    *   file to secrets.
    * - if too many auto restore point files exist, delete the extra ones.
    *   However, don't delete any auto-backups younger than 48 hours.
@@ -241,7 +246,46 @@ public class FileUtils {
       }
     }
   }
-  
+
+  /**
+   * Gets the salt already in use on this device, or null if none exists.
+   * 
+   * @return A byte array representing the salt for this device.
+   */
+  public static byte[] getSalt(Context context) {
+    // The salt is stored as a byte array at the start of the secrets file.
+    FileInputStream input = null;
+    byte[] salt = null;
+    try {
+      input = context.openFileInput(SECRETS_FILE_NAME);
+      salt = getSalt(input);
+    } catch (Exception ex) {
+      salt = null;
+    } finally {
+      try {if (null != input) input.close();} catch (IOException ex) {}
+    }
+    return salt;
+  }
+
+  /**
+   * Gets the salt already in use on this device, or null if none exists.
+   * 
+   * @return A byte array representing the salt for this device.
+   * @throws IOException 
+   */
+  private static byte[] getSalt(InputStream input) throws IOException {
+    // The salt is stored as a byte array at the start of the secrets file.
+    byte[] signature = new byte[SIGNATURE.length];
+    byte[] salt = null;
+    input.read(signature);
+    if (Arrays.equals(signature, SIGNATURE)) {
+      int length = input.read();
+      salt = new byte[length];
+      input.read(salt);
+    }
+    return salt;
+  }
+
   /**
    * Saves the secrets to file using the password retrieved from the user.
    *
@@ -285,9 +329,8 @@ public class FileUtils {
       // Step 1
       ObjectOutputStream output = null;
       try {
-        output = new ObjectOutputStream(new CipherOutputStream(
-            new FileOutputStream(tempn), cipher));
-        output.writeObject(secrets);
+        FileOutputStream fos = new FileOutputStream(tempn);
+        writeSecrets(fos, cipher, secrets);
       } catch (Exception ex) {
         Log.d(LOG_TAG, "FileUtils.saveSecrets: could not write secrets file");
         // NOTE: this delete() works, even though the file is still open.
@@ -320,7 +363,7 @@ public class FileUtils {
   /**
    * Backup the secrets to SD card using the password retrieved from the user.
    *
-   * @param context Avtivity context in which the backup is called.
+   * @param context Activity context in which the backup is called.
    * @param cipher The encryption cipher to use with the file.
    * @param secrets The list of secrets to save.
    * @return True if saved successfully
@@ -337,10 +380,8 @@ public class FileUtils {
     boolean success = false;
 
     try {
-      output = new ObjectOutputStream(
-          new CipherOutputStream(new FileOutputStream(SECRETS_FILE_NAME_SDCARD),
-                                 cipher));
-      output.writeObject(secrets);
+      FileOutputStream fos = new FileOutputStream(SECRETS_FILE_NAME_SDCARD);
+      writeSecrets(fos, cipher, secrets);
       success = true;
     } catch (Exception ex) {
     } finally {
@@ -353,11 +394,9 @@ public class FileUtils {
   /**
    * Opens the secrets file using the password retrieved from the user.
    * 
-   * @param context Avtivity context in which the load is called.
+   * @param context Activity context in which the load is called.
    * @return A list of loaded secrets.
    */
-  // TODO(rogerta): the readObject() method does not support generics.
-  @SuppressWarnings("unchecked")
   public static ArrayList<Secret> loadSecrets(Context context) {
     Log.d(LOG_TAG, "FileUtils.loadSecrets");
     synchronized (lock) {
@@ -368,13 +407,11 @@ public class FileUtils {
         return null;
 
       ArrayList<Secret> secrets = null;
-      ObjectInputStream input = null;
+      InputStream input = null;
 
       try {
-        input = new ObjectInputStream(
-            new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
-                                  cipher));
-        secrets = (ArrayList<Secret>) input.readObject();
+        input = context.openFileInput(SECRETS_FILE_NAME);
+        secrets = readSecrets(input, cipher);
       } catch (Exception ex) {
         Log.e(LOG_TAG, "loadSecrets", ex);
       } finally {
@@ -394,8 +431,6 @@ public class FileUtils {
    * @param rp A restore point name.  This should be one of the strings
    *     returned by the getRestorePoints() method. 
    */
-  // TODO(rogerta): the readObject() method does not support generics.
-  @SuppressWarnings("unchecked")
   public static ArrayList<Secret> restoreSecrets(Context context, String rp) {
     Log.d(LOG_TAG, "FileUtils.restoreSecrets");
 
@@ -404,14 +439,13 @@ public class FileUtils {
       return null;
 
     ArrayList<Secret> secrets = null;
-    ObjectInputStream input = null;
+    InputStream input = null;
 
     try {
-      InputStream stream = SECRETS_FILE_NAME_SDCARD.equals(rp)
+      input = SECRETS_FILE_NAME_SDCARD.equals(rp)
           ? new FileInputStream(rp)
           : context.openFileInput(rp);
-      input = new ObjectInputStream( new CipherInputStream(stream, cipher));
-      secrets = (ArrayList<Secret>) input.readObject();
+      secrets = readSecrets(input, cipher);
     } catch (Exception ex) {
       Log.e(LOG_TAG, "restoreSecrets", ex);
     } finally {
@@ -421,6 +455,59 @@ public class FileUtils {
     return secrets;
   }
 
+  /**
+   * Writes the secrets to the given output stream encrypted with the given
+   * cipher.
+   *
+   * @param output The output stream to write the secrets to.
+   * @param cipher The cipher to encrypt the secrets with.
+   * @param secrets The secrets to write.
+   * @throws IOException
+   */
+  private static void writeSecrets(OutputStream output,
+                                   Cipher cipher,
+                                   List<Secret> secrets) throws IOException {
+    byte[] salt = SecurityUtils.getSalt();
+    output.write(SIGNATURE);
+    output.write(salt.length);
+    output.write(salt);
+    ObjectOutputStream oout = new ObjectOutputStream(
+        new CipherOutputStream(output, cipher));
+    try {
+      oout.writeObject(secrets);
+    } finally {
+      try {if (null != oout) oout.close();} catch (IOException ex) {}
+    }
+  }
+  
+  /**
+   * Read the secrets from the given input stream, decrypting with the given
+   * cipher.
+   *
+   * @param output The input stream to read the secrets from.
+   * @param cipher The cipher to decrypt the secrets with.
+   * @return The secrets read from the stream.
+   * @throws IOException
+   * @throws ClassNotFoundException 
+   */
+  @SuppressWarnings("unchecked")
+  private static ArrayList<Secret> readSecrets(InputStream input,
+                                               Cipher cipher)
+      throws IOException, ClassNotFoundException {
+    byte[] salt = getSalt(input);
+    if (!Arrays.equals(salt, SecurityUtils.getSalt())) {
+      return null;
+    }
+
+    ObjectInputStream oin = new ObjectInputStream(
+        new CipherInputStream(input, cipher));
+    try {
+      return (ArrayList<Secret>) oin.readObject();
+    } finally {
+      try {if (null != oin) oin.close();} catch (IOException ex) {}
+    }
+  }
+  
   /** Deletes all secrets from the phone. */
   public static boolean deleteSecrets(Context context) {
     Log.d(LOG_TAG, "FileUtils.deleteSecrets");
