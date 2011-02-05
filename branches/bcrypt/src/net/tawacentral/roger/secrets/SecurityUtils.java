@@ -14,6 +14,7 @@
 
 package net.tawacentral.roger.secrets;
 
+import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 
 import javax.crypto.Cipher;
@@ -21,6 +22,9 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.mindrot.jbcrypt.BCrypt;
 
 import android.util.Log;
 
@@ -33,23 +37,33 @@ public class SecurityUtils {
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
 
-  private static final String KEY_FACTORY = "PBEWITHSHA-256AND256BITAES-CBC-BC";
+  // The following three constants were used with the initial implementation of
+  // secrets.  Secrets now uses a more secure algorithm, but for backwards
+  // compatibility, the program needs to be able to load the secrets with the
+  // old algorithm.  However, secrets will only be saved with the new algorithm
+  // moving forward.
+  //
+  // All members that end with V1 or v1 have to do with the old algorithm. 
+  private static final String KEY_FACTORY_V1 =
+	  "PBEWITHSHA-256AND256BITAES-CBC-BC";
 
   // TODO(rogerta): for now, I'm using an iteration count of 100.  I had
   // initially set it to 5000, but that took *ages* to create the cipher.  I
-  // need to figure(rogerta)out if this is a safe value to use.
-  private static final int KEY_ITERATION_COUNT = 100;
+  // need to figure out if this is a safe value to use.
+  private static final int KEY_ITERATION_COUNT_V1 = 100;
 
   // The salt can be hardcoded, because the secrets file is never transmitted
   // off the phone.  Generating a ramdom salt would not provide any real extra
   // protection, because if an attacker can get to the secrets file, then he
   // has broken into the phone, and therefore would be able to get to the
   // random salt too.
-  private static final byte[] salt = {
+  private static final byte[] salt_v1 = {
     (byte)0xA4, (byte)0x0B, (byte)0xC8, (byte)0x34,
     (byte)0xD6, (byte)0x95, (byte)0xF3, (byte)0x13
   };
 
+  private static final String KEY_FACTORY = "AES";
+  
   /** Class used to time the execution of functions */
   static public class ExecutionTimer {
     private long start = System.currentTimeMillis();
@@ -67,6 +81,7 @@ public class SecurityUtils {
 
   private static Cipher encryptCipher;
   private static Cipher decryptCipher;
+  private static byte[] salt;
 
   /**
    * Get the cipher used to encrypt data using the password given to the
@@ -85,32 +100,54 @@ public class SecurityUtils {
   }
 
   /**
+   * Gets the salt for this device.
+   * @return A byte array represent the salt for this specific device.
+   */
+  public static byte[] getSalt() {
+    return salt;
+  }
+
+  /**
+   * Creates a new unique random salt.
+   * @return A new salt value used to generate the secret key. 
+   */
+  private static byte[] createNewSalt() {
+    byte[] bytes = new byte[BCrypt.BCRYPT_SALT_LEN];
+    SecureRandom random = new SecureRandom();
+    random.nextBytes(bytes);
+    return bytes;
+  }
+  
+  /**
    * Create a pair of encryption and decryption ciphers based on the given
    * password string.  The string is not stored internally.  This function
    * needs to be called before calling getEncryptionCipher() or
    * getDecryptionCipher().
    *
+   * This method creates ciphers using the old algortihm to remain backward
+   * compatible.
+   * 
    * @param password String to use for creating the ciphers.
    * @return True if the ciphers were successfully created.
    */
-  public static boolean createCiphers(String password) {
+  public static boolean createCiphersV1(String password) {
     boolean succeeded = false;
 
     ExecutionTimer timer = new ExecutionTimer();
 
     try {
       PBEKeySpec keyspec = new PBEKeySpec(password.toCharArray(),
-                                          salt,
-                                          KEY_ITERATION_COUNT,
+                                          salt_v1,
+                                          KEY_ITERATION_COUNT_V1,
                                           32);
-      SecretKeyFactory skf = SecretKeyFactory.getInstance(KEY_FACTORY);
+      SecretKeyFactory skf = SecretKeyFactory.getInstance(KEY_FACTORY_V1);
       SecretKey key = skf.generateSecret(keyspec);
-      AlgorithmParameterSpec aps = new PBEParameterSpec(salt,
-                                                        KEY_ITERATION_COUNT);
-      encryptCipher = Cipher.getInstance(KEY_FACTORY);
+      AlgorithmParameterSpec aps = new PBEParameterSpec(salt_v1,
+                                                        KEY_ITERATION_COUNT_V1);
+      encryptCipher = Cipher.getInstance(KEY_FACTORY_V1);
       encryptCipher.init(Cipher.ENCRYPT_MODE, key, aps);
 
-      decryptCipher = Cipher.getInstance(KEY_FACTORY);
+      decryptCipher = Cipher.getInstance(KEY_FACTORY_V1);
       decryptCipher.init(Cipher.DECRYPT_MODE, key, aps);
 
       succeeded = true;
@@ -124,10 +161,55 @@ public class SecurityUtils {
     return succeeded;
   }
 
+  /**
+   * Create a pair of encryption and decryption ciphers based on the given
+   * password string.  The string is not stored internally.  This function
+   * needs to be called before calling getEncryptionCipher() or
+   * getDecryptionCipher().
+   *
+   * @param password String to use for creating the ciphers.
+   * @param saltBytes The salt to use when creating the encryption key.
+   * @return True if the ciphers were successfully created.
+   */
+  public static boolean createCiphers(String password, byte[] saltBytes) {
+    boolean succeeded = false;
+
+    ExecutionTimer timer = new ExecutionTimer();
+
+    try {
+      if (saltBytes == null)
+        saltBytes = createNewSalt();
+      
+      int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
+                         0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
+      BCrypt bcrypt = new BCrypt();
+      byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"),
+                                         saltBytes, 4, plaintext);
+      SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
+      encryptCipher = Cipher.getInstance(KEY_FACTORY);
+      encryptCipher.init(Cipher.ENCRYPT_MODE, spec);
+
+      decryptCipher = Cipher.getInstance(KEY_FACTORY);
+      decryptCipher.init(Cipher.DECRYPT_MODE, spec);
+
+      salt = saltBytes;
+      succeeded = true;
+    } catch (Exception ex) {
+      Log.d(LOG_TAG, "createCiphers", ex);
+      encryptCipher = null;
+      decryptCipher = null;
+      salt = null;
+    }
+
+    timer.logElapsed("Time to create cihpers: ");
+    return succeeded;
+  }
+
   /** Clear the ciphers from memory. */
   public static void clearCiphers() {
     decryptCipher = null;
     encryptCipher = null;
+    salt = null;
   }
   
   /** This method returns all available services types. */
