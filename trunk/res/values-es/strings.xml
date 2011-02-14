@@ -34,29 +34,29 @@ limitations under the License.
 
 <string name="backup_succeeded">Copia de Seguridad exitosa.</string>
 <string name="restore_succeeded">Restauración exitosa.</string>
-<string name="restore_failed">No se pudieron reestablecer los secretos.  Asegurese que su contraseña es la misma que le utilizada para crear la copia de seguridad.</string>
+<string name="restore_failed">No se pudieron restablecer los secretos.  Asegúrese que su contraseña es la misma que le utilizada para crear la copia de seguridad.</string>
 <string name="restore_file_too_old">Hora de hacer una copia de seguridad de tus secretos?</string>
 
 <string name="export_succeeded">Archivo exportado a tarjeta SD de manera exitosa.\n\ATENCIÓN: El archivo exportado no esta protegido por contraseña!</string>
 <string name="export_failed">No fue posible exportar tus secretos.</string>
 
-<string name="import_not_found">No se encontro un archivo CSV en la tarjeta SD.\n\nLos secretos pueden ser importados de los siguientes archivos:\n\n{0}</string>
+<string name="import_not_found">No se encontró un archivo CSV en la tarjeta SD.\n\nLos secretos pueden ser importados de los siguientes archivos:\n\n{0}</string>
 <string name="import_partial">Hmmm, solo algunos secretos fueron importados de manera exitosa. Revisa tus secretos y que el archivo \'\'{0}\'\' sea correcto.</string>
 <string name="import_failed">No fue posible importar tus secretos desde \'\'{0}\'\'.</string>
 
 <string name="login_instruction_1">
-Crea una contraseña para proteger tus secretos. Usa letras, numeros y
-puntuación para hcar tu contrasella dificil de adivinar.\nLuego de escribir la contraseña
-presiona \u21b5 o Done.
+Crea una contraseña para proteger tus secretos. Usa letras, números y
+puntuación para hacer tu contraseña difícil de adivinar.\nDespués de escribir la contraseña
+presiona \u21b5 o Fin.
 </string>
 <string name="login_instruction_2">
-Valida tu nueva contraseña escribiendola de nuevo. Si hay algún
-problema, vonverás a iniciar.
+Valida tu nueva contraseña escribiéndola de nuevo. Si hay algún
+problema, volverás a iniciar.
 </string>
 <string name="edit_instructions">
-Toda la información es opciones, escriba tanto o tan poco como lo requiera.
+Toda la información es opcional, escriba tanto o tan poco como lo requiera.
 
-Al terminar presiones el boton de Atrás o MENU para más opciones.
+Al terminar presiona el botón de Atrás o MENU para más opciones.
 </string>
 
 <string name="friendly_id_format">
@@ -67,7 +67,7 @@ Al terminar presiones el boton de Atrás o MENU para más opciones.
 </string>
 
 <string name="list_name">Secretos</string>
-<string name="list_no_data">Presiones \"Agregar\" para comenzar.</string>
+<string name="list_no_data">Presiona \"Agregar\" para comenzar.</string>
 <string name="list_descption_label">Sito Web/Descripción</string>
 <string name="list_username_label">Usuario/Id</string>
 <string name="list_password_label">Contraseña/PIN</string>
