@@ -145,6 +145,11 @@ public class LoginActivity extends Activity {
     password.setText("");
     password.setHint(R.string.login_enter_password);
     Log.d(LOG_TAG, "LoginActivity.onResume done");
+    //SecurityUtils.timeCreateBcryptRawBytes(4);
+    //SecurityUtils.createDecryptionCipherV1("12345678");
+    //SecurityUtils.timeCreateBcryptRawBytes(10);
+    //SecurityUtils.timeCreateBcryptRawBytes(8);
+    //SecurityUtils.timeCreateBcryptRawBytes(4);
   }
 
   @Override
@@ -292,7 +297,6 @@ public class LoginActivity extends Activity {
     byte[] salt = FileUtils.getSalt(this);
     
     SecurityUtils.createCiphers(passwordString, salt);
-    passwordString = null;
 
     if (isFirstRun) {
       secrets = new ArrayList<Secret>();
@@ -300,7 +304,8 @@ public class LoginActivity extends Activity {
       // Immediately save an empty file to hold the secrets.
       Cipher cipher = SecurityUtils.getEncryptionCipher();
       File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
-      int err = FileUtils.saveSecrets(this, file, cipher, secrets); 
+      salt = SecurityUtils.getSalt();
+      int err = FileUtils.saveSecrets(this, file, cipher, salt, secrets); 
       if (0 != err) {
         showToast(err, Toast.LENGTH_LONG);
         return;
@@ -308,13 +313,27 @@ public class LoginActivity extends Activity {
     } else {
       secrets = FileUtils.loadSecrets(this);
       if (null == secrets) {
-        // TODO(rogerta): need better error message here.  There are probably
-        // many reasons that we might not be able to open the file.
-        showToast(R.string.invalid_password, Toast.LENGTH_LONG);
-        return;
+        // Loading the secrets failed.  Try loading with the old encryption
+        // algorithm in case were are reading an older file.
+        Cipher cipher = SecurityUtils.createDecryptionCipherV1(passwordString);
+        if (null != cipher)
+          secrets = FileUtils.loadSecretsV1(this, cipher);
+
+        if (null != secrets) {
+          // TODO: display a better message to the user telling them to do a
+          // backup right now, since any restore file is likely in a format
+          // that cannot be read anymore.
+          showToast(R.string.restore_file_too_old, Toast.LENGTH_LONG);
+        } else {
+          // TODO(rogerta): need better error message here.  There are probably
+          // many reasons that we might not be able to open the file.
+          showToast(R.string.invalid_password, Toast.LENGTH_LONG);
+          return;
+        }
       }
     }
 
+    passwordString = null;
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
     Log.d(LOG_TAG, "LoginActivity.handlePasswordClick done");
