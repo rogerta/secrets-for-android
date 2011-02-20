@@ -465,7 +465,9 @@ public class SecretsListActivity extends ListActivity {
   private void backupSecrets() {
     // Backup everything to the SD card.
     Cipher cipher = SecurityUtils.getEncryptionCipher();
-    if (FileUtils.backupSecrets(this, cipher, secretsList.getAllSecrets())) {
+    byte[] salt = SecurityUtils.getSalt();
+    if (FileUtils.backupSecrets(this, cipher, salt,
+    		                        secretsList.getAllSecrets())) {
       showToast(R.string.backup_succeeded);
     } else {
       showToast(R.string.error_save_secrets);
@@ -677,7 +679,8 @@ public class SecretsListActivity extends ListActivity {
     // completion even if the user switches to another task/application.
     List<Secret> secrets = secretsList.getAllSecrets();
     Cipher cipher = SecurityUtils.getEncryptionCipher();
-    SaveService.execute(this, secrets, cipher);
+    byte[] salt = SecurityUtils.getSalt();
+    SaveService.execute(this, secrets, cipher, salt);
     super.onPause();
   }
 

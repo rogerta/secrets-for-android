@@ -14,6 +14,7 @@
 
 package net.tawacentral.roger.secrets;
 
+import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -75,7 +76,7 @@ public class SecurityUtils {
 
     /** Prints the time in millisecs since the object was created to the log. */
     public void logElapsed(String message) {
-      Log.d(LOG_TAG, message + getElapsed());
+      Log.i(LOG_TAG, message + getElapsed());
     }
   }
 
@@ -119,19 +120,16 @@ public class SecurityUtils {
   }
   
   /**
-   * Create a pair of encryption and decryption ciphers based on the given
-   * password string.  The string is not stored internally.  This function
-   * needs to be called before calling getEncryptionCipher() or
-   * getDecryptionCipher().
+   * Create a decryption cipher using the old algorithm based on the given
+   * password string.  The string is not stored internally.
    *
-   * This method creates ciphers using the old algortihm to remain backward
-   * compatible.
+   * This method is used for backward compatibility only.
    * 
    * @param password String to use for creating the ciphers.
    * @return True if the ciphers were successfully created.
    */
-  public static boolean createCiphersV1(String password) {
-    boolean succeeded = false;
+  public static Cipher createDecryptionCipherV1(String password) {
+    Cipher cipher = null;
 
     ExecutionTimer timer = new ExecutionTimer();
 
@@ -144,21 +142,15 @@ public class SecurityUtils {
       SecretKey key = skf.generateSecret(keyspec);
       AlgorithmParameterSpec aps = new PBEParameterSpec(salt_v1,
                                                         KEY_ITERATION_COUNT_V1);
-      encryptCipher = Cipher.getInstance(KEY_FACTORY_V1);
-      encryptCipher.init(Cipher.ENCRYPT_MODE, key, aps);
-
-      decryptCipher = Cipher.getInstance(KEY_FACTORY_V1);
-      decryptCipher.init(Cipher.DECRYPT_MODE, key, aps);
-
-      succeeded = true;
+      cipher = Cipher.getInstance(KEY_FACTORY_V1);
+      cipher.init(Cipher.DECRYPT_MODE, key, aps);
     } catch (Exception ex) {
-      Log.d(LOG_TAG, "createCiphers", ex);
-      encryptCipher = null;
-      decryptCipher = null;
+      Log.d(LOG_TAG, "createDecryptionCiphersV1", ex);
+      cipher = null;
     }
 
-    timer.logElapsed("Time to create cihpers: ");
-    return succeeded;
+    timer.logElapsed("Time to create V1 d-cipher: ");
+    return cipher;
   }
 
   /**
@@ -184,7 +176,7 @@ public class SecurityUtils {
                          0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
       BCrypt bcrypt = new BCrypt();
       byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"),
-                                         saltBytes, 4, plaintext);
+                                         saltBytes, 10, plaintext);
       SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
       encryptCipher = Cipher.getInstance(KEY_FACTORY);
       encryptCipher.init(Cipher.ENCRYPT_MODE, spec);
@@ -211,7 +203,25 @@ public class SecurityUtils {
     encryptCipher = null;
     salt = null;
   }
-  
+
+  public static void timeCreateBcryptRawBytes(int count) {
+    ExecutionTimer timer = new ExecutionTimer();
+    try {
+      byte[] saltBytes = createNewSalt();
+      
+      int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
+                         0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
+      BCrypt bcrypt = new BCrypt();
+      bcrypt.crypt_raw("12345678".getBytes("UTF-8"), saltBytes, count,
+                       plaintext);
+    } catch (UnsupportedEncodingException ex) {
+      Log.e(LOG_TAG, "testCreateBcryptRawBytes", ex);
+      ex.printStackTrace();
+    }
+
+    timer.logElapsed("Time to create ciphers count=" + count + ": ");
+  }
+
   /** This method returns all available services types. */
   /*public static String[] getServiceTypes() {
       java.util.HashSet result = new HashSet();

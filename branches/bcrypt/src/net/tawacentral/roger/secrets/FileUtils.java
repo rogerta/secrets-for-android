@@ -180,7 +180,7 @@ public class FileUtils {
       int oldCount = filenames.length;
       boolean secretsFileExists = context.getFileStreamPath(SECRETS_FILE_NAME)
           .exists();
-      
+
       // Cleanup any partial saves and find the most recent auto-backup file.
       {
         File mostRecent = null;
@@ -214,7 +214,7 @@ public class FileUtils {
           filenames[mostRecentIndex] = null;
         }
       }
-      
+
       // If there are too many old files, delete the oldest extra ones.
       while (oldCount > 10) {
         File oldest = null;
@@ -231,7 +231,7 @@ public class FileUtils {
             oldestIndex = i;
           }
         }
-        
+
         if (null != oldest) {
           // If the oldest file is not too old, then just break out of the
           // loop.  We don't want to delete any "old" files that are too
@@ -292,12 +292,14 @@ public class FileUtils {
    * @param context Activity context in which the save is called.
    * @param existing The file to save into.
    * @param cipher The encryption cipher to use with the file.
+   * @param salt The salt used to create the cipher.
    * @param secrets The list of secrets to save.
    * @return True if saved successfully.
    */
   public static int saveSecrets(Context context,
                                 File existing,
                                 Cipher cipher,
+                                byte[] salt,
                                 List<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.saveSecrets");
     synchronized (lock) {
@@ -330,7 +332,7 @@ public class FileUtils {
       ObjectOutputStream output = null;
       try {
         FileOutputStream fos = new FileOutputStream(tempn);
-        writeSecrets(fos, cipher, secrets);
+        writeSecrets(fos, cipher, salt, secrets);
       } catch (Exception ex) {
         Log.d(LOG_TAG, "FileUtils.saveSecrets: could not write secrets file");
         // NOTE: this delete() works, even though the file is still open.
@@ -365,11 +367,13 @@ public class FileUtils {
    *
    * @param context Activity context in which the backup is called.
    * @param cipher The encryption cipher to use with the file.
+   * @param salt The salt used to create the cipher.
    * @param secrets The list of secrets to save.
    * @return True if saved successfully
    */
   public static boolean backupSecrets(Context context,
                                       Cipher cipher,
+                                      byte[] salt,
                                       List<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.backupSecrets");
 
@@ -381,7 +385,7 @@ public class FileUtils {
 
     try {
       FileOutputStream fos = new FileOutputStream(SECRETS_FILE_NAME_SDCARD);
-      writeSecrets(fos, cipher, secrets);
+      writeSecrets(fos, cipher, salt, secrets);
       success = true;
     } catch (Exception ex) {
     } finally {
@@ -389,6 +393,41 @@ public class FileUtils {
     }
 
     return success;
+  }
+
+  /**
+   * Opens the secrets file using the password retrieved from the user and
+   * the old encryption cipher.  This function is called only for backward
+   * compatibility purposes, when Secrets encounters an error trying to load
+   * the secrets using the current encryption method.
+   * 
+   * @param context Activity context in which the load is called.
+   * @return A list of loaded secrets.
+   */
+  @SuppressWarnings("unchecked")
+  public static ArrayList<Secret> loadSecretsV1(Context context,
+                                                Cipher cipher) {
+    if (null == cipher)
+      return null;
+
+    ArrayList<Secret> secrets = null;
+
+    synchronized (lock) {
+      ObjectInputStream input = null;
+
+      try {
+        input = new ObjectInputStream(
+            new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
+                                  cipher));
+        secrets = (ArrayList<Secret>) input.readObject();
+      } catch (Exception ex) {
+        Log.e(LOG_TAG, "loadSecretsV1", ex);
+      } finally {
+        try {if (null != input) input.close();} catch (IOException ex) {}
+      }
+    }
+
+    return secrets;
   }
 
   /**
@@ -466,8 +505,8 @@ public class FileUtils {
    */
   private static void writeSecrets(OutputStream output,
                                    Cipher cipher,
+                                   byte[] salt,
                                    List<Secret> secrets) throws IOException {
-    byte[] salt = SecurityUtils.getSalt();
     output.write(SIGNATURE);
     output.write(salt.length);
     output.write(salt);

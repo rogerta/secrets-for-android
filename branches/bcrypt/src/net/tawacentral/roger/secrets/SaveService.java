@@ -37,23 +37,27 @@ import android.os.IBinder;
 public class SaveService extends Service {
   private static List<Secret> secrets;
   private static Cipher cipher;
+  private static byte[] salt;
 
   /** Backup manager for Android 2.2. */
   Object backupManager;
-  
+
   /**
    * Queue a background save of the secrets.
    * 
    * @param context The activity requesting the save.
    * @param secrets The list of secrets to save.
    * @param cipher The encryption cipher.
+   * @param salt The salt used to create the cipher.
    */
   public static synchronized void execute(Context context,
                                           List<Secret> secrets,
-                                          Cipher cipher) {
+                                          Cipher cipher,
+                                          byte[] salt) {
     SaveService.secrets = secrets;
     SaveService.cipher = cipher;
-    
+    SaveService.salt = salt;
+
     Intent intent = new Intent(context, SaveService.class);
     context.startService(intent);
   }
@@ -88,24 +92,26 @@ public class SaveService extends Service {
       final List<Secret> secrets = SaveService.secrets;
       final Cipher cipher = SaveService.cipher;
       final File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
-  
+      final byte[] salt = SaveService.salt;
+
       SaveService.secrets = null;
       SaveService.cipher = null;
-      
+      SaveService.salt = null;
+
       if (null != secrets && 0 != secrets.size() && null != cipher) {
         new Thread(new Runnable() {
           @Override
           public void run() {
             int r = FileUtils.saveSecrets(SaveService.this, file, cipher,
-                                          secrets);
-            
+                                          salt, secrets);
+
             // If the save was successful, schedule a backup. 
             if (0 == r)
               OS.backupManagerDataChanged(backupManager);
-            
+
             // If no SD card backup exists, save it now.
             if (!FileUtils.restoreFileExist())
-              FileUtils.backupSecrets(SaveService.this, cipher, secrets);
+              FileUtils.backupSecrets(SaveService.this, cipher, salt, secrets);
 
             stopSelf(startId);
           }}, "saveSecrets").start();
