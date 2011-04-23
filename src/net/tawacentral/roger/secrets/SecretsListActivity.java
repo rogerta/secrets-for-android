@@ -34,12 +34,14 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.ClipboardManager;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.AdapterView;
@@ -48,8 +50,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.Toast;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
 
 /**
  * An activity that handles two main functions: displaying the list of all
@@ -65,6 +67,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
  *
  * @author rogerta
  */
+@SuppressWarnings("deprecation")
 public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_DELETE_SECRET = 1;
   private static final int DIALOG_CONFIRM_RESTORE = 2;
@@ -90,6 +93,7 @@ public class SecretsListActivity extends ListActivity {
   private Toast toast;  // toast used to show password
   private boolean isEditing;  // true if changing a secret
   private int editingPosition;  // position of item being edited
+  private int cmenuPosition;  // position of item for cmenu
   private View root;  // root of the layout for this activity
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
@@ -180,15 +184,7 @@ public class SecretsListActivity extends ListActivity {
       }
     });
 
-    getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
-      @Override
-      public boolean onItemLongClick(AdapterView<?> parent, View view,
-                                     int position, long id) {
-        SetEditViews(position);
-        animateToEditView();
-        return true;
-      }
-    });
+    registerForContextMenu(getListView());
   }
 
   @Override
@@ -297,51 +293,35 @@ public class SecretsListActivity extends ListActivity {
 
   @Override
   public boolean onPrepareOptionsMenu(Menu menu) {
-    // Collect information needed to decide the state of the menu buttons.
-    int position = getCurrentSecretIndex();
-    boolean isPositionValid = position != AdapterView.INVALID_POSITION;
-
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
     menu.findItem(R.id.list_add).setVisible(!isEditing);
-    menu.findItem(R.id.list_edit).setVisible(!isEditing && isPositionValid);
     menu.findItem(R.id.list_save).setVisible(isEditing);
     menu.findItem(R.id.list_generate_password).setVisible(isEditing);
     menu.findItem(R.id.list_discard).setVisible(isEditing);
-    menu.findItem(R.id.list_delete).setVisible(isPositionValid);
-    menu.findItem(R.id.list_access).setVisible(isPositionValid);
     menu.findItem(R.id.list_backup).setVisible(!isEditing &&
         !secretsList.isEmpty());
     menu.findItem(R.id.list_restore).setVisible(!isEditing);
     menu.findItem(R.id.list_import).setVisible(!isEditing);
     menu.findItem(R.id.list_export).setVisible(!isEditing &&
         !secretsList.isEmpty());
-    menu.findItem(R.id.list_copy_password_to_clipboard).setVisible(!isEditing
-        && isPositionValid);
 
-    // The menu should be shown if we are editing, or if we must show the
-    // delete/access menu items.
     return true;
   }
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     boolean handled = false;
-    int position = getCurrentSecretIndex();
 
     // TODO(rogerta): when using this menu to finish the editing activity, for
     // some reason the selected item in the list view is not highlighted.  Need
     // to figure out what the interaction with the menu is.  This does not
     // happen when using the back button to finish the editing activity.
     switch (item.getItemId()) {
-    case R.id.list_add:
-        SetEditViews(AdapterView.INVALID_POSITION);
-        animateToEditView();
-        break;
-      case R.id.list_edit:
-        SetEditViews(position);
-        animateToEditView();
-        break;
+      case R.id.list_add:
+          SetEditViews(AdapterView.INVALID_POSITION);
+          animateToEditView();
+          break;
       case R.id.list_save:
         saveSecret();
         // NO BREAK
@@ -354,11 +334,6 @@ public class SecretsListActivity extends ListActivity {
         password.setText(pwd);
         break;
       }
-      case R.id.list_delete:
-        if (AdapterView.INVALID_POSITION != position) {
-          showDialog(DIALOG_DELETE_SECRET);
-        }
-        break;
       case R.id.list_backup:
         backupSecrets();
         break;
@@ -371,17 +346,50 @@ public class SecretsListActivity extends ListActivity {
       case R.id.list_import:
         importSecrets();
         break;
+      default:
+        break;
+    }
+
+    return handled;
+  }
+
+  @Override
+  public void onCreateContextMenu(ContextMenu menu, View v,
+      ContextMenuInfo menuInfo) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.list_cmenu, menu);
+    AdapterView.AdapterContextMenuInfo  info =
+        (AdapterContextMenuInfo) menuInfo;
+    Secret secret = secretsList.getSecret(cmenuPosition);
+    menu.setHeaderTitle(secret.getDescription());
+    
+    cmenuPosition = info.position;
+  }
+
+  @Override
+  public boolean onContextItemSelected(MenuItem item) {
+    boolean handled = false;
+    switch (item.getItemId()) {
+      case R.id.list_edit:
+        SetEditViews(cmenuPosition);
+        animateToEditView();
+        break;
+      case R.id.list_delete:
+        if (AdapterView.INVALID_POSITION != cmenuPosition) {
+          showDialog(DIALOG_DELETE_SECRET);
+        }
+        break;
       case R.id.list_access: {
         // TODO(rogerta): maybe just stuff the index into the intent instead
         // of serializing the whole secret, it seems to be slow.
-        Secret secret = secretsList.getSecret(position);
+        Secret secret = secretsList.getSecret(cmenuPosition);
         Intent intent = new Intent(this, AccessLogActivity.class);
         intent.putExtra(EXTRA_ACCESS_LOG, secret);
         startActivity(intent);
         break;
       }
       case R.id.list_copy_password_to_clipboard: {
-        Secret secret = secretsList.getSecret(position);
+        Secret secret = secretsList.getSecret(cmenuPosition);
         ClipboardManager cm = (ClipboardManager) getSystemService(
             CLIPBOARD_SERVICE);
         cm.setText(secret.getPassword(false));
@@ -390,10 +398,8 @@ public class SecretsListActivity extends ListActivity {
         showToast(msg);
         break;
       }
-      default:
-        break;
     }
-
+    
     return handled;
   }
 
@@ -502,7 +508,7 @@ public class SecretsListActivity extends ListActivity {
               @Override
               public void onClick(DialogInterface dialog, int which) {
                 if (DialogInterface.BUTTON1 == which) {
-                  deleteSecret(getCurrentSecretIndex());
+                  deleteSecret(cmenuPosition);
                 }
               }
             };
@@ -579,8 +585,7 @@ public class SecretsListActivity extends ListActivity {
     switch(id) {
       case DIALOG_DELETE_SECRET: {
         AlertDialog alert = (AlertDialog) dialog;
-        int position = getCurrentSecretIndex();
-        Secret secret = secretsList.getSecret(position);
+        Secret secret = secretsList.getSecret(cmenuPosition);
         String template = getText(R.string.edit_menu_delete_secret_message).
             toString();
         String msg = MessageFormat.format(template, secret.getDescription());
@@ -596,16 +601,6 @@ public class SecretsListActivity extends ListActivity {
         break;
       }
     }
-  }
-
-  /**
-   * Get the index of the current secret.  This works in list mode and in
-   * edit mode.  In list mode, if no secret is selected,
-   * AdpaterView.INVALID_POSITION is returned.
-   */
-  private int getCurrentSecretIndex() {
-    return isEditing ? editingPosition
-                      : getListView().getSelectedItemPosition();
   }
 
   /**
@@ -878,7 +873,8 @@ public class SecretsListActivity extends ListActivity {
       toast.cancel();
 
     OS.hideSoftKeyboard(this, getListView());
-
+    OS.invalidateOptionsMenu(this);
+    
     View list = getListView();
     int cx = root.getWidth() / 2;
     int cy = root.getHeight() / 2;
@@ -910,6 +906,7 @@ public class SecretsListActivity extends ListActivity {
     isEditing = false;
 
     OS.hideSoftKeyboard(this, getListView());
+    OS.invalidateOptionsMenu(this);
 
     View list = getListView();
     int cx = root.getWidth() / 2;

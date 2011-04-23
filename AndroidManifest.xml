@@ -25,7 +25,7 @@ limitations under the License.
   <!--Secrets supports Android 1.6 (SDK 4) or later only.  The main reason for
       this restriction is to properly set the required permissions for the
       app.-->
-  <uses-sdk android:minSdkVersion="4"></uses-sdk>
+  <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="11"></uses-sdk>
   <application android:icon="@drawable/icon"
       android:label="@string/app_name"
       android:allowBackup="true"
