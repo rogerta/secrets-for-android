@@ -17,6 +17,7 @@ package net.tawacentral.roger.secrets;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
 import android.view.View;
@@ -26,15 +27,15 @@ import android.view.inputmethod.InputMethodManager;
  * This class wraps OS-specific APIs behind Java's reflection API so that the
  * application can still run on OSs that don't support the given API.  This
  * class is used as a backward compatibility layer so that I don't need to
- * build different versions of the application for different OSs. 
- * 
+ * build different versions of the application for different OSs.
+ *
  * The root of the problem is the dalvik class verifier, which rejects classes
  * that depend on system classes or interfaces that are not present on the
  * device, causing the application to force exit.  Instead of statically
  * depending on OS-specific classes, this code uses reflection to dynamically
  * discover if a class is available or not, in order to get around the verifier.
  * This is the "correct" way to support different OS versions.
- *  
+ *
  * @author rogerta
  *
  */
@@ -42,7 +43,7 @@ public class OS {
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
 
-  private static int sdkVersion; 
+  private static int sdkVersion;
   static {
     try {
       sdkVersion = Integer.parseInt(android.os.Build.VERSION.SDK);
@@ -54,7 +55,12 @@ public class OS {
   public static boolean isAndroid22() {
     return sdkVersion >= 8;
   }
-  
+
+  /** Does the device support the Honeycomb (Android 3.0) APIs? */
+  public static boolean isAndroid30() {
+    return sdkVersion >= 11;
+  }
+
   /** Hide the soft keyboard if visible. */
   public static void hideSoftKeyboard(Context ctx, View view) {
     InputMethodManager manager = (InputMethodManager)
@@ -62,18 +68,18 @@ public class OS {
     if (null != manager)
       manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
   }
-  
+
   /**
    * Creates a backup manager for handling app backup in Android 2.2 and later.
    * Returns an Object so that that this function can be called from any
-   * version of Android. 
-   * 
+   * version of Android.
+   *
    * @param context Application context for the backup manager.
-   * @return A backup manager on Android 2.2 and later, null otherwise. 
+   * @return A backup manager on Android 2.2 and later, null otherwise.
    */
   public static Object createBackupManager(Context context) {
     Object bm = null;
-    
+
     if (isAndroid22()) {
       try {
         Class<?> clazz = Class.forName("android.app.backup.BackupManager");
@@ -84,14 +90,14 @@ public class OS {
         Log.e(LOG_TAG, "Should have found backup manager", ex);
       }
     }
-    
+
     return bm;
   }
-  
+
   /**
    * Calls dataChanged() on the backup manager on Android 2.2 and later, or
    * does nothing on previous versions of Android.
-   * 
+   *
    * @param bm Backup manager.  Can be null.
    */
   public static void backupManagerDataChanged(Object bm) {
@@ -104,6 +110,25 @@ public class OS {
       } catch (Exception ex) {
         Log.e(LOG_TAG, "backupManagerDataChanged", ex);
       }
+    }
+  }
+
+  /**
+   * Invalidates the option menu so that it is recreated.  This is needed
+   * for Honeycomb so that the action bar can be updated when switching to
+   * and from editing mode.
+   *
+   * @param activity The activity containing the option menu.
+   */
+  public static void invalidateOptionsMenu(Activity activity) {
+    if (!isAndroid30())
+      return;
+    
+    try {
+      Method m = activity.getClass().getMethod("invalidateOptionsMenu");
+      m.invoke(activity);
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "invalidateOptionMenu", ex);
     }
   }
 }
