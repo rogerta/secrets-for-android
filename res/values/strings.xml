@@ -97,6 +97,7 @@ Are you sure you want to delete \'\'{0}\'\'?
 
 <string name="list_menu_add">Add</string>
 <string name="list_menu_edit">Edit</string>
+<string name="list_menu_search">Search</string>
 <string name="list_menu_save">Save</string>
 <string name="list_menu_discard">Discard</string>
 <string name="list_menu_delete">Delete</string>
