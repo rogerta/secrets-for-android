@@ -288,6 +288,8 @@ public class SecretsListActivity extends ListActivity {
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.list_menu, menu);
+
+    OS.configureSearchView(this, menu);
     return true;
   }
 
@@ -322,6 +324,9 @@ public class SecretsListActivity extends ListActivity {
           SetEditViews(AdapterView.INVALID_POSITION);
           animateToEditView();
           break;
+      case R.id.list_search:
+        onSearchRequested();
+        break;
       case R.id.list_save:
         saveSecret();
         // NO BREAK

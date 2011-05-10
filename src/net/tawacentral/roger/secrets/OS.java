@@ -18,8 +18,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import android.app.Activity;
+import android.app.SearchManager;
 import android.content.Context;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
@@ -123,12 +126,48 @@ public class OS {
   public static void invalidateOptionsMenu(Activity activity) {
     if (!isAndroid30())
       return;
-    
+
     try {
       Method m = activity.getClass().getMethod("invalidateOptionsMenu");
       m.invoke(activity);
     } catch (Exception ex) {
       Log.e(LOG_TAG, "invalidateOptionMenu", ex);
+    }
+  }
+
+  /**
+   * Configures a SearchView if this is Android 3.0 or later.
+   *
+   * @param activity The activity containing the search view.
+   */
+  public static void configureSearchView(Activity activity, Menu menu) {
+    if (!isAndroid30())
+      return;
+
+    try {
+      SearchManager sm = (SearchManager) activity.getSystemService(
+          Context.SEARCH_SERVICE);
+      if (null == sm)
+        return;
+
+      Method m = sm.getClass().getMethod("getSearchableInfo",
+          android.content.ComponentName.class);
+      Object si = m.invoke(sm, activity.getComponentName());
+
+      MenuItem item = menu.findItem(R.id.list_search);
+      m = item.getClass().getMethod("getActionView");
+      View widget = (View) m.invoke(item);
+      
+      m = widget.getClass().getMethod("setSearchableInfo", si.getClass());
+      m.invoke(widget, si);
+      
+      m = widget.getClass().getMethod("setIconifiedByDefault", boolean.class);
+      m.invoke(widget, false);
+      
+      m = widget.getClass().getMethod("setSubmitButtonEnabled", boolean.class);
+      m.invoke(widget, true);
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "configureSearchView", ex);
     }
   }
 }

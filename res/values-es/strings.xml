@@ -97,6 +97,7 @@ Estás seguro?
 
 <string name="list_menu_add">Agregar</string>
 <string name="list_menu_edit">Editar</string>
+<string name="list_menu_search">Buscar</string>
 <string name="list_menu_save">Guardar</string>
 <string name="list_menu_discard">Descartar</string>
 <string name="list_menu_delete">Eliminar</string>

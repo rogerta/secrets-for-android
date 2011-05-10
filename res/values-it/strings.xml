@@ -93,6 +93,7 @@ Sei sicuro di voler cancellare \'\'{0}\'\'?
 
 <string name="list_menu_add">Aggiungi</string>
 <string name="list_menu_edit">Edita</string>
+<string name="list_menu_search">Cerca</string>
 <string name="list_menu_save">Salva</string>
 <string name="list_menu_discard">Elimina</string>
 <string name="list_menu_delete">Cancella</string>

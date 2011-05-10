@@ -93,6 +93,7 @@ La réinitialisation de votre mot de passe supprimera tous vos secrets! Êtes-vo
 
 <string name="list_menu_add">Ajouter</string>
 <string name="list_menu_edit">Modifier</string>
+<string name="list_menu_search">Rechercher</string>
 <string name="list_menu_save">Sauver</string>
 <string name="list_menu_discard">Abandonner</string>
 <string name="list_menu_delete">Supprimer</string>
