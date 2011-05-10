@@ -96,6 +96,7 @@ Weet u zeker dat u \'\'{0}\'\' wil wissen?
 
 <string name="list_menu_add">Voeg toe</string>
 <string name="list_menu_edit">Pas aan</string>
+<string name="list_menu_search">Zoeken</string>
 <string name="list_menu_save">Sla op</string>
 <string name="list_menu_discard">Annuleer</string>
 <string name="list_menu_delete">Wis</string>
