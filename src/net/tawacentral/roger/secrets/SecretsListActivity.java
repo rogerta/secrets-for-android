@@ -200,6 +200,7 @@ public class SecretsListActivity extends ListActivity {
       filter = SecretsListAdapter.DOT + filter;
 
     getListView().setFilterText(filter);
+    getListView().requestFocus();
   }
 
   @Override
@@ -297,17 +298,19 @@ public class SecretsListActivity extends ListActivity {
   public boolean onPrepareOptionsMenu(Menu menu) {
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
+    
+    boolean secretsListEmpty = (secretsList == null) || secretsList.isEmpty(); 
     menu.findItem(R.id.list_add).setVisible(!isEditing);
+    menu.findItem(R.id.list_backup).setVisible(!isEditing && !secretsListEmpty);
+    menu.findItem(R.id.list_search).setVisible(!isEditing);
+    menu.findItem(R.id.list_restore).setVisible(!isEditing);
+    menu.findItem(R.id.list_import).setVisible(!isEditing);
+    menu.findItem(R.id.list_export).setVisible(!isEditing && !secretsListEmpty);
+
     menu.findItem(R.id.list_save).setVisible(isEditing);
     menu.findItem(R.id.list_generate_password).setVisible(isEditing);
     menu.findItem(R.id.list_discard).setVisible(isEditing);
-    menu.findItem(R.id.list_backup).setVisible(!isEditing &&
-        !secretsList.isEmpty());
-    menu.findItem(R.id.list_restore).setVisible(!isEditing);
-    menu.findItem(R.id.list_import).setVisible(!isEditing);
-    menu.findItem(R.id.list_export).setVisible(!isEditing &&
-        !secretsList.isEmpty());
-
+    
     return true;
   }
 

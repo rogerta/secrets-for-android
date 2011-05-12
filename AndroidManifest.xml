@@ -20,7 +20,7 @@ limitations under the License.
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.tawacentral.roger.secrets"
     android:versionName="2.0"
-    android:versionCode="32"
+    android:versionCode="33"
     android:installLocation="auto">
   <!--Secrets supports Android 1.6 (SDK 4) or later only.  The main reason for
       this restriction is to properly set the required permissions for the
