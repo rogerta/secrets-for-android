@@ -364,14 +364,13 @@ public class SecretsListActivity extends ListActivity {
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
-    MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.list_cmenu, menu);
     AdapterView.AdapterContextMenuInfo  info =
         (AdapterContextMenuInfo) menuInfo;
+    cmenuPosition = info.position;
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.list_cmenu, menu);
     Secret secret = secretsList.getSecret(cmenuPosition);
     menu.setHeaderTitle(secret.getDescription());
-    
-    cmenuPosition = info.position;
   }
 
   @Override
