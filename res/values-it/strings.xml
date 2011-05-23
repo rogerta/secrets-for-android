@@ -89,7 +89,9 @@ Sei sicuro di voler cancellare \'\'{0}\'\'?
 
 <string name="edit_menu_import_secrets_message">Importazione riuscita.  Cancellare \'\'{0}\'\' ora?</string>
 
-<string name="copied_to_clipboard">Il PIN di {0} é stato copiato negli Appunti.</string>
+<string name="username_copied_to_clipboard">Id</string>
+<string name="password_copied_to_clipboard">PIN</string>
+<string name="copied_to_clipboard">Il {1} di {0} é stato copiato negli Appunti.</string>
 
 <string name="list_menu_add">Aggiungi</string>
 <string name="list_menu_edit">Edita</string>
@@ -102,7 +104,8 @@ Sei sicuro di voler cancellare \'\'{0}\'\'?
 <string name="list_menu_restore">Ripristino</string>
 <string name="list_menu_import">Importazione</string>
 <string name="list_menu_export">Esportazione</string>
-<string name="list_menu_copy_password_to_clipoboard">Agli appunti</string>
+<string name="list_menu_copy_username_to_clipoboard">Copia Id</string>
+<string name="list_menu_copy_password_to_clipoboard">Copia PIN</string>
 <string name="list_menu_generate_password">Genera PIN</string>
 
 <string name="log_name">Accesso ai log</string>
