@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Versión 1.9.8 (c) 2010 Google Inc.</string>
+<string name="copyright">Versión 2.0 (c) 2010 Google Inc.</string>
 
 <string name="invalid_password">Oops! La contraseña es inválida, por favor intente de nuevo.</string>
 <string name="no_password">&lt; No PIN &gt;</string>
@@ -93,7 +93,9 @@ Estás seguro?
 
 <string name="edit_menu_import_secrets_message">Importación exitosa.  Eliminar \'\'{0}\'\' ahora?</string>
 
-<string name="copied_to_clipboard">El PIN de \'\'{0}\'\' ha sido copiado al portapapeles.</string>
+<string name="username_copied_to_clipboard">Id</string>
+<string name="password_copied_to_clipboard">PIN</string>
+<string name="copied_to_clipboard">El {1} de \'\'{0}\'\' ha sido copiado al portapapeles.</string>
 
 <string name="list_menu_add">Agregar</string>
 <string name="list_menu_edit">Editar</string>
@@ -106,7 +108,8 @@ Estás seguro?
 <string name="list_menu_restore">Restaurar</string>
 <string name="list_menu_import">Importar</string>
 <string name="list_menu_export">Exportar</string>
-<string name="list_menu_copy_password_to_clipoboard">Copiar</string>
+<string name="list_menu_copy_username_to_clipoboard">Copiar Id</string>
+<string name="list_menu_copy_password_to_clipoboard">Copiar PIN</string>
 <string name="list_menu_generate_password">Generar</string>
 
 <string name="log_name">Registro de acceso</string>
