@@ -395,13 +395,23 @@ public class SecretsListActivity extends ListActivity {
         startActivity(intent);
         break;
       }
-      case R.id.list_copy_password_to_clipboard: {
+      case R.id.list_copy_password_to_clipboard:
+      case R.id.list_copy_username_to_clipboard: {
         Secret secret = secretsList.getSecret(cmenuPosition);
         ClipboardManager cm = (ClipboardManager) getSystemService(
             CLIPBOARD_SERVICE);
-        cm.setText(secret.getPassword(false));
+        int typeId;
+        if (item.getItemId() == R.id.list_copy_password_to_clipboard) {
+          cm.setText(secret.getPassword(false));
+          typeId = R.string.password_copied_to_clipboard;
+        } else {
+          cm.setText(secret.getUsername());
+          typeId = R.string.username_copied_to_clipboard;
+        }
         String template = getText(R.string.copied_to_clipboard).toString();
-        String msg = MessageFormat.format(template, secret.getDescription());
+        String typeOfCopy = getText(typeId).toString();
+        String msg = MessageFormat.format(template, secret.getDescription(),
+                                          typeOfCopy);
         showToast(msg);
         break;
       }
