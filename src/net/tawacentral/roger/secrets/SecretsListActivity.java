@@ -35,13 +35,16 @@ import android.os.Bundle;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.View.OnTouchListener;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.AdapterView;
@@ -51,7 +54,6 @@ import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * An activity that handles two main functions: displaying the list of all
@@ -91,6 +93,7 @@ public class SecretsListActivity extends ListActivity {
 
   private SecretsListAdapter secretsList;  // list of secrets
   private Toast toast;  // toast used to show password
+  private GestureDetector detector;  // detects taps and double taps
   private boolean isEditing;  // true if changing a secret
   private int editingPosition;  // position of item being edited
   private int cmenuPosition;  // position of item for cmenu
@@ -166,21 +169,47 @@ public class SecretsListActivity extends ListActivity {
     }
 
     // Hook up interactions.
-    getListView().setOnItemClickListener(new OnItemClickListener() {
-      @Override
-      public void onItemClick(AdapterView<?> parent, View view, int position,
-                              long id) {
-        Secret secret = getSecret(position);
-        CharSequence password = secret.getPassword(false);
-        if (password.length() == 0)
-          password = getText(R.string.no_password);
+    GestureDetector.SimpleOnGestureListener listener =
+        new GestureDetector.SimpleOnGestureListener() {
+          @Override
+          public boolean onSingleTapConfirmed(MotionEvent e) {
+            int position = getListView().pointToPosition((int)e.getX(),
+                                                         (int)e.getY());
+            if (AdapterView.INVALID_POSITION != position) {
+              Secret secret = getSecret(position);
+              CharSequence password = secret.getPassword(false);
+              if (password.length() == 0)
+              password = getText(R.string.no_password);
 
-        showToast(password);
-        // TODO(rogerta): to reliably record "view" access, we would want to
-        // checkpoint the secrets and save them here.  But doing so causes
-        // unacceptable delays is displaying the toast.
-        //FileUtils.saveSecrets(SecretsListActivity.this,
-        //                      secretsList_.getAllSecrets());
+              showToast(password);
+              // TODO(rogerta): to reliably record "view" access, we would want
+              // to checkpoint the secrets and save them here.  But doing so
+              // causes unacceptable delays is displaying the toast.
+              //FileUtils.saveSecrets(SecretsListActivity.this,
+              //                      secretsList_.getAllSecrets());
+            }
+
+            return true;
+          }
+          @Override
+          public boolean onDoubleTap(MotionEvent e) {
+            int position = getListView().pointToPosition((int)e.getX(),
+                                                         (int)e.getY());
+            if (AdapterView.INVALID_POSITION != position) {
+              SetEditViews(position);
+              animateToEditView();
+              hideToast();
+            }
+            return true;
+          }
+        };
+    detector = new GestureDetector(this, listener);
+    detector.setOnDoubleTapListener(listener);
+
+    getListView().setOnTouchListener(new OnTouchListener() {
+      @Override
+      public boolean onTouch(View arg0, MotionEvent event) {
+        return detector.onTouchEvent(event);
       }
     });
 
@@ -298,8 +327,8 @@ public class SecretsListActivity extends ListActivity {
   public boolean onPrepareOptionsMenu(Menu menu) {
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
-    
-    boolean secretsListEmpty = (secretsList == null) || secretsList.isEmpty(); 
+
+    boolean secretsListEmpty = (secretsList == null) || secretsList.isEmpty();
     menu.findItem(R.id.list_add).setVisible(!isEditing);
     menu.findItem(R.id.list_backup).setVisible(!isEditing && !secretsListEmpty);
     menu.findItem(R.id.list_search).setVisible(!isEditing);
@@ -310,7 +339,7 @@ public class SecretsListActivity extends ListActivity {
     menu.findItem(R.id.list_save).setVisible(isEditing);
     menu.findItem(R.id.list_generate_password).setVisible(isEditing);
     menu.findItem(R.id.list_discard).setVisible(isEditing);
-    
+
     return true;
   }
 
@@ -364,6 +393,7 @@ public class SecretsListActivity extends ListActivity {
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
+    hideToast();
     AdapterView.AdapterContextMenuInfo  info =
         (AdapterContextMenuInfo) menuInfo;
     cmenuPosition = info.position;
@@ -416,7 +446,7 @@ public class SecretsListActivity extends ListActivity {
         break;
       }
     }
-    
+
     return handled;
   }
 
@@ -872,6 +902,13 @@ public class SecretsListActivity extends ListActivity {
     toast.show();
   }
 
+  /** Hide the toast, if any. */
+  private void hideToast() {
+    if (null != toast) {
+      toast.cancel();
+    }
+  }
+
   /** Get the secret at the specified position in the list. */
   private Secret getSecret(int position) {
     return (Secret) getListAdapter().getItem(position);
@@ -891,7 +928,7 @@ public class SecretsListActivity extends ListActivity {
 
     OS.hideSoftKeyboard(this, getListView());
     OS.invalidateOptionsMenu(this);
-    
+
     View list = getListView();
     int cx = root.getWidth() / 2;
     int cy = root.getHeight() / 2;
