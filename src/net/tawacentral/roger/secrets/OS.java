@@ -15,7 +15,6 @@
 package net.tawacentral.roger.secrets;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import android.app.Activity;
@@ -58,11 +57,6 @@ public class OS {
   /** Does the device support the froyo (Android 2.2) APIs? */
   public static boolean isAndroid22() {
     return sdkVersion >= 8;
-  }
-
-  /** Does the device support the Gingerbread (Android 2.3) APIs? */
-  public static boolean isAndroid23() {
-    return sdkVersion >= 9;
   }
 
   /** Does the device support the Honeycomb (Android 3.0) APIs? */
@@ -163,49 +157,17 @@ public class OS {
       MenuItem item = menu.findItem(R.id.list_search);
       m = item.getClass().getMethod("getActionView");
       View widget = (View) m.invoke(item);
-
+      
       m = widget.getClass().getMethod("setSearchableInfo", si.getClass());
       m.invoke(widget, si);
-
+      
       m = widget.getClass().getMethod("setIconifiedByDefault", boolean.class);
       m.invoke(widget, false);
-
+      
       m = widget.getClass().getMethod("setSubmitButtonEnabled", boolean.class);
       m.invoke(widget, true);
     } catch (Exception ex) {
       Log.e(LOG_TAG, "configureSearchView", ex);
     }
-  }
-
-  /** Does the device support a scroll wheel or trackball? */
-  public static boolean supportsScrollWheel() {
-    // This API is only support in Android 2.3 and later.  If this is an
-    // earlier version of Android, then assume we have a scroll wheel.
-    if (!isAndroid23())
-      return true;
-
-    try {
-      Class<?> clazz = Class.forName("android.view.InputDevice");
-      Method m = clazz.getMethod("getDeviceIds");
-      Field f = clazz.getField("SOURCE_TRACKBALL");
-      final int trackballId = f.getInt(null);
-      f = clazz.getField("SOURCE_DPAD");
-      final int dpadId = f.getInt(null);
-
-      Method mGetDevice = clazz.getMethod("getDevice", int.class);
-      Method mGetSources = clazz.getMethod("getSources");
-      int[] ids = (int[]) m.invoke(null);
-      for (int id : ids) {
-        Object device = mGetDevice.invoke(null, id);
-        Integer sources = (Integer) mGetSources.invoke(device);
-        if (0 != (sources.intValue() & (trackballId | dpadId)))
-          return true;
-      }
-    } catch (Exception ex) {
-      Log.e(LOG_TAG, "supportsScrollWheel", ex);
-      return true;
-    }
-
-    return false;
   }
 }

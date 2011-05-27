@@ -35,16 +35,13 @@ import android.os.Bundle;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.View.OnTouchListener;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.AdapterView;
@@ -94,7 +91,6 @@ public class SecretsListActivity extends ListActivity {
 
   private SecretsListAdapter secretsList;  // list of secrets
   private Toast toast;  // toast used to show password
-  private GestureDetector detector;  // detects taps and double taps
   private boolean isEditing;  // true if changing a secret
   private int editingPosition;  // position of item being edited
   private int cmenuPosition;  // position of item for cmenu
@@ -169,78 +165,26 @@ public class SecretsListActivity extends ListActivity {
       }
     }
 
-    // This listener handles click using the scroll wheel.
-    if (OS.supportsScrollWheel()) {
-      getListView().setOnItemClickListener(new OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position,
-            long id) {
-          onItemClicked(position);
-        }
-      });
-    }
-
-    // The gesture detector is used to handle taps and double taps.  Its
-    // important to handle simple taps here and not just defer to the
-    // onItemClickListener, otherwise a double tap will trigger both the
-    // onItemClicked() behaviour as well as the double tap behaviour.  By
-    // handling simple taps here, we can use the onSingleTapConfirmed() to
-    // only do the simple tap behaviour when we are sure there is no double
-    // tap as well.
-    //
-    // However, in order to support device with a scroll wheel, I still need to
-    // handle onItemClicked(), causing both behaviours.  This can be
-    // fixed for device that do not have a scroll wheel, in which case the
-    // we do not need to handle onItemClicked().  However, the API to check
-    // if the device has a scroll where was only introduced in Android 2.3.
-    GestureDetector.SimpleOnGestureListener listener =
-        new GestureDetector.SimpleOnGestureListener() {
-          @Override
-          public boolean onSingleTapConfirmed(MotionEvent e) {
-            int position = getListView().pointToPosition((int)e.getX(),
-                                                         (int)e.getY());
-            onItemClicked(position);
-            return true;
-          }
-          @Override
-          public boolean onDoubleTap(MotionEvent e) {
-            int position = getListView().pointToPosition((int)e.getX(),
-                                                         (int)e.getY());
-            if (AdapterView.INVALID_POSITION != position) {
-              SetEditViews(position);
-              animateToEditView();
-              hideToast();
-            }
-            return true;
-          }
-        };
-    detector = new GestureDetector(this, listener);
-    detector.setOnDoubleTapListener(listener);
-
-    getListView().setOnTouchListener(new OnTouchListener() {
+    // Hook up interactions.
+    getListView().setOnItemClickListener(new OnItemClickListener() {
       @Override
-      public boolean onTouch(View arg0, MotionEvent event) {
-        return detector.onTouchEvent(event);
+      public void onItemClick(AdapterView<?> parent, View view, int position,
+                              long id) {
+        Secret secret = getSecret(position);
+        CharSequence password = secret.getPassword(false);
+        if (password.length() == 0)
+          password = getText(R.string.no_password);
+
+        showToast(password);
+        // TODO(rogerta): to reliably record "view" access, we would want to
+        // checkpoint the secrets and save them here.  But doing so causes
+        // unacceptable delays is displaying the toast.
+        //FileUtils.saveSecrets(SecretsListActivity.this,
+        //                      secretsList_.getAllSecrets());
       }
     });
 
     registerForContextMenu(getListView());
-  }
-
-  private void onItemClicked(int position) {
-    if (AdapterView.INVALID_POSITION != position) {
-      Secret secret = getSecret(position);
-      CharSequence password = secret.getPassword(false);
-      if (password.length() == 0)
-      password = getText(R.string.no_password);
-
-      showToast(password);
-      // TODO(rogerta): to reliably record "view" access, we would want
-      // to checkpoint the secrets and save them here.  But doing so
-      // causes unacceptable delays is displaying the toast.
-      //FileUtils.saveSecrets(SecretsListActivity.this,
-      //                      secretsList_.getAllSecrets());
-    }
   }
 
   @Override
@@ -256,7 +200,6 @@ public class SecretsListActivity extends ListActivity {
       filter = SecretsListAdapter.DOT + filter;
 
     getListView().setFilterText(filter);
-    getListView().requestFocus();
   }
 
   @Override
@@ -354,18 +297,16 @@ public class SecretsListActivity extends ListActivity {
   public boolean onPrepareOptionsMenu(Menu menu) {
     // We must always set the state of all the buttons, since we don't know
     // their states before this method is called.
-
-    boolean secretsListEmpty = (secretsList == null) || secretsList.isEmpty();
     menu.findItem(R.id.list_add).setVisible(!isEditing);
-    menu.findItem(R.id.list_backup).setVisible(!isEditing && !secretsListEmpty);
-    menu.findItem(R.id.list_search).setVisible(!isEditing);
-    menu.findItem(R.id.list_restore).setVisible(!isEditing);
-    menu.findItem(R.id.list_import).setVisible(!isEditing);
-    menu.findItem(R.id.list_export).setVisible(!isEditing && !secretsListEmpty);
-
     menu.findItem(R.id.list_save).setVisible(isEditing);
     menu.findItem(R.id.list_generate_password).setVisible(isEditing);
     menu.findItem(R.id.list_discard).setVisible(isEditing);
+    menu.findItem(R.id.list_backup).setVisible(!isEditing &&
+        !secretsList.isEmpty());
+    menu.findItem(R.id.list_restore).setVisible(!isEditing);
+    menu.findItem(R.id.list_import).setVisible(!isEditing);
+    menu.findItem(R.id.list_export).setVisible(!isEditing &&
+        !secretsList.isEmpty());
 
     return true;
   }
@@ -420,14 +361,14 @@ public class SecretsListActivity extends ListActivity {
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
       ContextMenuInfo menuInfo) {
-    hideToast();
-    AdapterView.AdapterContextMenuInfo  info =
-        (AdapterContextMenuInfo) menuInfo;
-    cmenuPosition = info.position;
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.list_cmenu, menu);
+    AdapterView.AdapterContextMenuInfo  info =
+        (AdapterContextMenuInfo) menuInfo;
     Secret secret = secretsList.getSecret(cmenuPosition);
     menu.setHeaderTitle(secret.getDescription());
+    
+    cmenuPosition = info.position;
   }
 
   @Override
@@ -452,28 +393,18 @@ public class SecretsListActivity extends ListActivity {
         startActivity(intent);
         break;
       }
-      case R.id.list_copy_password_to_clipboard:
-      case R.id.list_copy_username_to_clipboard: {
+      case R.id.list_copy_password_to_clipboard: {
         Secret secret = secretsList.getSecret(cmenuPosition);
         ClipboardManager cm = (ClipboardManager) getSystemService(
             CLIPBOARD_SERVICE);
-        int typeId;
-        if (item.getItemId() == R.id.list_copy_password_to_clipboard) {
-          cm.setText(secret.getPassword(false));
-          typeId = R.string.password_copied_to_clipboard;
-        } else {
-          cm.setText(secret.getUsername());
-          typeId = R.string.username_copied_to_clipboard;
-        }
+        cm.setText(secret.getPassword(false));
         String template = getText(R.string.copied_to_clipboard).toString();
-        String typeOfCopy = getText(typeId).toString();
-        String msg = MessageFormat.format(template, secret.getDescription(),
-                                          typeOfCopy);
+        String msg = MessageFormat.format(template, secret.getDescription());
         showToast(msg);
         break;
       }
     }
-
+    
     return handled;
   }
 
@@ -929,13 +860,6 @@ public class SecretsListActivity extends ListActivity {
     toast.show();
   }
 
-  /** Hide the toast, if any. */
-  private void hideToast() {
-    if (null != toast) {
-      toast.cancel();
-    }
-  }
-
   /** Get the secret at the specified position in the list. */
   private Secret getSecret(int position) {
     return (Secret) getListAdapter().getItem(position);
@@ -955,7 +879,7 @@ public class SecretsListActivity extends ListActivity {
 
     OS.hideSoftKeyboard(this, getListView());
     OS.invalidateOptionsMenu(this);
-
+    
     View list = getListView();
     int cx = root.getWidth() / 2;
     int cy = root.getHeight() / 2;
@@ -963,7 +887,6 @@ public class SecretsListActivity extends ListActivity {
     animation.setAnimationListener(new AnimationListener() {
       @Override
       public void onAnimationEnd(Animation animation) {
-        hideToast();
         if (0 == secretsList.getCount()) {
           showToast(getText(R.string.edit_instructions));
         }

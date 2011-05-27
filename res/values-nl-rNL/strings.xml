@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.9.8.2 (c) 2010 Google Inc.</string>
+<string name="copyright">Version 1.9.8 (c) 2010 Google Inc.</string>
 
 <string name="invalid_password">Oeps! Het wachtwoord is onjuist, probeer alstublieft opnieuw.</string>
 <string name="no_password">&lt; Geen PIN &gt;</string>
@@ -92,9 +92,7 @@ Weet u zeker dat u \'\'{0}\'\' wil wissen?
 
 <string name="edit_menu_import_secrets_message">Import succesvol. \'\'{0}\'\' nu wissen?</string>
 
-<string name="username_copied_to_clipboard">ID</string>
-<string name="password_copied_to_clipboard">PIN</string>
-<string name="copied_to_clipboard">{0}\'\'s {1} is gekopierd naar het klembord.</string>
+<string name="copied_to_clipboard">{0}\'\'s PIN is gekopierd naar het klembord.</string>
 
 <string name="list_menu_add">Voeg toe</string>
 <string name="list_menu_edit">Pas aan</string>
@@ -107,8 +105,7 @@ Weet u zeker dat u \'\'{0}\'\' wil wissen?
 <string name="list_menu_restore">Zet terug</string>
 <string name="list_menu_import">Importeer</string>
 <string name="list_menu_export">Exporteer</string>
-<string name="list_menu_copy_username_to_clipoboard">Kopieer ID</string>
-<string name="list_menu_copy_password_to_clipoboard">Kopieer PIN</string>
+<string name="list_menu_copy_password_to_clipoboard">Naar klembord</string>
 <string name="list_menu_generate_password">Genereer</string>
 
 <string name="log_name">Toegangslog</string>

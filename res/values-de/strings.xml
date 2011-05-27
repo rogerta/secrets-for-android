@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.9.8.2 (c) 2010 Google Inc.</string>
+<string name="copyright">Version 1.9.8 (c) 2010 Google Inc.</string>
 
 <string name="invalid_password">Oops! Das Passwort ist falsch, bitte noch einmal versuchen.</string>
 <string name="no_password">&lt; keine PIN &gt;</string>
@@ -93,9 +93,7 @@ Sind Sie sicher, dass Sie Geheimnis \'\'{0}\'\' löschen wollen?
 
 <string name="edit_menu_import_secrets_message">Datei erfolgreich importiert.  Soll die Datei \'\'{0}\'\' jetzt gelöscht werden?</string>
 
-<string name="username_copied_to_clipboard">ID</string>
-<string name="password_copied_to_clipboard">PIN</string>
-<string name="copied_to_clipboard">Die {1} von \'\'{0}\'\' wurde in die Zwischenablage kopiert.</string>
+<string name="copied_to_clipboard">Die PIN von \'\'{0}\'\' wurde in die Zwischenablage kopiert.</string>
 
 <string name="list_menu_add">Hinzufügen</string>
 <string name="list_menu_edit">Editieren</string>
@@ -108,8 +106,7 @@ Sind Sie sicher, dass Sie Geheimnis \'\'{0}\'\' löschen wollen?
 <string name="list_menu_restore">Datenwiederherstellung</string>
 <string name="list_menu_import">Import</string>
 <string name="list_menu_export">Export</string>
-<string name="list_menu_copy_username_to_clipoboard">Kopieren ID</string>
-<string name="list_menu_copy_password_to_clipoboard">Kopieren PIN</string>
+<string name="list_menu_copy_password_to_clipoboard">In die Zwischenablage</string>
 <string name="list_menu_generate_password">Generieren</string>
 
 <string name="log_name">Zugriffsprotokoll</string>

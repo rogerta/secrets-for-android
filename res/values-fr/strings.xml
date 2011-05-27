@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 1.9.8.2 (c) 2010 Google Inc.</string>
+<string name="copyright">Version 1.9.8 (c) 2010 Google Inc.</string>
 
 <string name="invalid_password">Le mot de passe n\'est pas valid, veuillez ressayer.</string>
 <string name="no_password">&lt; Pas de NIP &gt;</string>
@@ -89,9 +89,7 @@ La réinitialisation de votre mot de passe supprimera tous vos secrets! Êtes-vo
 
 <string name="edit_menu_import_secrets_message">Import réussi. Supprimer \'\'{0}\'\' maintenant?</string>
 
-<string name="username_copied_to_clipboard">Id</string>
-<string name="password_copied_to_clipboard">NIP</string>
-<string name="copied_to_clipboard">Le {1} de \'\'{0}\'\' a été copié.</string>
+<string name="copied_to_clipboard">Le NIP de \'\'{0}\'\' a été copié.</string>
 
 <string name="list_menu_add">Ajouter</string>
 <string name="list_menu_edit">Modifier</string>
@@ -104,7 +102,6 @@ La réinitialisation de votre mot de passe supprimera tous vos secrets! Êtes-vo
 <string name="list_menu_restore">Restorer</string>
 <string name="list_menu_import">Importer</string>
 <string name="list_menu_export">Exporter</string>
-<string name="list_menu_copy_username_to_clipoboard">Copier Id</string>
 <string name="list_menu_copy_password_to_clipoboard">Copier NIP</string>
 <string name="list_menu_generate_password">Générer</string>
 
