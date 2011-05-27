@@ -54,6 +54,7 @@ import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * An activity that handles two main functions: displaying the list of all
@@ -168,27 +169,37 @@ public class SecretsListActivity extends ListActivity {
       }
     }
 
-    // Hook up interactions.
+    // This listener handles click using the scroll wheel.
+    if (OS.supportsScrollWheel()) {
+      getListView().setOnItemClickListener(new OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position,
+            long id) {
+          onItemClicked(position);
+        }
+      });
+    }
+
+    // The gesture detector is used to handle taps and double taps.  Its
+    // important to handle simple taps here and not just defer to the
+    // onItemClickListener, otherwise a double tap will trigger both the
+    // onItemClicked() behaviour as well as the double tap behaviour.  By
+    // handling simple taps here, we can use the onSingleTapConfirmed() to
+    // only do the simple tap behaviour when we are sure there is no double
+    // tap as well.
+    //
+    // However, in order to support device with a scroll wheel, I still need to
+    // handle onItemClicked(), causing both behaviours.  This can be
+    // fixed for device that do not have a scroll wheel, in which case the
+    // we do not need to handle onItemClicked().  However, the API to check
+    // if the device has a scroll where was only introduced in Android 2.3.
     GestureDetector.SimpleOnGestureListener listener =
         new GestureDetector.SimpleOnGestureListener() {
           @Override
           public boolean onSingleTapConfirmed(MotionEvent e) {
             int position = getListView().pointToPosition((int)e.getX(),
                                                          (int)e.getY());
-            if (AdapterView.INVALID_POSITION != position) {
-              Secret secret = getSecret(position);
-              CharSequence password = secret.getPassword(false);
-              if (password.length() == 0)
-              password = getText(R.string.no_password);
-
-              showToast(password);
-              // TODO(rogerta): to reliably record "view" access, we would want
-              // to checkpoint the secrets and save them here.  But doing so
-              // causes unacceptable delays is displaying the toast.
-              //FileUtils.saveSecrets(SecretsListActivity.this,
-              //                      secretsList_.getAllSecrets());
-            }
-
+            onItemClicked(position);
             return true;
           }
           @Override
@@ -214,6 +225,22 @@ public class SecretsListActivity extends ListActivity {
     });
 
     registerForContextMenu(getListView());
+  }
+
+  private void onItemClicked(int position) {
+    if (AdapterView.INVALID_POSITION != position) {
+      Secret secret = getSecret(position);
+      CharSequence password = secret.getPassword(false);
+      if (password.length() == 0)
+      password = getText(R.string.no_password);
+
+      showToast(password);
+      // TODO(rogerta): to reliably record "view" access, we would want
+      // to checkpoint the secrets and save them here.  But doing so
+      // causes unacceptable delays is displaying the toast.
+      //FileUtils.saveSecrets(SecretsListActivity.this,
+      //                      secretsList_.getAllSecrets());
+    }
   }
 
   @Override
@@ -939,6 +966,7 @@ public class SecretsListActivity extends ListActivity {
     animation.setAnimationListener(new AnimationListener() {
       @Override
       public void onAnimationEnd(Animation animation) {
+        hideToast();
         if (0 == secretsList.getCount()) {
           showToast(getText(R.string.edit_instructions));
         }
