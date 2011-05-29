@@ -63,8 +63,8 @@ public class SecurityUtils {
     (byte)0xD6, (byte)0x95, (byte)0xF3, (byte)0x13
   };
 
-  private static final String KEY_FACTORY = "AES";
-  
+  private static final String KEY_FACTORY = "PBEWITHSHA-256AND256BITAES-CBC-BC";
+
   /** Class used to time the execution of functions */
   static public class ExecutionTimer {
     private long start = System.currentTimeMillis();
@@ -83,6 +83,7 @@ public class SecurityUtils {
   private static Cipher encryptCipher;
   private static Cipher decryptCipher;
   private static byte[] salt;
+  private static int rounds;
 
   /**
    * Get the cipher used to encrypt data using the password given to the
@@ -102,12 +103,20 @@ public class SecurityUtils {
 
   /**
    * Gets the salt for this device.
-   * @return A byte array represent the salt for this specific device.
+   * @return A byte array representing the salt for this specific device.
    */
   public static byte[] getSalt() {
     return salt;
   }
 
+  /**
+   * Gets the rounds for this device.
+   * @return an integer representing the number of bcrypt rounds.
+   */
+  public static int getRounds() {
+    return rounds;
+  }
+  
   /**
    * Creates a new unique random salt.
    * @return A new salt value used to generate the secret key. 
@@ -160,37 +169,41 @@ public class SecurityUtils {
    * getDecryptionCipher().
    *
    * @param password String to use for creating the ciphers.
-   * @param saltBytes The salt to use when creating the encryption key.
+   * @param salt The salt to use when creating the encryption key.
+   * @param rounds The number of rounds for bcrypt.
    * @return True if the ciphers were successfully created.
    */
-  public static boolean createCiphers(String password, byte[] saltBytes) {
+  public static boolean createCiphers(String password,
+                                      byte[] salt,
+                                      int rounds) {
     boolean succeeded = false;
 
     ExecutionTimer timer = new ExecutionTimer();
 
     try {
-      if (saltBytes == null)
-        saltBytes = createNewSalt();
-      
+      if (salt == null || rounds == 0) {
+        salt = createNewSalt();
+        rounds = 9;
+      }
+
       int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
                          0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
       BCrypt bcrypt = new BCrypt();
       byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"),
-                                         saltBytes, 10, plaintext);
+                                         salt, rounds, plaintext);
       SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
-      encryptCipher = Cipher.getInstance(KEY_FACTORY);
-      encryptCipher.init(Cipher.ENCRYPT_MODE, spec);
+      SecurityUtils.encryptCipher = Cipher.getInstance(KEY_FACTORY);
+      SecurityUtils.encryptCipher.init(Cipher.ENCRYPT_MODE, spec);
 
-      decryptCipher = Cipher.getInstance(KEY_FACTORY);
-      decryptCipher.init(Cipher.DECRYPT_MODE, spec);
+      SecurityUtils.decryptCipher = Cipher.getInstance(KEY_FACTORY);
+      SecurityUtils.decryptCipher.init(Cipher.DECRYPT_MODE, spec);
 
-      salt = saltBytes;
+      SecurityUtils.salt = salt;
+      SecurityUtils.rounds = rounds;
       succeeded = true;
     } catch (Exception ex) {
       Log.d(LOG_TAG, "createCiphers", ex);
-      encryptCipher = null;
-      decryptCipher = null;
-      salt = null;
+      clearCiphers();
     }
 
     timer.logElapsed("Time to create cihpers: ");
@@ -202,6 +215,7 @@ public class SecurityUtils {
     decryptCipher = null;
     encryptCipher = null;
     salt = null;
+    rounds = 0;
   }
 
   public static void timeCreateBcryptRawBytes(int count) {
