@@ -58,6 +58,16 @@ import javax.crypto.CipherOutputStream;
  * @author rogerta
  */
 public class FileUtils {
+  /** Return value for the getSaltAndRounds() function. */
+  public static class SaltAndRounds {
+    public SaltAndRounds(byte[] salt, int rounds) {
+      this.salt = salt;
+      this.rounds = rounds;
+    }
+    public byte[] salt;
+    public int rounds;
+  }
+
   /** Name of the secrets file. */
   public static final String SECRETS_FILE_NAME = "secrets";
 
@@ -90,8 +100,8 @@ public class FileUtils {
   /** Lock for accessing main secrets file. */
   private static final Object lock = new Object();
 
-  private static final byte[] SIGNATURE = {0x12, 0x34, 0x56, 0x78};
-  
+  private static final byte[] SIGNATURE = {0x22, 0x34, 0x56, 0x79};
+
   /** Does the secrets file exist? */
   public static boolean secretsExist(Context context) {
     // Instead of just checking for the existence of the secrets file
@@ -248,42 +258,48 @@ public class FileUtils {
   }
 
   /**
-   * Gets the salt already in use on this device, or null if none exists.
-   * 
-   * @return A byte array representing the salt for this device.
+   * Gets the salt and rounds already in use on this device, or null if none
+   * exists.
    */
-  public static byte[] getSalt(Context context) {
+  public static SaltAndRounds getSaltAndRounds(Context context) {
     // The salt is stored as a byte array at the start of the secrets file.
     FileInputStream input = null;
-    byte[] salt = null;
     try {
       input = context.openFileInput(SECRETS_FILE_NAME);
-      salt = getSalt(input);
+      return getSaltAndRounds(input);
     } catch (Exception ex) {
-      salt = null;
+      Log.e(LOG_TAG, "getSaltAndRounds", ex);
     } finally {
       try {if (null != input) input.close();} catch (IOException ex) {}
     }
-    return salt;
+    return new SaltAndRounds(null, 0);
   }
 
   /**
-   * Gets the salt already in use on this device, or null if none exists.
+   * Gets the salt and rounds already in use on this device, or null if none
+   * exists.
    * 
-   * @return A byte array representing the salt for this device.
    * @throws IOException 
    */
-  private static byte[] getSalt(InputStream input) throws IOException {
+  private static SaltAndRounds getSaltAndRounds(InputStream input)
+      throws IOException {
     // The salt is stored as a byte array at the start of the secrets file.
     byte[] signature = new byte[SIGNATURE.length];
     byte[] salt = null;
+    int rounds = 0;
     input.read(signature);
     if (Arrays.equals(signature, SIGNATURE)) {
       int length = input.read();
       salt = new byte[length];
       input.read(salt);
+      rounds = input.read();
+      if (rounds < 4 || rounds > 31) {
+        salt = null;
+        rounds = 0;
+      }
     }
-    return salt;
+
+    return new SaltAndRounds(salt, rounds);
   }
 
   /**
@@ -293,6 +309,7 @@ public class FileUtils {
    * @param existing The file to save into.
    * @param cipher The encryption cipher to use with the file.
    * @param salt The salt used to create the cipher.
+   * @param rounds The number of rounds for bcrypt.
    * @param secrets The list of secrets to save.
    * @return True if saved successfully.
    */
@@ -300,6 +317,7 @@ public class FileUtils {
                                 File existing,
                                 Cipher cipher,
                                 byte[] salt,
+                                int rounds,
                                 List<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.saveSecrets");
     synchronized (lock) {
@@ -332,7 +350,7 @@ public class FileUtils {
       ObjectOutputStream output = null;
       try {
         FileOutputStream fos = new FileOutputStream(tempn);
-        writeSecrets(fos, cipher, salt, secrets);
+        writeSecrets(fos, cipher, salt, rounds, secrets);
       } catch (Exception ex) {
         Log.d(LOG_TAG, "FileUtils.saveSecrets: could not write secrets file");
         // NOTE: this delete() works, even though the file is still open.
@@ -368,12 +386,14 @@ public class FileUtils {
    * @param context Activity context in which the backup is called.
    * @param cipher The encryption cipher to use with the file.
    * @param salt The salt used to create the cipher.
+   * @param rounds The number of rounds for bcrypt.
    * @param secrets The list of secrets to save.
    * @return True if saved successfully
    */
   public static boolean backupSecrets(Context context,
                                       Cipher cipher,
                                       byte[] salt,
+                                      int rounds,
                                       List<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.backupSecrets");
 
@@ -385,7 +405,7 @@ public class FileUtils {
 
     try {
       FileOutputStream fos = new FileOutputStream(SECRETS_FILE_NAME_SDCARD);
-      writeSecrets(fos, cipher, salt, secrets);
+      writeSecrets(fos, cipher, salt, rounds, secrets);
       success = true;
     } catch (Exception ex) {
     } finally {
@@ -402,6 +422,7 @@ public class FileUtils {
    * the secrets using the current encryption method.
    * 
    * @param context Activity context in which the load is called.
+   * @param cipher Decryption cipher for old encryption.
    * @return A list of loaded secrets.
    */
   @SuppressWarnings("unchecked")
@@ -501,15 +522,18 @@ public class FileUtils {
    * @param output The output stream to write the secrets to.
    * @param cipher The cipher to encrypt the secrets with.
    * @param secrets The secrets to write.
+   * @param rounds The number of rounds for bcrypt.
    * @throws IOException
    */
   private static void writeSecrets(OutputStream output,
                                    Cipher cipher,
                                    byte[] salt,
+                                   int rounds,
                                    List<Secret> secrets) throws IOException {
     output.write(SIGNATURE);
     output.write(salt.length);
     output.write(salt);
+    output.write(rounds);
     ObjectOutputStream oout = new ObjectOutputStream(
         new CipherOutputStream(output, cipher));
     try {
@@ -523,7 +547,7 @@ public class FileUtils {
    * Read the secrets from the given input stream, decrypting with the given
    * cipher.
    *
-   * @param output The input stream to read the secrets from.
+   * @param input The input stream to read the secrets from.
    * @param cipher The cipher to decrypt the secrets with.
    * @return The secrets read from the stream.
    * @throws IOException
@@ -533,8 +557,9 @@ public class FileUtils {
   private static ArrayList<Secret> readSecrets(InputStream input,
                                                Cipher cipher)
       throws IOException, ClassNotFoundException {
-    byte[] salt = getSalt(input);
-    if (!Arrays.equals(salt, SecurityUtils.getSalt())) {
+    SaltAndRounds pair = getSaltAndRounds(input);
+    if (!Arrays.equals(pair.salt, SecurityUtils.getSalt()) ||
+        pair.rounds != SecurityUtils.getRounds()) {
       return null;
     }
 
