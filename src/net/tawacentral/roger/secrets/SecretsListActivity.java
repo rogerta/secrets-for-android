@@ -30,7 +30,6 @@ import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.ClipboardManager;
 import android.util.Log;
@@ -291,14 +290,18 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /** Set the title for this activity. */
-  private void setTitle() {
+  public void setTitle() {
     CharSequence title;
-    int count = secretsList.getAllSecrets().size();
-    if (count > 0) {
-      StringBuilder builder = new StringBuilder(24);
-      builder.append(count).append(' ');
-      builder.append(getText(R.string.list_name));
-      title = builder.toString();
+    int allCount = secretsList.getAllSecrets().size();
+    int count = secretsList.getCount();
+    if (allCount > 0) {
+      if (allCount != count) {
+        String template = getText(R.string.list_title_filtered).toString();
+        title = MessageFormat.format(template, count, allCount);
+      } else {
+        String template = getText(R.string.list_title).toString();
+        title = MessageFormat.format(template, allCount);
+      }
     } else {
       title = getText(R.string.list_no_data);
     }
@@ -998,13 +1001,14 @@ public class SecretsListActivity extends ListActivity {
       @Override
       public void onAnimationEnd(Animation animation) {
         if (AdapterView.INVALID_POSITION != editingPosition) {
-          ListView list_view = getListView();
-          list_view.requestFocus();
-          list_view.setSelection(editingPosition);
-
-          Rect rect = new Rect();
-          list_view.getFocusedRect(rect);
-          list_view.requestChildRectangleOnScreen(list_view, rect, false);
+          ListView listView = getListView();
+          listView.requestFocus();
+          
+          int first = listView.getFirstVisiblePosition();
+          int last = listView.getLastVisiblePosition();
+          if (editingPosition < first || editingPosition > last) {
+            listView.setSelection(editingPosition);
+          }
         }
 
         setTitle();

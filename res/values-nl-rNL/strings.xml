@@ -66,6 +66,9 @@ Wanneer u klaar bent, druk op de TERUG knop of MENU voor meer opties.
 {1,date,short} {1,time,short}
 </string>
 
+<string name="list_title">{0,number} Geheimen</string>
+<string name="list_title_filtered">{0,number} van {1,number} Geheimen</string>
+
 <string name="list_name">Geheimen</string>
 <string name="list_no_data">Druk op \"Voeg toe\" om te beginnen.</string>
 <string name="list_descption_label">Website/Beschrijving</string>
