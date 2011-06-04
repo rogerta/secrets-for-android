@@ -66,6 +66,9 @@ Wenn Sie fertig sind drücken Sie auf den Zurück-Knopf oder auf MENU für mehr 
 {1,date,short} {1,time,short}
 </string>
 
+<string name="list_title">{0,number} Geheimnisse</string>
+<string name="list_title_filtered">{0,number} von {1,number} Geheimnisse</string>
+
 <string name="list_name">Geheimniss(e)</string>
 <string name="list_no_data">Drücken Sie \"Hinzufügen\" um zu beginnen.</string>
 <string name="list_descption_label">Webseite/Beschreibung</string>

@@ -14,7 +14,6 @@
 
 package net.tawacentral.roger.secrets;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -62,7 +61,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   private ArrayAdapter<String> emailAdapter;
 
   // Cache of objects to use in the various methods.
-  private Context context;
+  private SecretsListActivity activity;
   private LayoutInflater inflater;
   private SecretsFilter filter;
 
@@ -72,9 +71,9 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
    * @param context Context of the application, used for getting resources.
    * @param secrets The list of user secrets.  This list cannot be null.
    */
-  SecretsListAdapter(Context context, ArrayList<Secret> secrets) {
-    this.context = context;
-    inflater = LayoutInflater.from(this.context);
+  SecretsListAdapter(SecretsListActivity activity, ArrayList<Secret> secrets) {
+    this.activity = activity;
+    inflater = LayoutInflater.from(this.activity);
     allSecrets = secrets;
     this.secrets = allSecrets;
 
@@ -84,9 +83,9 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     // implementation of ListAdapter+Filterable instead of ArrayAdapter and two
     // maps, but will use this for now, since I don't expect there to be
     // hundreds of usernames or emails.
-    usernameAdapter = new ArrayAdapter<String>(context,
+    usernameAdapter = new ArrayAdapter<String>(activity,
         android.R.layout.simple_dropdown_item_1line);
-    emailAdapter = new ArrayAdapter<String>(context,
+    emailAdapter = new ArrayAdapter<String>(activity,
         android.R.layout.simple_dropdown_item_1line);
     usernames = new TreeSet<String>();
     emails = new TreeSet<String>();
@@ -282,6 +281,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
       // NOTE: this function is *always* called from the UI thread.
       secrets = (ArrayList<Secret>) results.values;
       notifyDataSetChanged();
+      activity.setTitle();
     }
   }
 
@@ -421,7 +421,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     String friendlyId = "";
     String username = secret.getUsername();
     Secret.LogEntry entry = secret.getMostRecentAccess();
-    String lastAccessed = AccessLogActivity.getElapsedString(context,
+    String lastAccessed = AccessLogActivity.getElapsedString(activity,
                                                               entry, 0);
     boolean hasUsername = null != username && username.length() > 0;
     if (hasUsername) {
