@@ -183,7 +183,7 @@ public class SecurityUtils {
     try {
       if (salt == null || rounds == 0) {
         salt = createNewSalt();
-        rounds = 9;
+        rounds = determineBestRounds();
       }
 
       int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
@@ -206,7 +206,7 @@ public class SecurityUtils {
       clearCiphers();
     }
 
-    timer.logElapsed("Time to create cihpers: ");
+    timer.logElapsed("Time to create ciphers rounds=" + rounds + ": ");
     return succeeded;
   }
 
@@ -218,22 +218,60 @@ public class SecurityUtils {
     rounds = 0;
   }
 
-  public static void timeCreateBcryptRawBytes(int count) {
-    ExecutionTimer timer = new ExecutionTimer();
-    try {
-      byte[] saltBytes = createNewSalt();
-      
+  /**
+   * Determines the ideal number of rounds to use for the bcrypt algorithm.
+   * More rounds are more secure, but require more time to log into Secrets.
+   * This function tries to balance security and convenience.
+   *
+   * Each round increment doubles the amount of work required by bcrypt to
+   * generate a key.  This function assumes that time is proportional to work.
+   * So for example, if 4 rounds takes 0.1 seconds to generate a key, 5 rounds
+   * will take 0.2 seconds, 6 rounds 0.4 seconds, and so on.  The assumption
+   * will be that the key must be generated in less than 0.9 seconds to remain
+   * convenient for the user.
+   *
+   * This function calculate how long it takes to generate a key using 4 rounds
+   * on the current device, then determines the maximum number of rounds such
+   * that the time to generate will remain below the convenience threshold. 
+   */
+  public static int determineBestRounds() {
+      byte[] salt = createNewSalt();
       int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
                          0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
+      final byte[] password = {1, 2, 3, 4, 5, 6, 7, 8};
       BCrypt bcrypt = new BCrypt();
-      bcrypt.crypt_raw("12345678".getBytes("UTF-8"), saltBytes, count,
-                       plaintext);
-    } catch (UnsupportedEncodingException ex) {
-      Log.e(LOG_TAG, "testCreateBcryptRawBytes", ex);
-      ex.printStackTrace();
-    }
 
-    timer.logElapsed("Time to create ciphers count=" + count + ": ");
+      // Calculate the time to create a cipher key with 4 rounds, in msecs.
+      // Do it twice and take the average.
+      final long start = System.currentTimeMillis();
+      bcrypt.crypt_raw(password, salt, 4, plaintext);
+      bcrypt.crypt_raw(password, salt, 4, plaintext);
+      final long T4 = (System.currentTimeMillis() - start) / 2;
+
+      // If T4 is the time in msecs to create the key with 4 rounds, then
+      // the time Tn to calculate the key using n rounds (n > 4) is:
+      //
+      //   Tn = 2^(n - 4) * T4
+      //
+      // where we want Tn to be less than 900 msecs.  Solving for n gives:
+      //
+      //   Tn = 2^(n - 4) * T4 < 900
+      //   n - 4 + log2(T4) < log2(900)
+      //   n < 4 + log2(900) - log2(T4)          -- solve for n
+      //   n < 4 + ln(900)/ln(2) - ln(T4)/ln(2)  -- convert to natural logs 
+      //
+      // The best number of rounds is the floor of n.
+      final double n = 4 + (Math.log(900) - Math.log(T4)) / Math.log(2);
+      int rounds = (int) n;
+
+      // Make sure rounds does not exceed its valid range.
+      if (rounds < 4) {
+        rounds = 4;
+      } else if (rounds > 31) {
+        rounds = 31;
+      }
+
+      return rounds;
   }
 
   /** This method returns all available services types. */
