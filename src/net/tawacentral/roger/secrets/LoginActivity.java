@@ -145,11 +145,6 @@ public class LoginActivity extends Activity {
     password.setText("");
     password.setHint(R.string.login_enter_password);
     Log.d(LOG_TAG, "LoginActivity.onResume done");
-    //SecurityUtils.timeCreateBcryptRawBytes(4);
-    //SecurityUtils.createDecryptionCipherV1("12345678");
-    //SecurityUtils.timeCreateBcryptRawBytes(10);
-    //SecurityUtils.timeCreateBcryptRawBytes(8);
-    //SecurityUtils.timeCreateBcryptRawBytes(4);
   }
 
   @Override

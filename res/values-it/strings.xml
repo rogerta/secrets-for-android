@@ -64,6 +64,9 @@ Una volta finito, premere il bottone per tornare indietro, o MENU per altre scel
 {1,date,short} {1,time,short}
 </string>
 
+<string name="list_title">{0,number} Segreti</string>
+<string name="list_title_filtered">{0,number} di {1,number} Segreti</string>
+
 <string name="list_name">Segreti</string>
 <string name="list_no_data">Premere \"Aggiungi\" per cominciare.</string>
 <string name="list_descption_label">Sito Internet/Descrizione</string>
