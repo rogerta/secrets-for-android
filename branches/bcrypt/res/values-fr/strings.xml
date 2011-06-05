@@ -65,6 +65,9 @@ Lorsque vous aurez terminé, appuyez sur le bouton "Retour" ou MENU pour plus d\
 {1,date,short} {1,time,short}
 </string>
 
+<string name="list_title">{0,number} Secrets</string>
+<string name="list_title_filtered">{0,number} de {1,number} Secrets</string>
+
 <string name="list_name">Secrets</string>
 <string name="list_no_data">Appuyez sur \"Ajouter\" pour commencer.</string>
 <string name="list_descption_label">Site web/Description</string>
