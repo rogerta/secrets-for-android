@@ -23,6 +23,9 @@ limitations under the License.
 <string name="login_enter_password">Enter password</string>
 <string name="login_validate_password">Validate password</string>
 
+<string name="cipher_strength_label">Bcrypt rounds ({0,number})</string>
+<string name="password_changed">Password changed successfully.</string>
+
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
 <string name="copyright">Version 2.0.2 (c) 2010 Google Inc.</string>
@@ -114,6 +117,7 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="list_menu_copy_username_to_clipoboard">Copy Id</string>
 <string name="list_menu_copy_password_to_clipoboard">Copy PIN</string>
 <string name="list_menu_generate_password">Generate</string>
+<string name="list_menu_change_password">Change password</string>
 
 <string name="log_name">Access log</string>
 <string name="log_name_format">Access log for {0}</string>

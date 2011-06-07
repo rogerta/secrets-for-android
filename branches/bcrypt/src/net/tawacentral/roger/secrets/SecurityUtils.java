@@ -14,7 +14,6 @@
 
 package net.tawacentral.roger.secrets;
 
-import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 
