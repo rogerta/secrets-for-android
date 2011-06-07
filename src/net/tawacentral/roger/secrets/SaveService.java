@@ -104,7 +104,7 @@ public class SaveService extends Service {
       SaveService.salt = null;
       SaveService.rounds = 0;
 
-      if (null != secrets && 0 != secrets.size() && null != cipher) {
+      if (null != secrets && null != cipher) {
         new Thread(new Runnable() {
           @Override
           public void run() {

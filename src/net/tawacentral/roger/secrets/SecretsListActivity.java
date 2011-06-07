@@ -37,6 +37,7 @@ import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -51,6 +52,8 @@ import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
@@ -74,6 +77,9 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_DELETE_SECRET = 1;
   private static final int DIALOG_CONFIRM_RESTORE = 2;
   private static final int DIALOG_IMPORT_SUCCESS = 3;
+  private static final int DIALOG_CHANGE_PASSWORD = 4;
+
+  private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
   private static final String EMPTY_STRING = "";
 
@@ -268,14 +274,14 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Check to see if the keyguard is enabled.  If so, its means the device
+   * Check to see if the key guard is enabled.  If so, its means the device
    * probably went to sleep due to inactivity.  If this is the case, this
    * activity is finished().
    *
    * @return True if the activity is finished, false otherwise.
    */
   private boolean checkKeyguard() {
-    // If the keyguard has been displayed, exit this activity.  This returns
+    // If the key guard has been displayed, exit this activity.  This returns
     // us to the login page requiring the user to enter his password again
     // before getting access again to his secrets.
     KeyguardManager key_guard = (KeyguardManager) getSystemService(
@@ -365,6 +371,7 @@ public class SecretsListActivity extends ListActivity {
     menu.findItem(R.id.list_restore).setVisible(!isEditing);
     menu.findItem(R.id.list_import).setVisible(!isEditing);
     menu.findItem(R.id.list_export).setVisible(!isEditing && !secretsListEmpty);
+    menu.findItem(R.id.list_menu_change_password).setVisible(!isEditing);
 
     menu.findItem(R.id.list_save).setVisible(isEditing);
     menu.findItem(R.id.list_generate_password).setVisible(isEditing);
@@ -412,6 +419,9 @@ public class SecretsListActivity extends ListActivity {
         break;
       case R.id.list_import:
         importSecrets();
+        break;
+      case R.id.list_menu_change_password:
+        showDialog(DIALOG_CHANGE_PASSWORD);
         break;
       default:
         break;
@@ -650,12 +660,75 @@ public class SecretsListActivity extends ListActivity {
             .create();
         break;
       }
+      case DIALOG_CHANGE_PASSWORD: {
+        DialogInterface.OnClickListener listener =
+          new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogi, int which) {
+              AlertDialog dialog = (AlertDialog) dialogi;
+              TextView password1 = (TextView) dialog.findViewById(
+                  R.id.password);
+              TextView password2 = (TextView) dialog.findViewById(
+                  R.id.password_validation);
+              String password = password1.getText().toString();
+              String p2 = password2.getText().toString();
+              if (!password.equals(p2) || password.length() == 0) {
+                showToast(R.string.invalid_password);
+                return;
+              }
 
+              SeekBar bar = (SeekBar) dialog.findViewById(R.id.cipher_strength);
+              byte[] salt = SecurityUtils.getSalt();
+              int rounds = bar.getProgress() + PROGRESS_ROUNDS_OFFSET;
+
+              SecurityUtils.clearCiphers();
+              SecurityUtils.createCiphers(password, salt, rounds);
+              showToast(R.string.password_changed);
+            }
+          };
+
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.change_password, getListView(),
+                                     false);
+
+        dialog = new AlertDialog.Builder(this)
+            .setTitle(R.string.list_menu_change_password)
+            .setIcon(android.R.drawable.ic_dialog_info)
+            .setView(view)
+            .setPositiveButton(R.string.list_menu_change_password, listener)
+            .create();
+        final Dialog dialogFinal = dialog;
+        
+        SeekBar bar = (SeekBar) view.findViewById(R.id.cipher_strength);
+        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+          @Override
+          public void onProgressChanged(SeekBar seekBar, int progress,
+              boolean fromUser) {
+            setCipherStrengthLabel(dialogFinal, progress +
+                                   PROGRESS_ROUNDS_OFFSET);
+          }
+          @Override
+          public void onStartTrackingTouch(SeekBar seekBar) {
+          }
+          @Override
+          public void onStopTrackingTouch(SeekBar seekBar) {
+          }});
+        break;
+      }
       default:
         break;
     }
 
     return dialog;
+  }
+
+  private void setCipherStrengthLabel(Dialog dialog, int rounds) {
+    String template =
+      getText(R.string.cipher_strength_label).toString();
+    String msg = MessageFormat.format(template, rounds);
+    TextView text = (TextView) dialog.findViewById(
+        R.id.cipher_strength_label);
+    text.setText(msg);
   }
 
   @Override
@@ -678,6 +751,19 @@ public class SecretsListActivity extends ListActivity {
             getText(R.string.edit_menu_import_secrets_message).toString();
         String msg = MessageFormat.format(template, importedFile.getName());
         alert.setMessage(msg);
+        break;
+      }
+      case DIALOG_CHANGE_PASSWORD: {
+        SeekBar bar = (SeekBar) dialog.findViewById(R.id.cipher_strength);
+        int rounds = SecurityUtils.getRounds();
+        bar.setProgress(rounds - PROGRESS_ROUNDS_OFFSET);
+        setCipherStrengthLabel(dialog, rounds);
+        TextView password1 = (TextView) dialog.findViewById(
+            R.id.password);
+        password1.setText("");
+        TextView password2 = (TextView) dialog.findViewById(
+            R.id.password_validation);
+        password2.setText("");
         break;
       }
     }
