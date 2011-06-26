@@ -3,7 +3,7 @@
 
 = Introduction =
 
-_*Secrets for Android*_ was initially available only in English because that is the language in which I am most fluent.  I am also able to read and write French, and can speak Portuguese, but that's it.  All translations into languages other than English have been very graciously done by volunteers.
+_*Secrets for Android*_ was initially available only in English because that is the language in which I am most fluent.  All translations into languages other than English have been very graciously done by volunteers.
 
 = Translating Secrets into your Language =
 
@@ -23,6 +23,6 @@ To translate into a new language, [http://secrets-for-android.googlecode.com/svn
 
 Only change the YYYY part, leave the rest as is, with one exception: Inside the YYYY part, you may see strings of the form `{0}` or `{1,date,short}`.  Please do not translate these parts.
 
-Once the translation is complete, either send me an email with the translated {{{strings.xml}}} file, or open a new [http://code.google.com/p/secrets-for-android/issues/entry issue] and attach the translation to it.
+Once the translation is complete, either send me an email with the translated {{{strings.xml}}} file, or [http://code.google.com/p/secrets-for-android/issues/entry open a new issue] and attach the translation to it.
 
 If you would like to receive credit for your translation, please let me know.  Send me a short string with your name and a link to your website, preferably in the translated language.  See the home page for example.
