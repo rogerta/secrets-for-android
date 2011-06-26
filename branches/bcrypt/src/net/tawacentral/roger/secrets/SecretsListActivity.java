@@ -78,6 +78,7 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_CONFIRM_RESTORE = 2;
   private static final int DIALOG_IMPORT_SUCCESS = 3;
   private static final int DIALOG_CHANGE_PASSWORD = 4;
+  private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
 
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
@@ -107,6 +108,7 @@ public class SecretsListActivity extends ListActivity {
   private View edit;  // root view for the editing layout
   private File importedFile;  // File that was imported
   private boolean isConfigChange;  // being destroyed for config change?
+  private String restorePoint;  // That file that should be restored from
 
   /** Called when the activity is first created. */
   @Override
@@ -541,18 +543,26 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
-  /** Restore secrets from the given restore point. */
-  private void restoreSecrets(String rp) {
+  /** Restore secrets from the given restore point.
+   *
+   * @param rp The name of the restore point to restore from.
+   * @param info A CipherInfo structure describing the decryption cipher to use. 
+   *
+   * @return True if the restore succeeded, false otherwise. 
+   */
+  private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info) {
     // Restore everything to the SD card.
-    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp);
-    if (null != secrets) {
-      LoginActivity.restoreSecrets(secrets);
-      secretsList.notifyDataSetChanged();
-      setTitle();
-      showToast(R.string.restore_succeeded);
-    } else {
-      showToast(R.string.restore_failed);
+    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp, info);
+    if (null == secrets) {
+      restorePoint = rp;
+      showDialog(DIALOG_ENTER_RESTORE_PASSWORD);
+      return false;
     }
+
+    LoginActivity.restoreSecrets(secrets);
+    secretsList.notifyDataSetChanged();
+    setTitle();
+    return true;
   }
 
   private void backupSecrets() {
@@ -625,7 +635,9 @@ public class SecretsListActivity extends ListActivity {
             public void onClick(DialogInterface dialog, int which) {
               state.selected = which;
               dialog.dismiss();
-              restoreSecrets(state.getSelectedRestorePoint());
+              SecurityUtils.CipherInfo info = SecurityUtils.getCipherInfo();
+              if (restoreSecrets(state.getSelectedRestorePoint(), info))
+                showToast(R.string.restore_succeeded);
             }
           };
 
@@ -681,9 +693,14 @@ public class SecretsListActivity extends ListActivity {
               byte[] salt = SecurityUtils.getSalt();
               int rounds = bar.getProgress() + PROGRESS_ROUNDS_OFFSET;
 
-              SecurityUtils.clearCiphers();
-              SecurityUtils.createCiphers(password, salt, rounds);
-              showToast(R.string.password_changed);
+              SecurityUtils.CipherInfo info = SecurityUtils.createCiphers(
+                  password, salt, rounds);
+              if (null != info) {
+                SecurityUtils.saveCiphers(info);
+                showToast(R.string.password_changed);
+              } else {
+                showToast(R.string.error_reset_password);
+              }
             }
           };
 
@@ -713,6 +730,55 @@ public class SecretsListActivity extends ListActivity {
           @Override
           public void onStopTrackingTouch(SeekBar seekBar) {
           }});
+        break;
+      }
+      case DIALOG_ENTER_RESTORE_PASSWORD: {
+        DialogInterface.OnClickListener listener =
+          new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogi, int which) {
+              AlertDialog dialog = (AlertDialog) dialogi;
+              TextView password1 = (TextView) dialog.findViewById(
+                  R.id.password);
+
+              String password = password1.getText().toString();
+              FileUtils.SaltAndRounds saltAndRounds =
+                  FileUtils.getSaltAndRounds(null, restorePoint);
+              
+              SecurityUtils.CipherInfo info =  SecurityUtils.createCiphers(
+                  password, saltAndRounds.salt, saltAndRounds.rounds);
+              if (restoreSecrets(restorePoint, info)) {
+                SecurityUtils.clearCiphers();
+                SecurityUtils.saveCiphers(info);
+
+                String message = getText(R.string.password_changed).toString();
+                message += '\n';
+                message += getText(R.string.restore_succeeded).toString();
+                showToast(message);
+              } else {
+                showToast(R.string.restore_failed);
+              }
+            }
+          };
+
+        LayoutInflater inflater = getLayoutInflater();
+        View view = inflater.inflate(R.layout.change_password, getListView(),
+                                     false);
+
+        // For this dialog, we don't want to show the seek bar nor the
+        // confirmation password field.
+        view.findViewById(R.id.cipher_strength).setVisibility(View.GONE);
+        view.findViewById(R.id.cipher_strength_label).setVisibility(View.GONE);
+        view.findViewById(R.id.password_validation).setVisibility(View.GONE);
+            view.findViewById(R.id.password_validation_label)
+            .setVisibility(View.GONE);
+
+        dialog = new AlertDialog.Builder(this)
+            .setTitle(R.string.login_enter_password)
+            .setIcon(android.R.drawable.ic_dialog_info)
+            .setView(view)
+            .setPositiveButton(R.string.list_menu_restore, listener)
+            .create();
         break;
       }
       default:
@@ -764,6 +830,12 @@ public class SecretsListActivity extends ListActivity {
         TextView password2 = (TextView) dialog.findViewById(
             R.id.password_validation);
         password2.setText("");
+        password1.requestFocus();
+        break;
+      }
+      case DIALOG_ENTER_RESTORE_PASSWORD: {
+        TextView password1 = (TextView) dialog.findViewById(R.id.password);
+        password1.setText("");
         break;
       }
     }

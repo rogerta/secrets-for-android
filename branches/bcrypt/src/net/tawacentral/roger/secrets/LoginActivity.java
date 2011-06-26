@@ -289,8 +289,10 @@ public class LoginActivity extends Activity {
     // Lets not save the password in memory anywhere.  Create all the ciphers
     // we will need based on the password and save those.  First get the salt
     // that is unique for this device.  If we can't find one, null is returned.
-    FileUtils.SaltAndRounds pair = FileUtils.getSaltAndRounds(this);    
-    SecurityUtils.createCiphers(passwordString, pair.salt, pair.rounds);
+    FileUtils.SaltAndRounds pair = FileUtils.getSaltAndRounds(this,
+        FileUtils.SECRETS_FILE_NAME);    
+    SecurityUtils.saveCiphers(SecurityUtils.createCiphers(passwordString,
+        pair.salt, pair.rounds));
 
     if (isFirstRun) {
       secrets = new ArrayList<Secret>();

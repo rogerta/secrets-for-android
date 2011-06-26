@@ -45,6 +45,8 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 
+import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
+
 /**
  * Helper class to manage reading and writing the secrets file.  The file
  * is encrypted using the ciphers created by the SecurityUtils helper
@@ -182,6 +184,8 @@ public class FileUtils {
    *   file to secrets.
    * - if too many auto restore point files exist, delete the extra ones.
    *   However, don't delete any auto-backups younger than 48 hours.
+   *
+   * @param context Activity context in which the save is called.
    */
   public static void cleanupDataFiles(Context context) {
     Log.d(LOG_TAG, "FileUtils.cleanupDataFiles");
@@ -260,12 +264,19 @@ public class FileUtils {
   /**
    * Gets the salt and rounds already in use on this device, or null if none
    * exists.
+   *
+   * @param context Activity context in which the save is called.
+   * @param path The file to read the salt and rounds from.  Can either be the
+   *     string SECRETS_FILE_NAME_SDCARD, SECRETS_FILE_NAME, or the  name of a
+   *     restore point.
    */
-  public static SaltAndRounds getSaltAndRounds(Context context) {
+  public static SaltAndRounds getSaltAndRounds(Context context, String path) {
     // The salt is stored as a byte array at the start of the secrets file.
     FileInputStream input = null;
     try {
-      input = context.openFileInput(SECRETS_FILE_NAME);
+      input = SECRETS_FILE_NAME_SDCARD.equals(path)
+          ? new FileInputStream(path)
+          : context.openFileInput(path);
       return getSaltAndRounds(input);
     } catch (Exception ex) {
       Log.e(LOG_TAG, "getSaltAndRounds", ex);
@@ -278,10 +289,12 @@ public class FileUtils {
   /**
    * Gets the salt and rounds already in use on this device, or null if none
    * exists.
-   * 
+   *
+   * @param input The stream to read the salt and rounds from.
+   *
    * @throws IOException 
    */
-  private static SaltAndRounds getSaltAndRounds(InputStream input)
+  public static SaltAndRounds getSaltAndRounds(InputStream input)
       throws IOException {
     // The salt is stored as a byte array at the start of the secrets file.
     byte[] signature = new byte[SIGNATURE.length];
@@ -471,7 +484,8 @@ public class FileUtils {
 
       try {
         input = context.openFileInput(SECRETS_FILE_NAME);
-        secrets = readSecrets(input, cipher);
+        secrets = readSecrets(input, cipher, SecurityUtils.getSalt(),
+                              SecurityUtils.getRounds());
       } catch (Exception ex) {
         Log.e(LOG_TAG, "loadSecrets", ex);
       } finally {
@@ -489,14 +503,13 @@ public class FileUtils {
    * 
    * @param context Activity context in which the load is called.
    * @param rp A restore point name.  This should be one of the strings
-   *     returned by the getRestorePoints() method. 
+   *     returned by the getRestorePoints() method.
+   * @param info A CipherInfo structure describing the decryption cipher to use. 
    */
-  public static ArrayList<Secret> restoreSecrets(Context context, String rp) {
+  public static ArrayList<Secret> restoreSecrets(Context context,
+                                                 String rp,
+                                                 CipherInfo info) {
     Log.d(LOG_TAG, "FileUtils.restoreSecrets");
-
-    Cipher cipher = SecurityUtils.getDecryptionCipher();
-    if (null == cipher)
-      return null;
 
     ArrayList<Secret> secrets = null;
     InputStream input = null;
@@ -505,7 +518,7 @@ public class FileUtils {
       input = SECRETS_FILE_NAME_SDCARD.equals(rp)
           ? new FileInputStream(rp)
           : context.openFileInput(rp);
-      secrets = readSecrets(input, cipher);
+      secrets = readSecrets(input, info.decryptCipher, info.salt, info.rounds);
     } catch (Exception ex) {
       Log.e(LOG_TAG, "restoreSecrets", ex);
     } finally {
@@ -555,11 +568,12 @@ public class FileUtils {
    */
   @SuppressWarnings("unchecked")
   private static ArrayList<Secret> readSecrets(InputStream input,
-                                               Cipher cipher)
+                                               Cipher cipher,
+                                               byte[] salt,
+                                               int rounds)
       throws IOException, ClassNotFoundException {
     SaltAndRounds pair = getSaltAndRounds(input);
-    if (!Arrays.equals(pair.salt, SecurityUtils.getSalt()) ||
-        pair.rounds != SecurityUtils.getRounds()) {
+    if (!Arrays.equals(pair.salt, salt) || pair.rounds != rounds) {
       return null;
     }
 

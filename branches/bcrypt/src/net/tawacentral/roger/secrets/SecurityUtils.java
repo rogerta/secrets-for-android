@@ -37,6 +37,14 @@ public class SecurityUtils {
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "Secrets";
 
+  /** Return value of createCiphers call. */
+  public static class CipherInfo {
+    public Cipher encryptCipher;
+    public Cipher decryptCipher;
+    public byte[] salt;
+    public int rounds;
+  }
+
   // The following three constants were used with the initial implementation of
   // secrets.  Secrets now uses a more secure algorithm, but for backwards
   // compatibility, the program needs to be able to load the secrets with the
@@ -116,6 +124,16 @@ public class SecurityUtils {
     return rounds;
   }
   
+  /** Gets information about current ciphers. */
+  public static CipherInfo getCipherInfo() {
+    CipherInfo info = new CipherInfo();
+    info.encryptCipher = encryptCipher;
+    info.decryptCipher = decryptCipher;
+    info.salt = salt.clone();
+    info.rounds = rounds;
+    return info;
+  }
+
   /**
    * Creates a new unique random salt.
    * @return A new salt value used to generate the secret key. 
@@ -170,15 +188,15 @@ public class SecurityUtils {
    * @param password String to use for creating the ciphers.
    * @param salt The salt to use when creating the encryption key.
    * @param rounds The number of rounds for bcrypt.
-   * @return True if the ciphers were successfully created.
+   * @return CipherInfo structure with information about the created ciphers.
    */
-  public static boolean createCiphers(String password,
-                                      byte[] salt,
-                                      int rounds) {
-    boolean succeeded = false;
+  public static CipherInfo createCiphers(String password,
+                                         byte[] salt,
+                                         int rounds) {
+    CipherInfo info = new CipherInfo();
 
     ExecutionTimer timer = new ExecutionTimer();
-
+    
     try {
       if (salt == null || rounds == 0) {
         salt = createNewSalt();
@@ -191,22 +209,38 @@ public class SecurityUtils {
       byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"),
                                          salt, rounds, plaintext);
       SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
-      SecurityUtils.encryptCipher = Cipher.getInstance(KEY_FACTORY);
-      SecurityUtils.encryptCipher.init(Cipher.ENCRYPT_MODE, spec);
+      info.encryptCipher = Cipher.getInstance(KEY_FACTORY);
+      info.encryptCipher.init(Cipher.ENCRYPT_MODE, spec);
 
-      SecurityUtils.decryptCipher = Cipher.getInstance(KEY_FACTORY);
-      SecurityUtils.decryptCipher.init(Cipher.DECRYPT_MODE, spec);
-
-      SecurityUtils.salt = salt;
-      SecurityUtils.rounds = rounds;
-      succeeded = true;
+      info.decryptCipher = Cipher.getInstance(KEY_FACTORY);
+      info.decryptCipher.init(Cipher.DECRYPT_MODE, spec);
+      info.salt = salt;
+      info.rounds = rounds;
     } catch (Exception ex) {
       Log.d(LOG_TAG, "createCiphers", ex);
-      clearCiphers();
+      info = null;
     }
 
     timer.logElapsed("Time to create ciphers rounds=" + rounds + ": ");
-    return succeeded;
+    return info;
+  }
+
+  /**
+   * Create a pair of encryption and decryption ciphers based on the given
+   * password string.  The string is not stored internally.  This function
+   * needs to be called before calling getEncryptionCipher() or
+   * getDecryptionCipher().
+   *
+   * @param password String to use for creating the ciphers.
+   * @param salt The salt to use when creating the encryption key.
+   * @param rounds The number of rounds for bcrypt.
+   * @return True if the ciphers were successfully created.
+   */
+  public static void saveCiphers(CipherInfo info) {
+    encryptCipher = info.encryptCipher;
+    decryptCipher = info.decryptCipher;
+    salt = info.salt.clone();
+    rounds = info.rounds;
   }
 
   /** Clear the ciphers from memory. */
