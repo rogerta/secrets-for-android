@@ -139,5 +139,11 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="error_missing_ciphers">Uh oh: can\'t save, password is invalid.</string>
 <string name="error_cannot_move_existing">Uh oh: can\'t move existing file out of the way.</string>
 <string name="error_cannot_move_new">Uh oh: can\'t rename new file.</string>
+<string name="password_strength_caption">Password Strength: {0}</string>
+<string name="password_strength_weak">Weak :(</string>
+<string name="password_strength_medium">Medium :|</string>
+<string name="password_strength_strong">Strong :)</string>
+<string name="password_strength_very_strong">Very Strong :D</string>
+<string name="password_strength_crazy_strong">Crazy Strong! B)</string>
 
 </resources>
