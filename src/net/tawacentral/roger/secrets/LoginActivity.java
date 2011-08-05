@@ -15,6 +15,7 @@
 package net.tawacentral.roger.secrets;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 
 import javax.crypto.Cipher;
@@ -26,12 +27,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,7 +47,7 @@ import android.widget.Toast;
  *
  * @author rogerta
  */
-public class LoginActivity extends Activity {
+public class LoginActivity extends Activity implements TextWatcher {
   /** Dialog Id for resetting password. */
   private static final int DIALOG_RESET_PASSWORD = 1;
   /** Tag for logging purposes. */
@@ -67,7 +71,7 @@ public class LoginActivity extends Activity {
     setContentView(R.layout.login);
 
     // Setup the behaviour of the password edit view.
-    View password = findViewById(R.id.login_password);
+    EditText password = (EditText)findViewById(R.id.login_password);
     password.setOnKeyListener(new View.OnKeyListener() {
       @Override
       public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -84,13 +88,19 @@ public class LoginActivity extends Activity {
         if (KeyEvent.KEYCODE_ENTER == keyCode) {
           if (KeyEvent.ACTION_UP == event.getAction())
             handlePasswordClick((TextView) v);
-          
+
           return true;
         }
-        
+
         return false;
       }
     });
+
+    // Further, we need to add ourselves as a TextWatcher of the password edit
+    // view. This is because as of Android 1.6, characters are no longer passed
+    // to onKey above. However, some keys, including Enter, are still processed
+    // by onKey, so the above code is fine and probably needs to stay.
+    password.addTextChangedListener(this);
     
     FileUtils.cleanupDataFiles(this);
     Log.d(LOG_TAG, "LoginActivity.onCreate done");
@@ -131,12 +141,14 @@ public class LoginActivity extends Activity {
     // message with instructions about entering a password, followed by a
     // validation pass to get him to enter the password again.
     isFirstRun = isFirstRun();
+    TextView instructions = (TextView)findViewById(R.id.login_instructions);
+    TextView strength = (TextView)findViewById(R.id.password_strength);
     if (isFirstRun) {
-      TextView text = (TextView)findViewById(R.id.login_instructions);
-      text.setText(R.string.login_instruction_1);
+      instructions.setText(R.string.login_instruction_1);
+      strength.setVisibility(TextView.VISIBLE);
     } else {
-      TextView text = (TextView)findViewById(R.id.login_instructions);
-      text.setText("");
+      instructions.setText("");
+      strength.setVisibility(TextView.GONE);
     }
 
     // Clear the password.  The user always needs to type it again when this
@@ -211,6 +223,23 @@ public class LoginActivity extends Activity {
     return dialog;
   }
 
+  /** Overrides from TextWatcher */
+  @Override
+  public void afterTextChanged(Editable s) {
+  }
+  @Override
+  public void beforeTextChanged(
+      CharSequence s, int start, int count, int after) {
+  }
+
+  @Override
+  public void onTextChanged(CharSequence s, int start, int before, int count) {
+    Log.d(LOG_TAG, "LoginActivity.onTextChanged");
+
+    // A key was pressed, so update the UI.
+    updatePasswordStrengthView(s.toString());
+  }
+
   /**
    * Determines if this is the first run of the program.  A first run is
    * detected if there is no existing secrets file.
@@ -246,7 +275,7 @@ public class LoginActivity extends Activity {
     // after getting the value, and the password string is held only as long as
     // required to generated the ciphers.
     //
-    // It seems that to get the hint to appear properly inthe on screen
+    // It seems that to get the hint to appear properly in the on screen
     // keyboard, the hint text must be set before before clearing the password
     // from the edit view.  So the clearing of the edit text is done in the
     // various code paths below, after setting the hint as needed.
@@ -254,6 +283,7 @@ public class LoginActivity extends Activity {
 
     if (isFirstRun) {
       TextView instructions = (TextView)findViewById(R.id.login_instructions);
+      TextView strength = (TextView)findViewById(R.id.password_strength);
 
       if (!isValidatingPassword) {
         // This is the first run, and the user has created his password for the
@@ -263,6 +293,8 @@ public class LoginActivity extends Activity {
         instructions.setText(R.string.login_instruction_2);
         passwordView.setHint(R.string.login_validate_password);
         passwordView.setText("");
+        strength.setVisibility(TextView.GONE);
+
         this.passwordString = passwordString;
         isValidatingPassword = true;
         return;
@@ -273,6 +305,7 @@ public class LoginActivity extends Activity {
         // password.
         if (!passwordString.equals(this.passwordString)) {
           instructions.setText(R.string.login_instruction_1);
+          strength.setVisibility(TextView.VISIBLE);
           passwordView.setHint(R.string.login_enter_password);
           passwordView.setText("");
           showToast(R.string.invalid_password, Toast.LENGTH_SHORT);
@@ -285,7 +318,7 @@ public class LoginActivity extends Activity {
     }
 
     passwordView.setText("");
-    
+
     // Lets not save the password in memory anywhere.  Create all the ciphers
     // we will need based on the password and save those.  First get the salt
     // that is unique for this device.  If we can't find one, null is returned.
@@ -353,6 +386,26 @@ public class LoginActivity extends Activity {
     }
 
     toast.show();
+  }
+  
+  /**
+   * If the password strength field is visible, recalculate the password
+   * strength and update the password strength TextView.
+   */
+  private void updatePasswordStrengthView(String password) {
+    // First, check to see if the view is visible at all before we proceed. We
+    // rely on the LoginActivity flow to hide or show the password view
+    // depending on what state it is in.
+    TextView strengthView = (TextView)findViewById(R.id.password_strength);
+    if (TextView.VISIBLE != strengthView.getVisibility())
+      return;
+
+    // Update UI appropriately based on the strength calculated.
+    PasswordStrength str = PasswordStrength.calculateStrength(password);
+    strengthView.setText(MessageFormat.format(
+        getText(R.string.password_strength_caption).toString(),
+        str.getText(this)));
+    strengthView.setTextColor(str.getColor());
   }
 
   /** Gets the global list if the user's secrets. */
