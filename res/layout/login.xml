@@ -46,8 +46,15 @@ limitations under the License.
     />
 <TextView  
     android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" 
+    android:gravity="center_horizontal" 
+    android:paddingTop="15sp" 
+    android:id="@+id/password_strength"
+    />
+<TextView  
+    android:layout_width="fill_parent" 
     android:layout_height="fill_parent" 
     android:text="@string/copyright"
-    android:gravity="bottom"
+    android:gravity="bottom|center_horizontal"
     />
 </LinearLayout>
