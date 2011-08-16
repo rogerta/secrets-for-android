@@ -110,6 +110,7 @@ La réinitialisation de votre mot de passe supprimera tous vos secrets! Êtes-vo
 <string name="list_menu_copy_username_to_clipoboard">Copier Id</string>
 <string name="list_menu_copy_password_to_clipoboard">Copier NIP</string>
 <string name="list_menu_generate_password">Générer</string>
+<string name="list_menu_change_password">Changer le mot de passe</string>
 
 <string name="log_name">Journal d\'accès</string>
 <string name="log_name_format">Journal d\'accès pour {0}</string>
@@ -135,5 +136,11 @@ La réinitialisation de votre mot de passe supprimera tous vos secrets! Êtes-vo
 <string name="error_missing_ciphers">Impossible d\'enregistrer, mot de passe invalide.</string>
 <string name="error_cannot_move_existing">Impossible de renommer l\'ancien fichier.</string>
 <string name="error_cannot_move_new">Impossible de renommer le nouveau fichier.</string>
+<string name="password_strength_caption">Niveau de sécurité: {0}</string>
+<string name="password_strength_weak">Faible :(</string>
+<string name="password_strength_medium">Medium :|</string>
+<string name="password_strength_strong">Fort :)</string>
+<string name="password_strength_very_strong">Très Fort :D</string>
+<string name="password_strength_crazy_strong">Fou! B)</string>
 
 </resources>

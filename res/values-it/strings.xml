@@ -110,6 +110,7 @@ Sei sicuro di voler cancellare \'\'{0}\'\'?
 <string name="list_menu_copy_username_to_clipoboard">Copia Id</string>
 <string name="list_menu_copy_password_to_clipoboard">Copia PIN</string>
 <string name="list_menu_generate_password">Genera PIN</string>
+<string name="list_menu_change_password">Cambiare la password</string>
 
 <string name="log_name">Accesso ai log</string>
 <string name="log_name_format">Accesso ai log per {0}</string>
@@ -135,5 +136,11 @@ Sei sicuro di voler cancellare \'\'{0}\'\'?
 <string name="error_missing_ciphers">Ops! La password non è valida, non posso salvare.</string>
 <string name="error_cannot_move_existing">Ops! Non posso muovere il file esistente.</string>
 <string name="error_cannot_move_new">Ops! Non posso rinominare il nuovo file.</string>
+<string name="password_strength_caption">Password di forza: {0}</string>
+<string name="password_strength_weak">Debole :(</string>
+<string name="password_strength_medium">Medio :|</string>
+<string name="password_strength_strong">Forte :)</string>
+<string name="password_strength_very_strong">Molto Forte :D</string>
+<string name="password_strength_crazy_strong">Pazzo! B)</string>
 
 </resources>

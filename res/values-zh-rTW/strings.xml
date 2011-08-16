@@ -83,6 +83,7 @@ limitations under the License.
 <string name="list_menu_copy_username_to_clipoboard">發送至ID剪貼板</string>
 <string name="list_menu_copy_password_to_clipoboard">發送至PIN剪貼板</string>
 <string name="list_menu_generate_password">生成</string>
+<string name="list_menu_change_password">更改密码</string>
 
 <string name="log_name">訪問日志</string>
 <string name="log_name_format">{0}訪問日志</string>
@@ -104,4 +105,12 @@ limitations under the License.
 <string name="log_changed">修改:</string>
 <string name="log_viewed">查看:</string>
 <string name="log_exported">導出:</string>
+
+<string name="password_strength_caption">密码强度: {0}</string>
+<string name="password_strength_weak">弱 :(</string>
+<string name="password_strength_medium">中等 :|</string>
+<string name="password_strength_strong">强 :)</string>
+<string name="password_strength_very_strong">非常强 :D</string>
+<string name="password_strength_crazy_strong">非常强! B)</string>
+
 </resources> 

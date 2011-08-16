@@ -114,6 +114,7 @@ Tem certeza que quer remover \'\'{0}\'\'?
 <string name="list_menu_copy_username_to_clipoboard">Copiar Usuário</string>
 <string name="list_menu_copy_password_to_clipoboard">Copiar Senha</string>
 <string name="list_menu_generate_password">Gerar</string>
+<string name="list_menu_change_password">Alterar a senha</string>
 
 <string name="log_name">Acessar log</string>
 <string name="log_name_format">Acessar log de {0}</string>
@@ -139,5 +140,11 @@ Tem certeza que quer remover \'\'{0}\'\'?
 <string name="error_missing_ciphers">Oh oh: Impossível salvar, senha inválida.</string>
 <string name="error_cannot_move_existing">Oh oh: Impossível remover arquivo existente.</string>
 <string name="error_cannot_move_new">Oh oh: Impossível renomear novo arquivo.</string>
+<string name="password_strength_caption">Força da senha: {0}</string>
+<string name="password_strength_weak">Fraco :(</string>
+<string name="password_strength_medium">Médio :|</string>
+<string name="password_strength_strong">Forte :)</string>
+<string name="password_strength_very_strong">Muito Forte :D</string>
+<string name="password_strength_crazy_strong">Louco! B)</string>
 
 </resources>
