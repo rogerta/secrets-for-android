@@ -114,6 +114,7 @@ Estás seguro?
 <string name="list_menu_copy_username_to_clipoboard">Copiar Id</string>
 <string name="list_menu_copy_password_to_clipoboard">Copiar PIN</string>
 <string name="list_menu_generate_password">Generar</string>
+<string name="list_menu_change_password">Cambiar la contraseña</string>
 
 <string name="log_name">Registro de acceso</string>
 <string name="log_name_format">Registro de acceso para {0}</string>
@@ -139,5 +140,11 @@ Estás seguro?
 <string name="error_missing_ciphers">No se pudo guardar, la contraseña es invalida.</string>
 <string name="error_cannot_move_existing">No se pudo mover el archivo existente.</string>
 <string name="error_cannot_move_new">No se puede renombrar el nuevo archivo.</string>
+<string name="password_strength_caption">Fortaleza de la contraseña: {0}</string>
+<string name="password_strength_weak">Débil :(</string>
+<string name="password_strength_medium">Medio :|</string>
+<string name="password_strength_strong">Fuerte :)</string>
+<string name="password_strength_very_strong">Muy Fuerte :D</string>
+<string name="password_strength_crazy_strong">Loco! B)</string>
 
 </resources>

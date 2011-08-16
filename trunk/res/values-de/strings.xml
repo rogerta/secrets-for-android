@@ -114,7 +114,8 @@ Sind Sie sicher, dass Sie Geheimnis \'\'{0}\'\' löschen wollen?
 <string name="list_menu_copy_username_to_clipoboard">Kopieren ID</string>
 <string name="list_menu_copy_password_to_clipoboard">Kopieren PIN</string>
 <string name="list_menu_generate_password">Generieren</string>
-
+<string name="list_menu_change_password">Passwort ändern</string>
+  
 <string name="log_name">Zugriffsprotokoll</string>
 <string name="log_name_format">Zugriffsprotokoll für \'\'{0}\'\'</string>
 
@@ -139,5 +140,11 @@ Sind Sie sicher, dass Sie Geheimnis \'\'{0}\'\' löschen wollen?
 <string name="error_missing_ciphers">Uh oh: Speichern nicht möglich, das Passwort ist ungültig.</string>
 <string name="error_cannot_move_existing">Uh oh: Kann die bestehende Datei nicht überschreiben.</string>
 <string name="error_cannot_move_new">Uh oh: Die neue Datei konnte nicht umbenannt werden.</string>
+<string name="password_strength_caption">Passwortstärke: {0}</string>
+<string name="password_strength_weak">Schwach :(</string>
+<string name="password_strength_medium">Medium :|</string>
+<string name="password_strength_strong">Stark :)</string>
+<string name="password_strength_very_strong">Sehr Stark :D</string>
+<string name="password_strength_crazy_strong">Verrückt! B)</string>
 
 </resources>

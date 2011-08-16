@@ -113,6 +113,7 @@ Weet u zeker dat u \'\'{0}\'\' wil wissen?
 <string name="list_menu_copy_username_to_clipoboard">Kopieer ID</string>
 <string name="list_menu_copy_password_to_clipoboard">Kopieer PIN</string>
 <string name="list_menu_generate_password">Genereer</string>
+<string name="list_menu_change_password">Wachtwoord wijzigen</string>
 
 <string name="log_name">Toegangslog</string>
 <string name="log_name_format">Toegangslog voor {0}</string>
@@ -138,5 +139,11 @@ Weet u zeker dat u \'\'{0}\'\' wil wissen?
 <string name="error_missing_ciphers">Oh jee: opslaan onmogelijk, wachtwoord incorrect.</string>
 <string name="error_cannot_move_existing">Oh jee: bestaand bestand kan niet weggehaald worden.</string>
 <string name="error_cannot_move_new">Oh jee: kan nieuw bestand niet hernoemen.</string>
+<string name="password_strength_caption">Wachtwoord sterkte: {0}</string>
+<string name="password_strength_weak">Zwak :(</string>
+<string name="password_strength_medium">Medium :|</string>
+<string name="password_strength_strong">Sterk :)</string>
+<string name="password_strength_very_strong">Zeer Sterke :D</string>
+<string name="password_strength_crazy_strong">Gek! B)</string>
 
 </resources>
