@@ -438,30 +438,11 @@ public class FileUtils {
    * @param cipher Decryption cipher for old encryption.
    * @return A list of loaded secrets.
    */
-  @SuppressWarnings("unchecked")
   public static ArrayList<Secret> loadSecretsV1(Context context,
                                                 Cipher cipher) {
-    if (null == cipher)
-      return null;
-
-    ArrayList<Secret> secrets = null;
-
     synchronized (lock) {
-      ObjectInputStream input = null;
-
-      try {
-        input = new ObjectInputStream(
-            new CipherInputStream(context.openFileInput(SECRETS_FILE_NAME),
-                                  cipher));
-        secrets = (ArrayList<Secret>) input.readObject();
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "loadSecretsV1", ex);
-      } finally {
-        try {if (null != input) input.close();} catch (IOException ex) {}
-      }
+      return restoreSecretsV1(context, SECRETS_FILE_NAME, cipher);
     }
-
-    return secrets;
   }
 
   /**
@@ -495,6 +476,39 @@ public class FileUtils {
       Log.d(LOG_TAG, "FileUtils.loadSecrets: done");
       return secrets;
     }
+  }
+
+  /**
+   * Restore the secrets from the SD card using the old encryption cipher.
+   * 
+   * @param context Activity context in which the load is called.
+   * @param rp A restore point name.  This should be one of the strings
+   *     returned by the getRestorePoints() method.
+   * @param cipher Decryption cipher for old encryption.
+   */
+  @SuppressWarnings("unchecked")
+  public static ArrayList<Secret> restoreSecretsV1(Context context,
+                                                   String rp,
+                                                   Cipher cipher) {
+    if (null == cipher)
+      return null;
+
+    ArrayList<Secret> secrets = null;
+    ObjectInputStream input = null;
+
+    try {
+      InputStream fis = SECRETS_FILE_NAME_SDCARD.equals(rp)
+          ? new FileInputStream(rp)
+          : context.openFileInput(rp);
+      input = new ObjectInputStream(new CipherInputStream(fis, cipher));
+      secrets = (ArrayList<Secret>) input.readObject();
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "restoreSecretsV1", ex);
+    } finally {
+      try {if (null != input) input.close();} catch (IOException ex) {}
+    }
+
+    return secrets;
   }
 
   /**

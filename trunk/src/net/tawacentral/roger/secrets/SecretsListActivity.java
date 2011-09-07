@@ -547,15 +547,21 @@ public class SecretsListActivity extends ListActivity {
    *
    * @param rp The name of the restore point to restore from.
    * @param info A CipherInfo structure describing the decryption cipher to use. 
+   * @param askForPassword If the restore fails, show a dialog asking the
+   *     user for the password to restore from the backup.
    *
    * @return True if the restore succeeded, false otherwise. 
    */
-  private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info) {
+  private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info,
+                                 boolean askForPassword) {
     // Restore everything to the SD card.
     ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp, info);
     if (null == secrets) {
-      restorePoint = rp;
-      showDialog(DIALOG_ENTER_RESTORE_PASSWORD);
+      if (askForPassword) {
+        restorePoint = rp;
+        showDialog(DIALOG_ENTER_RESTORE_PASSWORD);
+      }
+      
       return false;
     }
 
@@ -636,7 +642,7 @@ public class SecretsListActivity extends ListActivity {
               state.selected = which;
               dialog.dismiss();
               SecurityUtils.CipherInfo info = SecurityUtils.getCipherInfo();
-              if (restoreSecrets(state.getSelectedRestorePoint(), info))
+              if (restoreSecrets(state.getSelectedRestorePoint(), info, true))
                 showToast(R.string.restore_succeeded);
             }
           };
@@ -745,19 +751,35 @@ public class SecretsListActivity extends ListActivity {
               FileUtils.SaltAndRounds saltAndRounds =
                   FileUtils.getSaltAndRounds(null, restorePoint);
               
-              SecurityUtils.CipherInfo info =  SecurityUtils.createCiphers(
+              String message = null;
+              
+              SecurityUtils.CipherInfo info = SecurityUtils.createCiphers(
                   password, saltAndRounds.salt, saltAndRounds.rounds);
-              if (restoreSecrets(restorePoint, info)) {
+              if (restoreSecrets(restorePoint, info, false)) {
                 SecurityUtils.clearCiphers();
                 SecurityUtils.saveCiphers(info);
-
-                String message = getText(R.string.password_changed).toString();
+                message = getText(R.string.password_changed).toString();
                 message += '\n';
                 message += getText(R.string.restore_succeeded).toString();
-                showToast(message);
               } else {
-                showToast(R.string.restore_failed);
+                // Try the old encryption cipher.  This may be a restore point
+                // created by an older version of Secrets.
+                Cipher cipher = SecurityUtils.createDecryptionCipherV1(
+                    password);
+                ArrayList<Secret> secrets = FileUtils.restoreSecretsV1(
+                    SecretsListActivity.this, restorePoint, cipher);
+                if (secrets != null) {
+                  LoginActivity.restoreSecrets(secrets);
+                  secretsList.notifyDataSetChanged();
+                  setTitle();
+                  message = getText(R.string.restore_succeeded).toString();
+                }
               }
+              
+              if (message == null)
+                message = getText(R.string.restore_failed).toString();
+              
+              showToast(message);
             }
           };
 
