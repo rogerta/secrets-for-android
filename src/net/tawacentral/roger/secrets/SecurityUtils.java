@@ -146,7 +146,7 @@ public class SecurityUtils {
   }
   
   /**
-   * Create a decryption cipher using the old algorithm based on the given
+   * Create a decryption cipher using an old algorithm based on the given
    * password string.  The string is not stored internally.
    *
    * This method is used for backward compatibility only.
@@ -180,6 +180,41 @@ public class SecurityUtils {
   }
 
   /**
+   * Create a decryption cipher using an old algorithm based on the given
+   * password string.  The string is not stored internally.
+   *
+   * This method is used for backward compatibility only.
+   * 
+   * @param password String to use for creating the ciphers.
+   * @param salt The salt to use when creating the encryption key.
+   * @param rounds The number of rounds for bcrypt.
+   * @return True if the ciphers were successfully created.
+   */
+  public static Cipher createDecryptionCipherV2(String password,
+                                                byte[] salt,
+                                                int rounds) {
+    if (salt == null || rounds == 0)
+      return null;
+
+    Cipher cipher = null;
+
+    try {
+      int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
+                         0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
+      BCrypt bcrypt = new BCrypt();
+      byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"), salt,
+          rounds, plaintext);
+      SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
+      cipher = Cipher.getInstance(KEY_FACTORY);
+      cipher.init(Cipher.DECRYPT_MODE, spec);
+    } catch (Exception ex) {
+      Log.d(LOG_TAG, "createCiphersV2", ex);
+    }
+
+    return cipher;
+  }
+
+  /**
    * Create a pair of encryption and decryption ciphers based on the given
    * password string.  The string is not stored internally.  This function
    * needs to be called before calling getEncryptionCipher() or
@@ -198,6 +233,10 @@ public class SecurityUtils {
     ExecutionTimer timer = new ExecutionTimer();
     
     try {
+      // Append a null at the end of the password string to prevent multiple
+      // repetitions of the password from being valid.
+      password += '\000';
+
       if (salt == null || rounds == 0) {
         salt = createNewSalt();
         rounds = determineBestRounds();

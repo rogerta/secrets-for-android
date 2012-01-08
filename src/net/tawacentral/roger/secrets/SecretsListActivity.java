@@ -762,12 +762,22 @@ public class SecretsListActivity extends ListActivity {
                 message += '\n';
                 message += getText(R.string.restore_succeeded).toString();
               } else {
-                // Try the old encryption cipher.  This may be a restore point
+                // Try an old encryption cipher.  This may be a restore point
                 // created by an older version of Secrets.
-                Cipher cipher = SecurityUtils.createDecryptionCipherV1(
-                    password);
-                ArrayList<Secret> secrets = FileUtils.restoreSecretsV1(
-                    SecretsListActivity.this, restorePoint, cipher);
+                Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
+                    password, saltAndRounds.salt, saltAndRounds.rounds);
+                ArrayList<Secret> secrets = FileUtils.restoreSecretsV2(
+                    SecretsListActivity.this, restorePoint, cipher2,
+                    saltAndRounds.salt, saltAndRounds.rounds);
+
+                if (secrets == null) {
+                  // Try an even old encryption cipher.
+                  Cipher cipher1 = SecurityUtils.createDecryptionCipherV1(
+                      password);
+                  secrets = FileUtils.restoreSecretsV1(
+                      SecretsListActivity.this, restorePoint, cipher1);
+                }
+
                 if (secrets != null) {
                   LoginActivity.restoreSecrets(secrets);
                   secretsList.notifyDataSetChanged();
