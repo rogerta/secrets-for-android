@@ -554,7 +554,6 @@ public class FileUtils {
    * @param salt The salt to use when creating the encryption key.
    * @param rounds The number of rounds for bcrypt.
    */
-  @SuppressWarnings("unchecked")
   public static ArrayList<Secret> restoreSecretsV2(Context context,
                                                    String rp,
                                                    Cipher cipher,
