@@ -325,7 +325,8 @@ public class LoginActivity extends Activity implements TextWatcher {
     FileUtils.SaltAndRounds pair = FileUtils.getSaltAndRounds(this,
         FileUtils.SECRETS_FILE_NAME);    
     SecurityUtils.saveCiphers(SecurityUtils.createCiphers(passwordString,
-        pair.salt, pair.rounds));
+                                                          pair.salt,
+                                                          pair.rounds));
 
     if (isFirstRun) {
       secrets = new ArrayList<Secret>();
@@ -346,9 +347,20 @@ public class LoginActivity extends Activity implements TextWatcher {
       if (null == secrets) {
         // Loading the secrets failed.  Try loading with the old encryption
         // algorithm in case were are reading an older file.
-        Cipher cipher = SecurityUtils.createDecryptionCipherV1(passwordString);
-        if (null != cipher)
-          secrets = FileUtils.loadSecretsV1(this, cipher);
+        Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
+            passwordString, pair.salt, pair.rounds);
+        if (null != cipher2)
+          secrets = FileUtils.loadSecretsV2(this, cipher2, pair.salt,
+                                            pair.rounds);
+
+        // Loading the secrets failed again.  Try an even older encryption
+        // algorithm.
+        if (null == secrets) {
+          Cipher cipher1 = SecurityUtils.createDecryptionCipherV1(
+              passwordString);
+          if (null != cipher1)
+            secrets = FileUtils.loadSecretsV1(this, cipher1);
+        }
 
         if (null != secrets) {
           // TODO: display a better message to the user telling them to do a

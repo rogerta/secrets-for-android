@@ -446,6 +446,39 @@ public class FileUtils {
   }
 
   /**
+   * Opens the secrets file using the password retrieved from the user and
+   * the old encryption cipher.  This function is called only for backward
+   * compatibility purposes, when Secrets encounters an error trying to load
+   * the secrets using the current encryption method.
+   * 
+   * @param context Activity context in which the load is called.
+   * @param cipher Decryption cipher for old encryption.
+   * @param salt The salt to use when creating the encryption key.
+   * @param rounds The number of rounds for bcrypt.
+   * @return A list of loaded secrets.
+   */
+  public static ArrayList<Secret> loadSecretsV2(Context context,
+                                                Cipher cipher,
+                                                byte[] salt,
+                                                int rounds) {
+    synchronized (lock) {
+      ArrayList<Secret> secrets = null;
+      InputStream input = null;
+
+      try {
+        input = context.openFileInput(SECRETS_FILE_NAME);
+        secrets = readSecrets(input, cipher, salt, rounds);
+      } catch (Exception ex) {
+        Log.e(LOG_TAG, "loadSecretsV2", ex);
+      } finally {
+        try {if (null != input) input.close();} catch (IOException ex) {}
+      }
+
+      return secrets;
+    }
+  }
+
+  /**
    * Opens the secrets file using the password retrieved from the user.
    * 
    * @param context Activity context in which the load is called.
@@ -479,7 +512,7 @@ public class FileUtils {
   }
 
   /**
-   * Restore the secrets from the SD card using the old encryption cipher.
+   * Restore the secrets from the SD card using an old encryption cipher.
    * 
    * @param context Activity context in which the load is called.
    * @param rp A restore point name.  This should be one of the strings
@@ -509,6 +542,29 @@ public class FileUtils {
     }
 
     return secrets;
+  }
+
+  /**
+   * Restore the secrets from the SD card using an old encryption cipher.
+   * 
+   * @param context Activity context in which the load is called.
+   * @param rp A restore point name.  This should be one of the strings
+   *     returned by the getRestorePoints() method.
+   * @param cipher Decryption cipher for old encryption.
+   * @param salt The salt to use when creating the encryption key.
+   * @param rounds The number of rounds for bcrypt.
+   */
+  @SuppressWarnings("unchecked")
+  public static ArrayList<Secret> restoreSecretsV2(Context context,
+                                                   String rp,
+                                                   Cipher cipher,
+                                                   byte[] salt,
+                                                   int rounds) {
+    CipherInfo info = new CipherInfo();
+    info.decryptCipher = cipher;
+    info.salt = salt;
+    info.rounds = rounds;
+    return restoreSecrets(context, rp, info);
   }
 
   /**
