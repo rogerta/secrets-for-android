@@ -14,17 +14,9 @@
 
 package net.tawacentral.roger.secrets;
 
-import android.app.backup.BackupAgentHelper;
-import android.app.backup.BackupDataInput;
-import android.app.backup.BackupDataOutput;
-import android.app.backup.FileBackupHelper;
-import android.content.Context;
-import android.os.ParcelFileDescriptor;
-import android.util.Log;
-
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.CSVWriter;
-
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -33,7 +25,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -46,6 +37,20 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 
 import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.app.backup.BackupAgentHelper;
+import android.app.backup.BackupDataInput;
+import android.app.backup.BackupDataOutput;
+import android.app.backup.FileBackupHelper;
+import android.content.Context;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+import au.com.bytecode.opencsv.CSVReader;
+import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * Helper class to manage reading and writing the secrets file.  The file
@@ -360,9 +365,9 @@ public class FileUtils {
         tempo = new File(parent, prefix + i);
       }
       // Step 1
-      ObjectOutputStream output = null;
+      FileOutputStream fos = null;
       try {
-        FileOutputStream fos = new FileOutputStream(tempn);
+        fos = new FileOutputStream(tempn);
         writeSecrets(fos, cipher, salt, rounds, secrets);
       } catch (Exception ex) {
         Log.d(LOG_TAG, "FileUtils.saveSecrets: could not write secrets file");
@@ -370,7 +375,7 @@ public class FileUtils {
         tempn.delete();
         return R.string.error_save_secrets;
       } finally {
-        try {if (null != output) output.close();} catch (IOException ex) {}
+        try {if (null != fos) fos.close();} catch (IOException ex) {}
       }
 
       // Step 2
@@ -413,12 +418,12 @@ public class FileUtils {
     if (null == cipher)
       return false;
 
-    ObjectOutputStream output = null;
+    FileOutputStream output = null;
     boolean success = false;
 
     try {
-      FileOutputStream fos = new FileOutputStream(SECRETS_FILE_NAME_SDCARD);
-      writeSecrets(fos, cipher, salt, rounds, secrets);
+    	output = new FileOutputStream(SECRETS_FILE_NAME_SDCARD);
+      writeSecrets(output, cipher, salt, rounds, secrets);
       success = true;
     } catch (Exception ex) {
     } finally {
@@ -438,7 +443,7 @@ public class FileUtils {
    * @param cipher Decryption cipher for old encryption.
    * @return A list of loaded secrets.
    */
-  public static ArrayList<Secret> loadSecretsV1(Context context,
+  public static SecretsCollection loadSecretsV1(Context context,
                                                 Cipher cipher) {
     synchronized (lock) {
       return restoreSecretsV1(context, SECRETS_FILE_NAME, cipher);
@@ -457,17 +462,17 @@ public class FileUtils {
    * @param rounds The number of rounds for bcrypt.
    * @return A list of loaded secrets.
    */
-  public static ArrayList<Secret> loadSecretsV2(Context context,
+  public static SecretsCollection loadSecretsV2(Context context,
                                                 Cipher cipher,
                                                 byte[] salt,
                                                 int rounds) {
     synchronized (lock) {
-      ArrayList<Secret> secrets = null;
+      SecretsCollection secrets = null;
       InputStream input = null;
 
       try {
         input = context.openFileInput(SECRETS_FILE_NAME);
-        secrets = readSecrets(input, cipher, salt, rounds);
+        secrets = readSecretsV2(input, cipher, salt, rounds);
       } catch (Exception ex) {
         Log.e(LOG_TAG, "loadSecretsV2", ex);
       } finally {
@@ -484,7 +489,41 @@ public class FileUtils {
    * @param context Activity context in which the load is called.
    * @return A list of loaded secrets.
    */
-  public static ArrayList<Secret> loadSecrets(Context context) {
+  public static SecretsCollection loadSecretsV21(Context context) {
+    Log.d(LOG_TAG, "FileUtils.loadSecretsV21");
+    synchronized (lock) {
+      Log.d(LOG_TAG, "FileUtils.loadSecretsV21: got lock");
+
+      Cipher cipher = SecurityUtils.getDecryptionCipher();
+      if (null == cipher)
+        return null;
+
+      SecretsCollection secrets = null;
+      InputStream input = null;
+
+      try {
+        input = context.openFileInput(SECRETS_FILE_NAME);
+        secrets = readSecretsV2(input, cipher, SecurityUtils.getSalt(),
+                              SecurityUtils.getRounds());
+      } catch (Exception ex) {
+        Log.e(LOG_TAG, "loadSecretsV21", ex);
+      } finally {
+        try {if (null != input) input.close();} catch (IOException ex) {}
+      }
+  
+      Log.d(LOG_TAG, "FileUtils.loadSecretsV21: done");
+      return secrets;
+    }
+  }
+
+  /**
+   * Opens the secrets file using the password retrieved from the user.
+   * 
+   * @param context Activity context in which the load is called.
+   * @return A list of loaded secrets.
+   */
+//  public static ArrayList<Secret> loadSecrets(Context context) {
+  public static SecretsCollection loadSecrets(Context context) {
     Log.d(LOG_TAG, "FileUtils.loadSecrets");
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.loadSecrets: got lock");
@@ -493,7 +532,8 @@ public class FileUtils {
       if (null == cipher)
         return null;
 
-      ArrayList<Secret> secrets = null;
+//      ArrayList<Secret> secrets = null;
+      SecretsCollection secrets = null;
       InputStream input = null;
 
       try {
@@ -518,15 +558,16 @@ public class FileUtils {
    * @param rp A restore point name.  This should be one of the strings
    *     returned by the getRestorePoints() method.
    * @param cipher Decryption cipher for old encryption.
+   * @return secrets collection
    */
   @SuppressWarnings("unchecked")
-  public static ArrayList<Secret> restoreSecretsV1(Context context,
+  public static SecretsCollection restoreSecretsV1(Context context,
                                                    String rp,
                                                    Cipher cipher) {
     if (null == cipher)
       return null;
 
-    ArrayList<Secret> secrets = null;
+    SecretsCollection secrets = null;
     ObjectInputStream input = null;
 
     try {
@@ -534,7 +575,7 @@ public class FileUtils {
           ? new FileInputStream(rp)
           : context.openFileInput(rp);
       input = new ObjectInputStream(new CipherInputStream(fis, cipher));
-      secrets = (ArrayList<Secret>) input.readObject();
+      secrets = new SecretsCollection((ArrayList<Secret>)input.readObject());
     } catch (Exception ex) {
       Log.e(LOG_TAG, "restoreSecretsV1", ex);
     } finally {
@@ -554,7 +595,8 @@ public class FileUtils {
    * @param salt The salt to use when creating the encryption key.
    * @param rounds The number of rounds for bcrypt.
    */
-  public static ArrayList<Secret> restoreSecretsV2(Context context,
+//  public static ArrayList<Secret> restoreSecretsV2(Context context,
+  public static SecretsCollection restoreSecretsV2(Context context,
                                                    String rp,
                                                    Cipher cipher,
                                                    byte[] salt,
@@ -575,12 +617,13 @@ public class FileUtils {
    *     returned by the getRestorePoints() method.
    * @param info A CipherInfo structure describing the decryption cipher to use. 
    */
-  public static ArrayList<Secret> restoreSecrets(Context context,
+//  public static ArrayList<Secret> restoreSecrets(Context context,
+  public static SecretsCollection restoreSecrets(Context context,
                                                  String rp,
                                                  CipherInfo info) {
     Log.d(LOG_TAG, "FileUtils.restoreSecrets");
 
-    ArrayList<Secret> secrets = null;
+    SecretsCollection secrets = null;
     InputStream input = null;
 
     try {
@@ -598,8 +641,110 @@ public class FileUtils {
   }
 
   /**
+   * Constructs secrets from the supplied encrypted byte stream
+   * 
+   * @param secrets encrypted byte array
+   * @return list of secrets
+   */
+//  public static ArrayList<Secret> getSecretsFromEncryptedJSONStream(byte[] secrets) {
+  public static SecretsCollection getSecretsFromEncryptedJSONStream(byte[] secrets) {
+    Cipher cipher = SecurityUtils.getDecryptionCipher();
+
+    return getSecretsFromEncryptedJSONStream(cipher, secrets);
+  }
+
+  /**
+   * Constructs secrets from the supplied encrypted byte stream
+   * 
+   * @param cipher cipher to use
+   * @param secrets encrypted byte array
+   * @return list of secrets
+   */
+  public static SecretsCollection getSecretsFromEncryptedJSONStream(Cipher cipher, byte[] secrets) {
+    if(cipher == null || secrets == null || secrets.length == 0) return null;
+    CipherInputStream cis = new CipherInputStream(new ByteArrayInputStream(secrets), cipher);
+    BufferedInputStream bis = new BufferedInputStream(cis);
+    byte[] secretStrBytes = new byte[secrets.length];
+    int offset = 0;
+    int read = 0;
+    try {
+      while (offset < secretStrBytes.length
+          && (read = bis.read(secretStrBytes, offset, secretStrBytes.length - offset)) >= 0) {
+        offset += read;
+      }
+      JSONObject jsonValues = new JSONObject(new String(secretStrBytes, "UTF-8"));
+      /* get the secrets */
+      JSONArray jsonSecrets = jsonValues.getJSONArray("secrets");
+      SecretsCollection secretList = new SecretsCollection();
+//      ArrayList<Secret> secretList = new ArrayList<Secret>();
+      for(int i = 0; i < jsonSecrets.length(); i++) {
+        secretList.add(Secret.fromJSONString(jsonSecrets.getString(i)));
+      }
+      /* get the last sync date */
+      if (jsonValues.has("syncdate")) {
+        secretList.setLastSyncTimestamp(jsonValues.getLong("syncdate"));      	
+      } else {
+      	Log.w(LOG_TAG, "No sync date in JSON stream");
+      }
+      return secretList;
+    } catch (IOException e) {
+      Log.e(LOG_TAG, "Error restoring secret stream", e);
+    } catch (JSONException e) {
+      Log.e(LOG_TAG, "Error restoring secret stream", e);
+    }
+    return null;
+  }
+
+  /**
+   * Returns an encrypted json stream representing the user's secrets.
+   *
+   * @param cipher The encryption cipher to use with the file.
+   * @param secrets The list of secrets.
+   * @return byte array of secrets
+   */
+  public static byte[] putSecretsToEncryptedJSONStream(Cipher cipher,
+                                      List<Secret> secrets) {
+    Log.d(LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream");
+
+    if (null == cipher)
+      return null;
+
+    CipherOutputStream output = null;
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    JSONObject jsonValues = new JSONObject();
+    boolean success = false;
+    try {
+      output = new CipherOutputStream(baos,
+                                 cipher);
+      JSONArray jsonSecrets = new JSONArray();
+      for(Secret secret : secrets) {
+      	jsonSecrets.put(secret.toJSONString());
+      }
+      jsonValues.put("secrets", jsonSecrets);
+      if (secrets instanceof SecretsCollection) {
+      	jsonValues.put("syncdate", ((SecretsCollection)secrets).getLastSyncTimestamp());
+      } else {
+      	Log.w(LOG_TAG, "No sync date in stored secrets - not SecretsCollection");
+      }
+      output.write(jsonValues.toString().getBytes("UTF-8"));
+      success = true;
+    } catch (Exception ex) {
+    	Log.d(LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream " + ex);
+    } finally {
+      try {if (null != output) output.close();} catch (IOException ex) {}
+    }
+
+    if(!success) {
+      throw new RuntimeException("Failed creating stream");
+    }
+    return baos.toByteArray();
+  }
+
+  /**
    * Writes the secrets to the given output stream encrypted with the given
    * cipher.
+   * 
+   * The output stream is closed by the caller.
    *
    * @param output The output stream to write the secrets to.
    * @param cipher The cipher to encrypt the secrets with.
@@ -616,13 +761,15 @@ public class FileUtils {
     output.write(salt.length);
     output.write(salt);
     output.write(rounds);
-    ObjectOutputStream oout = new ObjectOutputStream(
-        new CipherOutputStream(output, cipher));
-    try {
-      oout.writeObject(secrets);
-    } finally {
-      try {if (null != oout) oout.close();} catch (IOException ex) {}
-    }
+//    ObjectOutputStream oout = new ObjectOutputStream(
+//        new CipherOutputStream(output, cipher));
+//    try {
+//      oout.writeObject(secrets);
+//    } finally {
+//      try {if (null != oout) oout.close();} catch (IOException ex) {}
+//    }
+    output.write(putSecretsToEncryptedJSONStream(cipher, secrets));
+  	output.flush();
   }
   
   /**
@@ -635,8 +782,7 @@ public class FileUtils {
    * @throws IOException
    * @throws ClassNotFoundException 
    */
-  @SuppressWarnings("unchecked")
-  private static ArrayList<Secret> readSecrets(InputStream input,
+  private static SecretsCollection readSecrets(InputStream input,
                                                Cipher cipher,
                                                byte[] salt,
                                                int rounds)
@@ -645,11 +791,47 @@ public class FileUtils {
     if (!Arrays.equals(pair.salt, salt) || pair.rounds != rounds) {
       return null;
     }
-
+    BufferedInputStream bis = new BufferedInputStream(input);
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    try {
+    	// read the whole stream into the buffer
+    	int nRead;
+    	byte[] data = new byte[4096];
+    	while ((nRead = bis.read(data, 0, data.length)) != -1) {
+    	  buffer.write(data, 0, nRead);
+    	}
+    	buffer.flush();
+    	return getSecretsFromEncryptedJSONStream(cipher, buffer.toByteArray());
+    } finally {
+    	try {if (null != bis) bis.close();} catch (IOException ex) {}
+    }
+  }
+  
+  /**
+   * Read the secrets from the given input stream, decrypting with the given
+   * cipher. This uses the old object format and exists for compatibility.
+   *
+   * @param input The input stream to read the secrets from.
+   * @param cipher The cipher to decrypt the secrets with.
+   * @return The secrets read from the stream.
+   * @throws IOException
+   * @throws ClassNotFoundException 
+   */
+  @SuppressWarnings("unchecked")
+  private static SecretsCollection readSecretsV2(InputStream input,
+                                               Cipher cipher,
+                                               byte[] salt,
+                                               int rounds)
+      throws IOException, ClassNotFoundException {
+    SaltAndRounds pair = getSaltAndRounds(input);
+    if (!Arrays.equals(pair.salt, salt) || pair.rounds != rounds) {
+      return null;
+    }
     ObjectInputStream oin = new ObjectInputStream(
         new CipherInputStream(input, cipher));
     try {
-      return (ArrayList<Secret>) oin.readObject();
+//      return (ArrayList<Secret>) oin.readObject();
+      return (new SecretsCollection((ArrayList<Secret>)oin.readObject()));
     } finally {
       try {if (null != oin) oin.close();} catch (IOException ex) {}
     }
