@@ -21,6 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * Represents one secret.  The assumption is that each secret is describable,
  * uses a combination of username/password, and may require a separate email
@@ -39,6 +42,8 @@ public class Secret implements Serializable {
   private String email;
   private String note;
   private ArrayList<LogEntry> access_log;
+  
+  private long timestamp = System.currentTimeMillis(); /* creation or modification timestamp */
 
   /**
    * An immutable class that represents one entry in the access log.  Each
@@ -97,9 +102,10 @@ public class Secret implements Serializable {
 
   /**
    * Creates a new secret where all fields are empty.  The access log contains
-   * only on CREATED entry with the current time.
+   * only one CREATED entry, with the current time.
    */
   public Secret() {
+  	timestamp = System.currentTimeMillis();
     access_log = new ArrayList<LogEntry>();
     access_log.add(new LogEntry());
   }
@@ -181,6 +187,101 @@ public class Secret implements Serializable {
     return password;
   }
 
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setNote(String note) {
+    this.note = note;
+  }
+
+  public String getNote() {
+    return note;
+  }
+	
+	/**
+	 * Get the last update timestamp
+	 * @return the timestamp
+	 */
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	/**
+	 * Set the last update timestamp
+	 * @param timestamp the timestamp to set
+	 */
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
+	}
+	
+	/**
+	 * Update this secret from another
+	 * @param from source secret
+	 */
+	public void update(Secret from) {
+		setPassword(from.getPassword(true));
+		username = from.getUsername();
+		email = from.getEmail();
+		note = from.getNote();
+		timestamp = System.currentTimeMillis();
+	}
+
+  /**
+   * Convert secret to a JSON string
+   * @return JSON string
+   * @throws JSONException
+   */
+  public String toJSONString() throws JSONException {
+    JSONObject jsonSecret = new JSONObject();
+    jsonSecret.put("description", description);
+    jsonSecret.put("username", username);
+    jsonSecret.put("password", password);
+    jsonSecret.put("email", email);
+    jsonSecret.put("note", note);
+    jsonSecret.put("timestamp", timestamp);
+//    Log.d(LOG_TAG, "JSON: " + jsonSecret.toString());
+    return jsonSecret.toString();
+  }
+
+  /**
+   * Convert JSON string to a Secret
+   * @param json JSON string
+   * @return instance of a Secret
+   * @throws JSONException
+   */
+  public static Secret fromJSONString(String json) throws JSONException {
+    Secret secret = new Secret();
+    JSONObject jsonSecret = new JSONObject(json);
+    secret.description = jsonSecret.getString("description");
+    secret.username = jsonSecret.getString("username");
+    secret.password = jsonSecret.getString("password");
+    secret.email = jsonSecret.getString("email");
+    secret.note = jsonSecret.getString("note");
+    secret.timestamp = jsonSecret.getLong("timestamp");
+    return secret;
+  }
+
+  /**
+   * Get an unmodifiable list of access logs, in reverse chronological order,
+   * for this secret.
+   */
+  public List<LogEntry> getAccessLog() {
+    return Collections.unmodifiableList(access_log);
+  }
+
+  /**
+   * A helper function to return the most recent access log entry of this
+   * secret.
+   */
+  public LogEntry getMostRecentAccess() {
+    return access_log.get(0);
+  }
+
   /**
    * Prune the size of the access log to the maximum size by getting rid of
    * the oldest entries.  The "created" log entry is never pruned away.
@@ -201,37 +302,5 @@ public class Secret implements Serializable {
       int index = access_log.size() - 2;
       access_log.remove(index);
     }
-  }
-
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public String getEmail() {
-    return email;
-  }
-
-  public void setNote(String note) {
-    this.note = note;
-  }
-
-  public String getNote() {
-    return note;
-  }
-
-  /**
-   * Get an unmodifiable list of access logs, in reverse chronological order,
-   * for this secret.
-   */
-  public List<LogEntry> getAccessLog() {
-    return Collections.unmodifiableList(access_log);
-  }
-
-  /**
-   * A helper function to return the most recent access log entry of this
-   * secret.
-   */
-  public LogEntry getMostRecentAccess() {
-    return access_log.get(0);
   }
 }

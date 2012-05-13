@@ -60,6 +60,11 @@ public class SecurityUtils {
   // need to figure out if this is a safe value to use.
   private static final int KEY_ITERATION_COUNT_V1 = 100;
 
+  /* (ChrisW) The comments below refer to the original implementation. The
+   * salt is now generated. A random salt is more secure than a fixed one
+   * because it prevents a decryption attack using a pre-generated dictionary.
+   */
+  
   // The salt can be hardcoded, because the secrets file is never transmitted
   // off the phone.  Generating a ramdom salt would not provide any real extra
   // protection, because if an attacker can get to the secrets file, then he
