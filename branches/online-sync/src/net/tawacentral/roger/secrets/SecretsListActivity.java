@@ -31,9 +31,11 @@ import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -43,11 +45,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnTouchListener;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -55,8 +58,6 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.AdapterContextMenuInfo;
-import android.widget.AdapterView.OnItemClickListener;
 
 /**
  * An activity that handles two main functions: displaying the list of all
@@ -79,6 +80,10 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_IMPORT_SUCCESS = 3;
   private static final int DIALOG_CHANGE_PASSWORD = 4;
   private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
+  private static final int DIALOG_CONFIG_ONLINE_BACKUP_APP = 6;
+  private static final int DIALOG_BACKUP = 7;
+  private static final int DIALOG_SYNC = 8;
+  private static final int DIALOG_CONFIG_SYNC = 9;
 
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
@@ -109,6 +114,9 @@ public class SecretsListActivity extends ListActivity {
   private File importedFile;  // File that was imported
   private boolean isConfigChange;  // being destroyed for config change?
   private String restorePoint;  // That file that should be restored from
+  private boolean isConfigOSA; // is the user selecing a secret for an OSA?
+  private OnlineSecretsAgent selectedOSA; // currently selected agent
+  private Handler osaHandler; // handler used when waiting for an OSA to send secrets for restore
 
   /** Called when the activity is first created. */
   @Override
@@ -131,6 +139,8 @@ public class SecretsListActivity extends ListActivity {
       return;
     }
 
+    osaHandler = new Handler();
+    
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
 
@@ -203,9 +213,10 @@ public class SecretsListActivity extends ListActivity {
     GestureDetector.SimpleOnGestureListener listener =
         new GestureDetector.SimpleOnGestureListener() {
           @Override
-          public boolean onSingleTapConfirmed(MotionEvent e) {
+          public boolean onSingleTapConfirmed(MotionEvent e) {          	
             int position = getListView().pointToPosition((int)e.getX(),
                                                          (int)e.getY());
+//            Log.d(LOG_TAG, "SecretsListActivity.onSingleTapConfirmed position=" + position);
             onItemClicked(position);
             return true;
           }
@@ -236,17 +247,25 @@ public class SecretsListActivity extends ListActivity {
 
   private void onItemClicked(int position) {
     if (AdapterView.INVALID_POSITION != position) {
-      Secret secret = getSecret(position);
-      CharSequence password = secret.getPassword(false);
-      if (password.length() == 0)
-      password = getText(R.string.no_password);
-
-      showToast(password);
-      // TODO(rogerta): to reliably record "view" access, we would want
-      // to checkpoint the secrets and save them here.  But doing so
-      // causes unacceptable delays is displaying the toast.
-      //FileUtils.saveSecrets(SecretsListActivity.this,
-      //                      secretsList_.getAllSecrets());
+    	Secret secret = getSecret(position);
+//    	Log.d(LOG_TAG, "SecretsListActivity.onItemClicked isConfigOSA=" + isConfigOSA);
+    	if (isConfigOSA) {
+    		isConfigOSA = false;
+    		selectedOSA.setConfigSecret(secret);
+        String template = getText(R.string.osa_configured).toString();
+        String msg = MessageFormat.format(template, selectedOSA.getDisplayName(),secret.getDescription());
+        showToast(msg);
+    	} else {
+        CharSequence password = secret.getPassword(false);
+        if (password.length() == 0)
+        password = getText(R.string.no_password);
+        showToast(password);
+        // TODO(rogerta): to reliably record "view" access, we would want
+        // to checkpoint the secrets and save them here.  But doing so
+        // causes unacceptable delays is displaying the toast.
+        //FileUtils.saveSecrets(SecretsListActivity.this,
+        //                      secretsList_.getAllSecrets());
+    	}
     }
   }
 
@@ -321,6 +340,9 @@ public class SecretsListActivity extends ListActivity {
   protected void onResume() {
     Log.d(LOG_TAG, "SecretsListActivity.onResume");
     super.onResume();
+    
+    // send roll call for OSAs
+    OnlineAgentManager.sendRollCallBroadcast(this);
 
     // If checkKeyguard() returns true, then this activity has been finished.
     // We don't want to execute any more in this function.
@@ -411,10 +433,14 @@ public class SecretsListActivity extends ListActivity {
         break;
       }
       case R.id.list_backup:
-        backupSecrets();
+//        backupSecrets();
+        showDialog(DIALOG_BACKUP);
         break;
       case R.id.list_restore:
         showDialog(DIALOG_CONFIRM_RESTORE);
+        break;
+      case R.id.list_sync:
+        showDialog(DIALOG_SYNC);
         break;
       case R.id.list_export:
         exportSecrets();
@@ -555,7 +581,8 @@ public class SecretsListActivity extends ListActivity {
   private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info,
                                  boolean askForPassword) {
     // Restore everything to the SD card.
-    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp, info);
+//    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp, info);
+    SecretsCollection secrets = FileUtils.restoreSecrets(this, rp, info);
     if (null == secrets) {
       if (askForPassword) {
         restorePoint = rp;
@@ -585,23 +612,24 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /** Holds the currently chosen item in the restore dialog. */
-  private class RestoreDialogState {
-    public int selected = 0;
-    private List<String> restorePoints;
-
-    /** Get an array of choices for the restore dialog. */
-    public CharSequence[] getRestoreChoices() {
-      restorePoints = FileUtils.getRestorePoints(SecretsListActivity.this);
-      return restorePoints.toArray(new CharSequence[restorePoints.size()]);
-    }
-
-    public String getSelectedRestorePoint() {
-      return restorePoints.get(selected);
-    }
-  }
+//  private class RestoreDialogState {
+//    public int selected = 0;
+//    private List<String> restorePoints;
+//
+//    /** Get an array of choices for the restore dialog. */
+//    public CharSequence[] getRestoreChoices() {
+//      restorePoints = FileUtils.getRestorePoints(SecretsListActivity.this);
+//      return restorePoints.toArray(new CharSequence[restorePoints.size()]);
+//    }
+//
+//    public String getSelectedRestorePoint() {
+//      return restorePoints.get(selected);
+//    }
+//  }
 
   @Override
-  public Dialog onCreateDialog(int id) {
+  public Dialog onCreateDialog(final int id) {
+  	Log.d(LOG_TAG, "SecretsListActivity.onCreateDialog, id="+id);
     Dialog dialog = null;
 
     switch (id) {
@@ -633,25 +661,48 @@ public class SecretsListActivity extends ListActivity {
         break;
       }
       case DIALOG_CONFIRM_RESTORE: {
-        final RestoreDialogState state = new RestoreDialogState();
+      	DialogInterface.OnClickListener itemListener =
+            new DialogInterface.OnClickListener() {
 
-        DialogInterface.OnClickListener itemListener =
-          new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              state.selected = which;
-              dialog.dismiss();
-              SecurityUtils.CipherInfo info = SecurityUtils.getCipherInfo();
-              if (restoreSecrets(state.getSelectedRestorePoint(), info, true))
-                showToast(R.string.restore_succeeded);
-            }
-          };
+              public void onClick(DialogInterface dialog, int which) {
+                AlertDialog alertDialog = (AlertDialog) dialog;
+                selectedOSA = (OnlineSecretsAgent) alertDialog.getListView().getItemAtPosition(which);
+                Log.d(LOG_TAG, "Selected restore app: " + selectedOSA.getDisplayName() + ":" + selectedOSA.getClassId());
+                dialog.dismiss();
+                if (selectedOSA.getClassId().equals("localrp")) {
+                	SecurityUtils.CipherInfo info = SecurityUtils.getCipherInfo();
+                  if (restoreSecrets(selectedOSA.getDisplayName(), info, true))
+                    showToast(R.string.restore_succeeded);
+                } else {
+                	OnlineAgentManager.sendRestoreRequest(selectedOSA, secretsList.getAllSecrets(),
+                      SecretsListActivity.this, osaHandler, new OnlineAgentManager.SecretsReceivedListener() {
+                        @Override
+                        public void run() {
+                          Log.d(LOG_TAG, "Secret received listener called " + this.secrets);
+                          if (this.secrets != null) {
+                            LoginActivity.restoreSecrets(this.secrets);
+                            secretsList.notifyDataSetInvalidated();
+                            setTitle();
+                            showToast(R.string.restore_succeeded);
+                          } else {
+                            showToast(R.string.restore_failed);
+                          }
+                        }
+                      });
+                }
+              }
+            };
 
+//        OnlineBackupAdapter adapter = new OnlineBackupAdapter(SecretsListActivity.this, android.R.layout.select_dialog_singlechoice,
+//          android.R.id.text1, false, true);
+        OnlineAgentAdapter adapter = new OnlineAgentAdapter(SecretsListActivity.this, android.R.layout.select_dialog_singlechoice,
+              android.R.id.text1, false, OnlineAgentAdapter.TYPE_RESTORE);
+        adapter.updateAppList(secretsList);
         dialog = new AlertDialog.Builder(this)
             .setTitle(R.string.dialog_restore_title)
             .setIcon(android.R.drawable.ic_dialog_alert)
-            .setSingleChoiceItems(state.getRestoreChoices(),
-                                  state.selected,
+            .setSingleChoiceItems(adapter,
+                                  0,
                                   itemListener)
             .create();
         break;
@@ -766,7 +817,7 @@ public class SecretsListActivity extends ListActivity {
                 // created by an older version of Secrets.
                 Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
                     password, saltAndRounds.salt, saltAndRounds.rounds);
-                ArrayList<Secret> secrets = FileUtils.restoreSecretsV2(
+                SecretsCollection secrets = FileUtils.restoreSecretsV2(
                     SecretsListActivity.this, restorePoint, cipher2,
                     saltAndRounds.salt, saltAndRounds.rounds);
 
@@ -813,6 +864,86 @@ public class SecretsListActivity extends ListActivity {
             .create();
         break;
       }
+      case DIALOG_BACKUP:
+      case DIALOG_SYNC:
+      case DIALOG_CONFIG_SYNC:
+			case DIALOG_CONFIG_ONLINE_BACKUP_APP: {
+				Log.d(LOG_TAG, "Showing backup/config dialog");
+				DialogInterface.OnClickListener itemListener = new DialogInterface.OnClickListener() {
+					
+					public void onClick(DialogInterface dialog, int which) {
+						AlertDialog alertDialog = (AlertDialog) dialog;
+						selectedOSA = (OnlineSecretsAgent) alertDialog.getListView().getItemAtPosition(which);
+						Log.d(LOG_TAG, "Selected app: " + selectedOSA.getDisplayName());
+						dialog.dismiss();
+	
+						if (id == DIALOG_CONFIG_ONLINE_BACKUP_APP) {
+							showToast(R.string.osa_config_instructions);
+							isConfigOSA = true;
+						} else if (id == DIALOG_CONFIG_SYNC) {
+							showToast(R.string.osa_config_instructions_sync);
+							isConfigOSA = true;
+						} else {
+							if (selectedOSA.getClassId().equals(OnlineSecretsAgent.SD_CARD_CLASSID)) {
+								backupSecrets();
+							} else if (selectedOSA.getClassId().equals("configure")) {
+								if (id == DIALOG_CONFIG_ONLINE_BACKUP_APP) {
+									showDialog(DIALOG_CONFIG_ONLINE_BACKUP_APP);
+								} else {
+									showDialog(DIALOG_CONFIG_SYNC);
+								}
+								// showDialog(DIALOG_CONFIG_ONLINE_BACKUP_APP);
+							} else {
+								// send to the OSA
+								if (id == DIALOG_SYNC) { // sync operation
+									if (!OnlineAgentManager.sendSecrets(selectedOSA, LoginActivity.getSecrets(),
+                      SecretsListActivity.this, osaHandler, new OnlineAgentManager.SecretsReceivedListener() {
+                    @Override
+                    public void run() {
+                      Log.d(LOG_TAG, "Secret received listener called " + this.secrets);
+                      if (this.secrets != null) {
+                      	SecretsCollection allSecrets = LoginActivity.getSecrets();
+                      	allSecrets.addOrUpdateSecrets(this.secrets);
+                      	allSecrets.setLastSyncTimestamp(System.currentTimeMillis());
+                        secretsList.notifyDataSetInvalidated();
+                        setTitle();
+                        showToast(R.string.sync_succeeded);
+                      } else {
+                        showToast(R.string.sync_failed);
+                      }
+                    }
+                  })) {
+										showToast(R.string.error_osa_sync_secrets);
+									}
+								} else { // backup operation
+									if (OnlineAgentManager										.sendSecrets(selectedOSA, LoginActivity.getSecrets(), SecretsListActivity.this)) {
+										String template = getText(R.string.osa_sent).toString();
+										String msg = MessageFormat.format(template, selectedOSA.getDisplayName());
+										showToast(msg);
+									} else {
+										showToast(R.string.error_osa_backup_secrets);
+									}
+								}
+							}
+						}
+					}
+				};
+				int adapterType = id == DIALOG_BACKUP || id == DIALOG_CONFIG_ONLINE_BACKUP_APP ? OnlineAgentAdapter.TYPE_BACKUP
+						: (id == DIALOG_SYNC || id == DIALOG_CONFIG_SYNC ? OnlineAgentAdapter.TYPE_SYNC
+								: OnlineAgentAdapter.TYPE_RESTORE);
+				boolean adapterConfigMode = (id == DIALOG_CONFIG_ONLINE_BACKUP_APP || id == DIALOG_CONFIG_SYNC);
+				// OnlineBackupAdapter adapter = new OnlineBackupAdapter(SecretsListActivity.this,
+				// 															 android.R.layout.select_dialog_singlechoice,android.R.id.text1, id == DIALOG_CONFIG_ONLINE_BACKUP_APP, false);
+				OnlineAgentAdapter adapter = new OnlineAgentAdapter(SecretsListActivity.this,
+						android.R.layout.select_dialog_singlechoice, android.R.id.text1, adapterConfigMode, adapterType);
+				adapter.updateAppList(secretsList);
+				adapter.notifyDataSetChanged();
+				String title = id == DIALOG_BACKUP ? getString(R.string.dialog_backup_title)
+						: (id == DIALOG_SYNC ? getString(R.string.dialog_sync_title) : getString(R.string.dialog_configure_title));
+				dialog = new AlertDialog.Builder(this).setTitle(title).setIcon(android.R.drawable.ic_dialog_alert)
+						.setSingleChoiceItems(adapter, 0, itemListener).create();
+				break;
+			}
       default:
         break;
     }
@@ -868,6 +999,16 @@ public class SecretsListActivity extends ListActivity {
       case DIALOG_ENTER_RESTORE_PASSWORD: {
         TextView password1 = (TextView) dialog.findViewById(R.id.password);
         password1.setText("");
+        break;
+      }
+      case DIALOG_BACKUP:
+      case DIALOG_SYNC:
+      case DIALOG_CONFIG_SYNC:
+      case DIALOG_CONFIRM_RESTORE:
+      case DIALOG_CONFIG_ONLINE_BACKUP_APP: {
+        AlertDialog alert = (AlertDialog) dialog;
+        OnlineAgentAdapter adapter = (OnlineAgentAdapter)alert.getListView().getAdapter();
+        adapter.updateAppList(secretsList);
         break;
       }
     }
@@ -1071,6 +1212,9 @@ public class SecretsListActivity extends ListActivity {
     secret.setPassword(password.getText().toString());
     secret.setEmail(email.getText().toString());
     secret.setNote(notes.getText().toString());
+    
+    // CTW set last changed timestamp
+    secret.setTimestamp(System.currentTimeMillis());
 
     editingPosition = secretsList.insert(secret);
     secretsList.notifyDataSetChanged();
