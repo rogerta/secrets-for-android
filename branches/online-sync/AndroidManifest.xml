@@ -28,6 +28,10 @@ limitations under the License.
   <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="11"></uses-sdk>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE">
   </uses-permission>
+  <permission android:name="net.tawacentral.roger.secrets.permission.ENCRYPTED_SECRETS"
+              android:label="@string/permission_osa_label"
+              android:description="@string/permission_osa_desc"
+              android:protectionLevel="dangerous" />
   <application android:icon="@drawable/icon"
       android:label="@string/app_name"
       android:allowBackup="true"
@@ -73,6 +77,12 @@ limitations under the License.
         android:stateNotNeeded="true"
         android:finishOnTaskLaunch="true"></activity>
     <service android:name=".SaveService"></service>
+    <receiver android:name=".OnlineAgentManager" android:label="OnlineAgentReceiver" android:enabled="true">
+      <intent-filter>
+          <action android:name="net.tawacentral.roger.secrets.OSARollCallResponse" />
+          <action android:name="net.tawacentral.roger.secrets.OSADataResponse" />
+      </intent-filter>
+  </receiver>
   </application>
 </manifest>
  
