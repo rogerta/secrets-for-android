@@ -16,7 +16,6 @@ package net.tawacentral.roger.secrets;
 
 import java.io.File;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 
 import javax.crypto.Cipher;
 
@@ -26,9 +25,9 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -55,8 +54,7 @@ public class LoginActivity extends Activity implements TextWatcher {
 
   /**
    * This is the global list of the user's secrets.  This list is accessed
-   * from other parts of the program. */
-//  private static ArrayList<Secret> secrets = null;
+   * from other parts of the program. */  
   private static SecretsCollection secrets = null;
 
   private boolean isFirstRun;
@@ -350,8 +348,8 @@ public class LoginActivity extends Activity implements TextWatcher {
       	// Loading failed. Try the old object format using same cipher
       	secrets = FileUtils.loadSecretsV21(this);
       	if (null == secrets) {
-	      	// Loading the secrets failed again.  Try loading with the old encryption
-	      	// algorithm in case were are reading an older file.
+          // Loading the secrets failed again. Try loading with the old
+          // encryption algorithm in case were are reading an older file.
 	      	Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
 	      			passwordString, pair.salt, pair.rounds);
 	      	if (null != cipher2) {
