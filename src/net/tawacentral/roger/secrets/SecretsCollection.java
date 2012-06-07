@@ -43,29 +43,29 @@ public class SecretsCollection extends ArrayList<Secret> {
 	}
   
   /** Add or update the current secrets from the given collection. 
-   * @param newSecrets new collection
-   * @param secrets - added or changed secrets
+   * @param newSecrets - added or changed secrets
    */
   public void addOrUpdateSecrets(SecretsCollection newSecrets) {
-  	for (Secret newSecret : newSecrets) {
-  		boolean done = false;
-  		for (int i = 0; i < size(); i++) {
-				Secret existingSecret = get(i);
-				int compare = newSecret.getDescription().compareTo(existingSecret.getDescription());
-				if (compare < 0) {
-					add(i, newSecret);
-					done = true;
-					break;
-				} else if (compare == 0) {
-					existingSecret.update(newSecret);
-					done = true;
-					break;
-				}
-			}
-  		if (!done) {
-  			add(newSecret);
-  		}
-		}
+    for (Secret newSecret : newSecrets) {
+      boolean done = false;
+      for (int i = 0; i < size(); i++) {
+        Secret existingSecret = get(i);
+        int compare = newSecret.getDescription().compareTo(
+                existingSecret.getDescription());
+        if (compare < 0) {
+          add(i, newSecret);
+          done = true;
+          break;
+        } else if (compare == 0) {
+          existingSecret.update(newSecret);
+          done = true;
+          break;
+        }
+      }
+      if (!done) {
+        add(newSecret);
+      }
+    }
   }
 	
 }
