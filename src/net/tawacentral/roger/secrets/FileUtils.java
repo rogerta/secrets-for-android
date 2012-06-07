@@ -15,7 +15,6 @@
 package net.tawacentral.roger.secrets;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,7 +38,6 @@ import javax.crypto.CipherOutputStream;
 import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.app.backup.BackupAgentHelper;
@@ -66,6 +64,7 @@ import au.com.bytecode.opencsv.CSVWriter;
  */
 public class FileUtils {
   /** Return value for the getSaltAndRounds() function. */
+  @SuppressWarnings("javadoc")
   public static class SaltAndRounds {
     public SaltAndRounds(byte[] salt, int rounds) {
       this.salt = salt;
@@ -274,6 +273,7 @@ public class FileUtils {
    * @param path The file to read the salt and rounds from.  Can either be the
    *     string SECRETS_FILE_NAME_SDCARD, SECRETS_FILE_NAME, or the  name of a
    *     restore point.
+   * @return the salt and rounds
    */
   public static SaltAndRounds getSaltAndRounds(Context context, String path) {
     // The salt is stored as a byte array at the start of the secrets file.
@@ -296,6 +296,7 @@ public class FileUtils {
    * exists.
    *
    * @param input The stream to read the salt and rounds from.
+   * @return the salt and rounds
    *
    * @throws IOException 
    */
@@ -484,9 +485,13 @@ public class FileUtils {
   }
 
   /**
-   * Opens the secrets file using the password retrieved from the user.
+   * Opens the secrets file using the password retrieved from the user. This
+   * function is called only for backward compatibility purposes, when Secrets
+   * encounters an error trying to load the secrets using the current encryption
+   * method.
    * 
-   * @param context Activity context in which the load is called.
+   * @param context
+   *          Activity context in which the load is called.
    * @return A list of loaded secrets.
    */
   public static SecretsCollection loadSecretsV21(Context context) {
@@ -522,7 +527,6 @@ public class FileUtils {
    * @param context Activity context in which the load is called.
    * @return A list of loaded secrets.
    */
-//  public static ArrayList<Secret> loadSecrets(Context context) {
   public static SecretsCollection loadSecrets(Context context) {
     Log.d(LOG_TAG, "FileUtils.loadSecrets");
     synchronized (lock) {
@@ -532,7 +536,6 @@ public class FileUtils {
       if (null == cipher)
         return null;
 
-//      ArrayList<Secret> secrets = null;
       SecretsCollection secrets = null;
       InputStream input = null;
 
@@ -594,8 +597,8 @@ public class FileUtils {
    * @param cipher Decryption cipher for old encryption.
    * @param salt The salt to use when creating the encryption key.
    * @param rounds The number of rounds for bcrypt.
+   * @return the secrets collection
    */
-//  public static ArrayList<Secret> restoreSecretsV2(Context context,
   public static SecretsCollection restoreSecretsV2(Context context,
                                                    String rp,
                                                    Cipher cipher,
@@ -616,8 +619,8 @@ public class FileUtils {
    * @param rp A restore point name.  This should be one of the strings
    *     returned by the getRestorePoints() method.
    * @param info A CipherInfo structure describing the decryption cipher to use. 
+   * @return the secrets collection
    */
-//  public static ArrayList<Secret> restoreSecrets(Context context,
   public static SecretsCollection restoreSecrets(Context context,
                                                  String rp,
                                                  CipherInfo info) {
@@ -643,13 +646,13 @@ public class FileUtils {
   /**
    * Constructs secrets from the supplied encrypted byte stream
    * 
-   * @param secrets encrypted byte array
+   * @param secrets
+   *          encrypted byte array
    * @return list of secrets
    */
-//  public static ArrayList<Secret> getSecretsFromEncryptedJSONStream(byte[] secrets) {
-  public static SecretsCollection getSecretsFromEncryptedJSONStream(byte[] secrets) {
+  public static SecretsCollection getSecretsFromEncryptedJSONStream(
+          byte[] secrets) {
     Cipher cipher = SecurityUtils.getDecryptionCipher();
-
     return getSecretsFromEncryptedJSONStream(cipher, secrets);
   }
 
@@ -660,36 +663,30 @@ public class FileUtils {
    * @param secrets encrypted byte array
    * @return list of secrets
    */
-  public static SecretsCollection getSecretsFromEncryptedJSONStream(Cipher cipher, byte[] secrets) {
-    if(cipher == null || secrets == null || secrets.length == 0) return null;
-    CipherInputStream cis = new CipherInputStream(new ByteArrayInputStream(secrets), cipher);
-    BufferedInputStream bis = new BufferedInputStream(cis);
-    byte[] secretStrBytes = new byte[secrets.length];
-    int offset = 0;
-    int read = 0;
+  public static SecretsCollection getSecretsFromEncryptedJSONStream(Cipher cipher,
+                                                                    byte[] secrets) {
+    if (cipher == null || secrets == null || secrets.length == 0)
+      return null;
+
     try {
-      while (offset < secretStrBytes.length
-          && (read = bis.read(secretStrBytes, offset, secretStrBytes.length - offset)) >= 0) {
-        offset += read;
-      }
-      JSONObject jsonValues = new JSONObject(new String(secretStrBytes, "UTF-8"));
+      byte[] secretStrBytes = cipher.doFinal(secrets);
+      JSONObject jsonValues = new JSONObject(
+              new String(secretStrBytes, "UTF-8"));
       /* get the secrets */
       JSONArray jsonSecrets = jsonValues.getJSONArray("secrets");
       SecretsCollection secretList = new SecretsCollection();
-//      ArrayList<Secret> secretList = new ArrayList<Secret>();
-      for(int i = 0; i < jsonSecrets.length(); i++) {
+      for (int i = 0; i < jsonSecrets.length(); i++) {
         secretList.add(Secret.fromJSONString(jsonSecrets.getString(i)));
       }
       /* get the last sync date */
       if (jsonValues.has("syncdate")) {
-        secretList.setLastSyncTimestamp(jsonValues.getLong("syncdate"));      	
+        secretList.setLastSyncTimestamp(jsonValues.getLong("syncdate"));
       } else {
-      	Log.w(LOG_TAG, "No sync date in JSON stream");
+        Log.w(LOG_TAG, "No sync date in JSON stream - set to default");
+        secretList.setLastSyncTimestamp(0);
       }
       return secretList;
-    } catch (IOException e) {
-      Log.e(LOG_TAG, "Error restoring secret stream", e);
-    } catch (JSONException e) {
+    } catch (Exception e) {
       Log.e(LOG_TAG, "Error restoring secret stream", e);
     }
     return null;
@@ -703,7 +700,7 @@ public class FileUtils {
    * @return byte array of secrets
    */
   public static byte[] putSecretsToEncryptedJSONStream(Cipher cipher,
-                                      List<Secret> secrets) {
+                                                       List<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream");
 
     if (null == cipher)
@@ -714,27 +711,30 @@ public class FileUtils {
     JSONObject jsonValues = new JSONObject();
     boolean success = false;
     try {
-      output = new CipherOutputStream(baos,
-                                 cipher);
+      output = new CipherOutputStream(baos, cipher);
       JSONArray jsonSecrets = new JSONArray();
-      for(Secret secret : secrets) {
-      	jsonSecrets.put(secret.toJSONString());
+      for (Secret secret : secrets) {
+        jsonSecrets.put(secret.toJSONString());
       }
       jsonValues.put("secrets", jsonSecrets);
       if (secrets instanceof SecretsCollection) {
-      	jsonValues.put("syncdate", ((SecretsCollection)secrets).getLastSyncTimestamp());
+        jsonValues.put("syncdate",
+                ((SecretsCollection) secrets).getLastSyncTimestamp());
       } else {
-      	Log.w(LOG_TAG, "No sync date in stored secrets - not SecretsCollection");
+        Log.w(LOG_TAG, "No sync date in stored secrets - not SecretsCollection");
       }
       output.write(jsonValues.toString().getBytes("UTF-8"));
       success = true;
     } catch (Exception ex) {
-    	Log.d(LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream " + ex);
+      Log.d(LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream " + ex);
     } finally {
-      try {if (null != output) output.close();} catch (IOException ex) {}
+      try {
+        if (null != output)
+          output.close();
+      } catch (IOException ex) {}
     }
 
-    if(!success) {
+    if (!success) {
       throw new RuntimeException("Failed creating stream");
     }
     return baos.toByteArray();
@@ -761,13 +761,6 @@ public class FileUtils {
     output.write(salt.length);
     output.write(salt);
     output.write(rounds);
-//    ObjectOutputStream oout = new ObjectOutputStream(
-//        new CipherOutputStream(output, cipher));
-//    try {
-//      oout.writeObject(secrets);
-//    } finally {
-//      try {if (null != oout) oout.close();} catch (IOException ex) {}
-//    }
     output.write(putSecretsToEncryptedJSONStream(cipher, secrets));
   	output.flush();
   }
@@ -830,14 +823,16 @@ public class FileUtils {
     ObjectInputStream oin = new ObjectInputStream(
         new CipherInputStream(input, cipher));
     try {
-//      return (ArrayList<Secret>) oin.readObject();
       return (new SecretsCollection((ArrayList<Secret>)oin.readObject()));
     } finally {
       try {if (null != oin) oin.close();} catch (IOException ex) {}
     }
   }
   
-  /** Deletes all secrets from the phone. */
+  /** Deletes all secrets from the phone. 
+   * @param context the current context
+   * @return always true
+   */
   public static boolean deleteSecrets(Context context) {
     Log.d(LOG_TAG, "FileUtils.deleteSecrets");
     synchronized (lock) {
@@ -853,6 +848,9 @@ public class FileUtils {
   /**
    * Export secrets to a CSV file on the SD card.  See the description of
    * the importSecrets() method for more details about the format written.
+   * @param context the current context
+   * @param secrets the secrets to export
+   * @return true if successful, false otherwise
    */
   public static boolean exportSecrets(Context context,List<Secret> secrets) {
     // An array to hold the rows that will be written to the CSV file.
@@ -896,6 +894,7 @@ public class FileUtils {
    * those files.
    *
    * If more than one CSV file of exist, the one last modified is used.
+   * @return the file to import
    */
   public static File getFileToImport() {
     boolean haveSecretsCsv = SECRETS_FILE_CSV.exists();
@@ -1039,6 +1038,7 @@ public class FileUtils {
   }
 
   /** Returns a list of the supported CSV file names, newline separated. */
+  @SuppressWarnings("javadoc")
   public static String getCsvFileNames() {
     StringBuilder builder = new StringBuilder();
     builder.append(INDENT).append(SECRETS_FILE_CSV.getName()).append('\n');
@@ -1047,6 +1047,7 @@ public class FileUtils {
     return builder.toString();
   }
 
+  @SuppressWarnings("javadoc")
   static public class SecretsBackupAgent extends BackupAgentHelper {
     /** Tag for logging purposes. */
     public static final String LOG_TAG = "Secrets";
