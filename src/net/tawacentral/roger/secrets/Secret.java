@@ -43,7 +43,8 @@ public class Secret implements Serializable {
   private String note;
   private ArrayList<LogEntry> access_log;
   
-  private long timestamp = System.currentTimeMillis(); /* creation or modification timestamp */
+  /* creation or modification timestamp */
+  private long timestamp = System.currentTimeMillis();
 
   /**
    * An immutable class that represents one entry in the access log.  Each
@@ -105,7 +106,6 @@ public class Secret implements Serializable {
    * only one CREATED entry, with the current time.
    */
   public Secret() {
-  	timestamp = System.currentTimeMillis();
     access_log = new ArrayList<LogEntry>();
     access_log.add(new LogEntry());
   }
