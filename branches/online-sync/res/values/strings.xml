@@ -157,6 +157,7 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_changed">Modified</string>
 <string name="log_viewed">Viewed</string>
 <string name="log_exported">Exported</string>
+<string name="log_synced">Synced</string>
 
 <string name="error_missing_ciphers">Uh oh: can\'t save, password is invalid.</string>
 <string name="error_cannot_move_existing">Uh oh: can\'t move existing file out of the way.</string>

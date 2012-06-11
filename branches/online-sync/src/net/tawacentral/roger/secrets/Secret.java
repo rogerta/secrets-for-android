@@ -33,7 +33,7 @@ import org.json.JSONObject;
  */
 public class Secret implements Serializable {
   private static final long serialVersionUID = -116450416616138469L;
-  private static final int TIMEOUT_MS = 60 * 1000;
+  private static final int THRESHOLD_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
 
   private String description;
@@ -65,6 +65,7 @@ public class Secret implements Serializable {
     public static final int VIEWED = 2;
     public static final int CHANGED = 3;
     public static final int EXPORTED = 4;
+    public static final int SYNCED = 5;
 
     private int type_;
     private long time_;
@@ -78,7 +79,7 @@ public class Secret implements Serializable {
     /**
      * Creates a new log entry object of the given type for the given time.
      *
-     * @param type One of CREATED, VIEWED, or CHANGED.
+     * @param type One of the supported types.
      * @param time Time of the entry, in milliseconds.
      */
     public LogEntry(int type, long time) {
@@ -89,7 +90,7 @@ public class Secret implements Serializable {
     /**
      * Returns the type of this log entry.
      *
-     * @return One of CREATED, VIEWED, or CHANGED.
+     * @return One of the supported types.
      */
     public int getType() {
       return type_;
@@ -153,35 +154,87 @@ public class Secret implements Serializable {
    * when the user edits a secret, we don't want to accumulate too many
    * log entries.
    */
-  public void setPassword(String password) {
-    long now = System.currentTimeMillis();
-    LogEntry entry = access_log.get(0);
-    if (now - entry.getTime() < TIMEOUT_MS) {
-      if (entry.getType() == LogEntry.VIEWED) {
-        access_log.remove(0);
-        access_log.add(0, new LogEntry(LogEntry.CHANGED, now));
-      }
-    } else {
-      access_log.add(0, new LogEntry(LogEntry.CHANGED, entry.getTime()));
-      pruneAccessLog();
+//  public void setPassword(String password) {
+//    long now = System.currentTimeMillis();
+//    LogEntry entry = access_log.get(0);
+//    if (now - entry.getTime() < THRESHOLD_MS) {
+//      if (entry.getType() == LogEntry.VIEWED) {
+//        access_log.remove(0);
+//        access_log.add(0, new LogEntry(LogEntry.CHANGED, now));
+//      }
+//    } else {
+//      access_log.add(0, new LogEntry(LogEntry.CHANGED, entry.getTime()));
+//      pruneAccessLog();
+//    }
+//
+//    this.password = password;
+//  }
+
+  /**
+   * Sets the password for the secret, updating the access log with a
+   * CHANGED entry if requested.
+   * 
+   * @param password The new password
+   * @param createDefaultLogEntry If true, create a CHANGED entry, otherwise
+   *                              do nothing
+   */
+  public void setPassword(String password, boolean createDefaultLogEntry) {
+    if (createDefaultLogEntry) {
+      createLogEntry(LogEntry.CHANGED);
     }
 
     this.password = password;
+  }
+  
+  /**
+   * Create a new log entry for the specified type, under the following
+   * conditions.
+   * If the specified type is:
+   *   VIEWED -  if the previous entry is recent, do nothing
+   *   CHANGED - if the previous entry is VIEWED and is recent, change this
+   *             entry to CHANGED
+   *   EXPORTED - always create a new entry
+   *   SYNCED (input) - always create a new entry
+   *   
+   * Any other type is ignored.
+   *   
+   * The first two conditons are to prevent too many log entries.
+   *   
+   * @param type VIEWED, CHANGED, EXPORTED, SYNCED
+   */
+  public void createLogEntry(int type) {
+    if (!(type == LogEntry.VIEWED ||
+        type == LogEntry.CHANGED ||
+        type == LogEntry.EXPORTED ||
+        type == LogEntry.SYNCED)) return;
+    
+    long now = System.currentTimeMillis();
+    if (type == LogEntry.VIEWED || type == LogEntry.CHANGED) {
+      LogEntry lastEntry = access_log.get(0);
+      if (now - lastEntry.getTime() < THRESHOLD_MS) {
+        if (type == LogEntry.VIEWED) return;
+        if (lastEntry.getType() == LogEntry.VIEWED) {
+          access_log.remove(0);
+          access_log.add(0, new LogEntry(LogEntry.CHANGED, now));
+          return;
+        }
+      }
+    }
+    access_log.add(0, new LogEntry(type, now));
+    pruneAccessLog();
   }
 
   /**
    * Gets the password for the secret, updating the access log with a
    * VIEWED (if the most recent access is not too recent) or EXPORTED entry.
+   * @param forExport if true create EXPORTED log entry, else VIEWED
+   * @return password
    */
   public String getPassword(boolean forExport) {
-    // Don't add an entry to the access log if the last entry is within
-    // 60 seconds of now.
-    long now = System.currentTimeMillis();
-    LogEntry entry = access_log.get(0);
-    if (forExport || (now - entry.getTime() > TIMEOUT_MS)) {
-      int type = forExport ? LogEntry.EXPORTED : LogEntry.VIEWED;
-      access_log.add(0, new LogEntry(type, now));
-      pruneAccessLog();
+    if (forExport) {
+      createLogEntry(LogEntry.EXPORTED);
+    } else {
+      createLogEntry(LogEntry.VIEWED);
     }
 
     return password;
@@ -224,7 +277,7 @@ public class Secret implements Serializable {
 	 * @param from source secret
 	 */
 	public void update(Secret from) {
-		setPassword(from.getPassword(true));
+		setPassword(from.password, false);
 		username = from.getUsername();
 		email = from.getEmail();
 		note = from.getNote();
@@ -264,6 +317,16 @@ public class Secret implements Serializable {
     secret.note = jsonSecret.getString("note");
     secret.timestamp = jsonSecret.getLong("timestamp");
     return secret;
+  }
+  
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("d=").append(description);
+    sb.append(",u=").append(username);
+    sb.append(",p=").append(password);
+    sb.append(",e=").append(email);
+//    sb.append(",n=").append(note);
+    return sb.toString();
   }
 
   /**

@@ -903,7 +903,7 @@ public class SecretsListActivity extends ListActivity {
                       Log.d(LOG_TAG, "Secret received listener called " + this.secrets);
                       if (this.secrets != null) {
                       	SecretsCollection allSecrets = LoginActivity.getSecrets();
-                      	allSecrets.addOrUpdateSecrets(this.secrets);
+                      	allSecrets.syncSecrets(this.secrets);
                       	allSecrets.setLastSyncTimestamp(System.currentTimeMillis());
                         secretsList.notifyDataSetInvalidated();
                         setTitle();
@@ -1209,7 +1209,7 @@ public class SecretsListActivity extends ListActivity {
 
     secret.setDescription(description.getText().toString());
     secret.setUsername(username.getText().toString());
-    secret.setPassword(password.getText().toString());
+    secret.setPassword(password.getText().toString(), true);
     secret.setEmail(email.getText().toString());
     secret.setNote(notes.getText().toString());
     

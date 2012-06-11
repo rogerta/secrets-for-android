@@ -972,7 +972,7 @@ public class FileUtils {
         if (isOiSafeCsv) {
           secret.setDescription(row[1]);
           secret.setUsername(row[3]);
-          secret.setPassword(row[4]);
+          secret.setPassword(row[4], false);
           secret.setEmail(EMPTY_STRING);
 
           // I will combine the category, website, and notes columns into
@@ -991,7 +991,7 @@ public class FileUtils {
           // or for worse, this is a "best effort" to import that data.
           secret.setDescription(row[0]);
           secret.setUsername(row[1]);
-          secret.setPassword(row[2]);
+          secret.setPassword(row[2], false);
           secret.setEmail(row[3]);
           secret.setNote(row[4]);
         }
