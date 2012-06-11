@@ -3,6 +3,8 @@ package net.tawacentral.roger.secrets;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import net.tawacentral.roger.secrets.Secret.LogEntry;
+
 /**
  * Class that represents a secrets collection. Introduced to hold meta-info
  * for the collection e.g. sync timestamp.
@@ -45,7 +47,7 @@ public class SecretsCollection extends ArrayList<Secret> {
   /** Add or update the current secrets from the given collection. 
    * @param newSecrets - added or changed secrets
    */
-  public void addOrUpdateSecrets(SecretsCollection newSecrets) {
+  public void syncSecrets(SecretsCollection newSecrets) {
     for (Secret newSecret : newSecrets) {
       boolean done = false;
       for (int i = 0; i < size(); i++) {
@@ -58,6 +60,7 @@ public class SecretsCollection extends ArrayList<Secret> {
           break;
         } else if (compare == 0) {
           existingSecret.update(newSecret);
+          existingSecret.createLogEntry(LogEntry.SYNCED);
           done = true;
           break;
         }
