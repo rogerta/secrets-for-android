@@ -54,7 +54,7 @@ _On the new phone_
   * choose the "Restore" menu item
 
 == Phones with Internal Memory ==
-If either your new or old phone has internal memory, even if it accepts SD cards, its possible to transfer your secrets to your phone with the help of PC or Mac.  If so, do the following:
+If either your new or old phone has internal memory, even if it accepts SD cards, its possible to transfer your secrets to your phone with the help of a PC or Mac.  If so, do the following:
 
 _On the old phone_
   * Start *_Secrets for Android_* and enter the app
@@ -63,7 +63,7 @@ _On the old phone_
 _On the PC or Mac_
   * connect your *old* phone to the PC or Mac with a USB cable
   * locate the device or drive that represents the phone
-  * locate the file called {{{secrets}}} (at the root od the device or drive) and copy it your desktop
+  * locate the file called {{{secrets}}} (at the root of the device or drive) and copy it your desktop
   * disconnect the phone from the PC or Mac
   * connect your *new* phone to the PC or Mac with a USB cable
   * copy the {{{secrets}}} file from your desktop to the root of the device or drive representing the phone
