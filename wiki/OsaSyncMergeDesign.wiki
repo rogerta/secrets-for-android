@@ -1,0 +1,6 @@
+#summary A description of the sync/merge algorithm used with synchronizing between SfA and an OSA.
+
+= Introduction =
+
+
+= Details =
