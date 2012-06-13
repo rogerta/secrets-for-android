@@ -1,0 +1,75 @@
+#summary How to transfer your secrets to a new phone.
+
+= Introduction =
+
+Changing mobile phone seems inevitable.  Maybe the phone is lost or stolen, maybe it breaks, or maybe you just want the latest and greatest.  Easily transferring secrets to a new phone is an important issue for all users of *_Secrets for Android_*.
+
+This page describes several ways to ensure that your secrets make it to your new phone.  Note that for best results you will need to perform some actions before you stop using your existing phone.  Please take the time to follow the recommended steps below before disaster strikes!  These steps work for Android tablets as well.
+
+= Online Backup =
+
+Android provides a built-in mechanism to backup your apps and data to your Google account.  This is by far the easiest way to transfer secrets to a new phone.  It may also be the only way to do so in the case of lost, stolen or damaged phones.
+
+Online backup must be enabled before it will function and is normally done when you first configure your phone.  If you didn't do it then or want to check if its enabled, do the following:
+
+(steps for Android 4)
+  * start the "Settings" apps
+  * tap "Backup & reset"
+  * make sure that the items "Back up my data" and "Automatic restore" are checked
+
+Take note of the email address listed under "Backup account" as this is the Google account that will store your phone's information.  Do this for your phone right now, and for all your new phones in the future.
+
+When you configure your new phone, make sure to use the same email address as was shown under "Backup account".  Most of your apps will automatically be restored, some even with their data.  In particular, *_Secrets for Android_* will be restored on your phone along with all your secrets.
+
+== Check the Online Backup ==
+
+To further check that backups are properly enabled, verify the state of the online information stored with your Google account:
+
+  * open a web browser and go to the page https://www.google.com/dashboard
+  * make sure you are logged in with the account noted under "Backup account" above
+  * scroll down to the section called "Android devices" and look for your phone
+  * click the link "More data stored about this device" to see which apps have been backed up
+
+If all is working correctly, you will see the name and time of the most recent backup for each apps that support online backup.
+
+Keep in mind that if you just enabled backups as described above, it may take a day or so before the dashboard will show anything.
+
+= SD Card =
+
+This section applies to phones that have a slot for an SD card.
+
+== Phones with no Internal Memory ==
+If your old and new phones both accept SD cards and have no internal storage, then its possible to use an SD card to transfer your secrets to your new phone.  This assumes that you have access to your old phone and new phone at the same time.  If so, do the following:
+
+_On the old phone_
+  * place the SD card in the phone
+  * Start *_Secrets for Android_* and enter the app
+  * choose the "Backup" menu item
+  * remove the SD card from the phone.  Make sure to unmount the SD card first or turn off the phone
+
+_On the new phone_
+  * place the SD card in the phone
+  * install *_Secrets for Android_* and enter the app
+  * make sure to use the *exact* same master password as you used on the old phone
+  * choose the "Restore" menu item
+
+== Phones with Internal Memory ==
+If either your new or old phone has internal memory, even if it accepts SD cards, its possible to transfer your secrets to your phone with the help of PC or Mac.  If so, do the following:
+
+_On the old phone_
+  * Start *_Secrets for Android_* and enter the app
+  * choose the "Backup" menu item
+
+_On the PC or Mac_
+  * connect your *old* phone to the PC or Mac with a USB cable
+  * locate the device or drive that represents the phone
+  * locate the file called {{{secrets}}} (at the root od the device or drive) and copy it your desktop
+  * disconnect the phone from the PC or Mac
+  * connect your *new* phone to the PC or Mac with a USB cable
+  * copy the {{{secrets}}} file from your desktop to the root of the device or drive representing the phone
+  * disconnect the phone from the PC or Mac
+
+_On the new phone_
+  * install *_Secrets for Android_* and enter the app
+  * make sure to use the *exact* same master password as you used on the old phone
+  * choose the "Restore" menu item
