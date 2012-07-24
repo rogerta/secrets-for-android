@@ -54,7 +54,7 @@ public class LoginActivity extends Activity implements TextWatcher {
 
   /**
    * This is the global list of the user's secrets.  This list is accessed
-   * from other parts of the program. */  
+   * from other parts of the program. */
   private static SecretsCollection secrets = null;
 
   private boolean isFirstRun;
@@ -328,16 +328,15 @@ public class LoginActivity extends Activity implements TextWatcher {
                                                           pair.rounds));
 
     if (isFirstRun) {
-//      secrets = new ArrayList<Secret>();
       secrets = new SecretsCollection();
-      
+
       // Immediately save an empty file to hold the secrets.
       Cipher cipher = SecurityUtils.getEncryptionCipher();
       File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
       byte[] salt = SecurityUtils.getSalt();
       int rounds = SecurityUtils.getRounds();
-      int err = FileUtils.saveSecrets(this, file, cipher, salt, rounds,
-                                      secrets); 
+      int err = FileUtils
+              .saveSecrets(this, file, cipher, salt, rounds, secrets);
       if (0 != err) {
         showToast(err, Toast.LENGTH_LONG);
         return;
@@ -345,38 +344,38 @@ public class LoginActivity extends Activity implements TextWatcher {
     } else {
       secrets = FileUtils.loadSecrets(this);
       if (null == secrets) {
-      	// Loading failed. Try the old object format using same cipher
-      	secrets = FileUtils.loadSecretsV21(this);
-      	if (null == secrets) {
+        // Loading failed. Try the old object format using same cipher
+        secrets = FileUtils.loadSecretsV21(this);
+        if (null == secrets) {
           // Loading the secrets failed again. Try loading with the old
           // encryption algorithm in case were are reading an older file.
-	      	Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
-	      			passwordString, pair.salt, pair.rounds);
-	      	if (null != cipher2) {
-	      		secrets = FileUtils.loadSecretsV2(this, cipher2, pair.salt,
-	      				pair.rounds);
-	      	}
-      	}
-      	if (null == secrets) {
-        	// Loading the secrets failed again.  Try an even older encryption
-        	// algorithm.
-      		Cipher cipher1 = SecurityUtils.createDecryptionCipherV1(
-      				passwordString);
-      		if (null != cipher1)
-      			secrets = FileUtils.loadSecretsV1(this, cipher1);
-      	}
+          Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
+                  passwordString, pair.salt, pair.rounds);
+          if (null != cipher2) {
+            secrets = FileUtils.loadSecretsV2(this, cipher2, pair.salt,
+                    pair.rounds);
+          }
+        }
+        if (null == secrets) {
+          // Loading the secrets failed again. Try an even older encryption
+          // algorithm.
+          Cipher cipher1 = SecurityUtils
+                  .createDecryptionCipherV1(passwordString);
+          if (null != cipher1)
+            secrets = FileUtils.loadSecretsV1(this, cipher1);
+        }
 
-      	if (null != secrets) {
-      		// TODO: display a better message to the user telling them to do a
-      		// backup right now, since any restore file is likely in a format
-      		// that cannot be read anymore.
-      		showToast(R.string.restore_file_too_old, Toast.LENGTH_LONG);
-      	} else {
-      		// TODO(rogerta): need better error message here.  There are probably
-      		// many reasons that we might not be able to open the file.
-      		showToast(R.string.invalid_password, Toast.LENGTH_LONG);
-      		return;
-      	}
+        if (null != secrets) {
+          // TODO: display a better message to the user telling them to do a
+          // backup right now, since any restore file is likely in a format
+          // that cannot be read anymore.
+          showToast(R.string.restore_file_too_old, Toast.LENGTH_LONG);
+        } else {
+          // TODO(rogerta): need better error message here. There are probably
+          // many reasons that we might not be able to open the file.
+          showToast(R.string.invalid_password, Toast.LENGTH_LONG);
+          return;
+        }
       }
     }
 
@@ -431,7 +430,9 @@ public class LoginActivity extends Activity implements TextWatcher {
     return secrets;
   }
 
-  /** Overwrite the current secrets with the given list. */
+  /** Overwrite the current secrets with the given list. 
+   * @param secrets
+   */
   public static void restoreSecrets(SecretsCollection secrets) {
     // I don't want to change the actual instance of the global array that
     // holds the secrets, since this array is referred to from other places
