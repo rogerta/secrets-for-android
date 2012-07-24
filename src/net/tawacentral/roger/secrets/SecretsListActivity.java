@@ -61,16 +61,16 @@ import android.widget.Toast;
 
 /**
  * An activity that handles two main functions: displaying the list of all
- * secrets, and modifying an existing secret.  The reason that these two
+ * secrets, and modifying an existing secret. The reason that these two
  * activities are combined into one is to take advantage of the 3d page flip
  * effect, which basically happens inside one View.
- *
+ * 
  * If the 3d transition could be done while transferring from the view of one
  * activity to the view of another, I would do that instead, since its more
- * natural for an android app.  Because of this hack, I need to override the
- * behaviour of the back button to restore the "natural feel" of the back
- * button to the user.
- *
+ * natural for an android app. Because of this hack, I need to override the
+ * behaviour of the back button to restore the "natural feel" of the back button
+ * to the user.
+ * 
  * @author rogerta
  */
 @SuppressWarnings("deprecation")
@@ -80,21 +80,17 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_IMPORT_SUCCESS = 3;
   private static final int DIALOG_CHANGE_PASSWORD = 4;
   private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
-  private static final int DIALOG_CONFIG_ONLINE_BACKUP_APP = 6;
-  private static final int DIALOG_BACKUP = 7;
-  private static final int DIALOG_SYNC = 8;
-  private static final int DIALOG_CONFIG_SYNC = 9;
+  private static final int DIALOG_SYNC = 6;
+  private static final int DIALOG_CONFIG_SYNC = 7;
 
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
   private static final String EMPTY_STRING = "";
 
-  public static final String EXTRA_ACCESS_LOG =
-      "net.tawacentreal.secrets.accesslog";
+  public static final String EXTRA_ACCESS_LOG = "net.tawacentreal.secrets.accesslog";
 
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "SecretsListActivity";
-
   public static final String STATE_IS_EDITING = "is_editing";
   public static final String STATE_EDITING_POSITION = "editing_position";
   public static final String STATE_EDITING_DESCRIPTION = "editing_description";
@@ -103,20 +99,21 @@ public class SecretsListActivity extends ListActivity {
   public static final String STATE_EDITING_EMAIL = "editing_email";
   public static final String STATE_EDITING_NOTES = "editing_notes";
 
-  private SecretsListAdapter secretsList;  // list of secrets
-  private Toast toast;  // toast used to show password
-  private GestureDetector detector;  // detects taps and double taps
-  private boolean isEditing;  // true if changing a secret
-  private int editingPosition;  // position of item being edited
-  private int cmenuPosition;  // position of item for cmenu
-  private View root;  // root of the layout for this activity
-  private View edit;  // root view for the editing layout
-  private File importedFile;  // File that was imported
-  private boolean isConfigChange;  // being destroyed for config change?
-  private String restorePoint;  // That file that should be restored from
+  private SecretsListAdapter secretsList; // list of secrets
+  private Toast toast; // toast used to show password
+  private GestureDetector detector; // detects taps and double taps
+  private boolean isEditing; // true if changing a secret
+  private int editingPosition; // position of item being edited
+  private int cmenuPosition; // position of item for cmenu
+  private View root; // root of the layout for this activity
+  private View edit; // root view for the editing layout
+  private File importedFile; // File that was imported
+  private boolean isConfigChange; // being destroyed for config change?
+  private String restorePoint; // That file that should be restored from
   private boolean isConfigOSA; // is the user selecing a secret for an OSA?
-  private OnlineSecretsAgent selectedOSA; // currently selected agent
-  private Handler osaHandler; // handler used when waiting for an OSA to send secrets for restore
+  private OnlineSyncAgent selectedOSA; // currently selected agent
+  private Handler osaHandler; // handler used when waiting for an OSA to send
+                              // secrets for restore
 
   /** Called when the activity is first created. */
   @Override
@@ -133,14 +130,15 @@ public class SecretsListActivity extends ListActivity {
     }
 
     // If for any reason we get here and there is no secrets list, then we
-    // cannot continue.  Finish the activity and return.
+    // cannot continue. Finish the activity and return.
     if (null == LoginActivity.getSecrets()) {
       finish();
       return;
     }
 
+    /* Create a handler for the thread to receive messages */
     osaHandler = new Handler();
-    
+
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
 
@@ -148,10 +146,8 @@ public class SecretsListActivity extends ListActivity {
     getListView().setTextFilterEnabled(true);
 
     // Setup the auto complete adapters for the username and email views.
-    AutoCompleteTextView username = (AutoCompleteTextView)
-        findViewById(R.id.list_username);
-    AutoCompleteTextView email = (AutoCompleteTextView)
-        findViewById(R.id.list_email);
+    AutoCompleteTextView username = (AutoCompleteTextView) findViewById(R.id.list_username);
+    AutoCompleteTextView email = (AutoCompleteTextView) findViewById(R.id.list_email);
 
     username.setAdapter(secretsList.getUsernameAutoCompleteAdapter());
     email.setAdapter(secretsList.getEmailAutoCompleteAdapter());
@@ -191,47 +187,48 @@ public class SecretsListActivity extends ListActivity {
       getListView().setOnItemClickListener(new OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position,
-            long id) {
+                                long id) {
           onItemClicked(position);
         }
       });
     }
 
-    // The gesture detector is used to handle taps and double taps.  Its
+    // The gesture detector is used to handle taps and double taps. Its
     // important to handle simple taps here and not just defer to the
     // onItemClickListener, otherwise a double tap will trigger both the
-    // onItemClicked() behaviour as well as the double tap behaviour.  By
+    // onItemClicked() behaviour as well as the double tap behaviour. By
     // handling simple taps here, we can use the onSingleTapConfirmed() to
     // only do the simple tap behaviour when we are sure there is no double
     // tap as well.
     //
     // However, in order to support device with a scroll wheel, I still need to
-    // handle onItemClicked(), causing both behaviours.  This can be
+    // handle onItemClicked(), causing both behaviours. This can be
     // fixed for device that do not have a scroll wheel, in which case the
-    // we do not need to handle onItemClicked().  However, the API to check
+    // we do not need to handle onItemClicked(). However, the API to check
     // if the device has a scroll where was only introduced in Android 2.3.
-    GestureDetector.SimpleOnGestureListener listener =
-        new GestureDetector.SimpleOnGestureListener() {
-          @Override
-          public boolean onSingleTapConfirmed(MotionEvent e) {          	
-            int position = getListView().pointToPosition((int)e.getX(),
-                                                         (int)e.getY());
-//            Log.d(LOG_TAG, "SecretsListActivity.onSingleTapConfirmed position=" + position);
-            onItemClicked(position);
-            return true;
-          }
-          @Override
-          public boolean onDoubleTap(MotionEvent e) {
-            int position = getListView().pointToPosition((int)e.getX(),
-                                                         (int)e.getY());
-            if (AdapterView.INVALID_POSITION != position) {
-              SetEditViews(position);
-              animateToEditView();
-              hideToast();
-            }
-            return true;
-          }
-        };
+    GestureDetector.SimpleOnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
+      @Override
+      public boolean onSingleTapConfirmed(MotionEvent e) {
+        int position = getListView().pointToPosition((int) e.getX(),
+                (int) e.getY());
+        // Log.d(LOG_TAG, "SecretsListActivity.onSingleTapConfirmed position=" +
+        // position);
+        onItemClicked(position);
+        return true;
+      }
+
+      @Override
+      public boolean onDoubleTap(MotionEvent e) {
+        int position = getListView().pointToPosition((int) e.getX(),
+                (int) e.getY());
+        if (AdapterView.INVALID_POSITION != position) {
+          SetEditViews(position);
+          animateToEditView();
+          hideToast();
+        }
+        return true;
+      }
+    };
     detector = new GestureDetector(this, listener);
     detector.setOnDoubleTapListener(listener);
 
@@ -247,25 +244,27 @@ public class SecretsListActivity extends ListActivity {
 
   private void onItemClicked(int position) {
     if (AdapterView.INVALID_POSITION != position) {
-    	Secret secret = getSecret(position);
-//    	Log.d(LOG_TAG, "SecretsListActivity.onItemClicked isConfigOSA=" + isConfigOSA);
-    	if (isConfigOSA) {
-    		isConfigOSA = false;
-    		selectedOSA.setConfigSecret(secret);
+      Secret secret = getSecret(position);
+      // Log.d(LOG_TAG, "SecretsListActivity.onItemClicked isConfigOSA=" +
+      // isConfigOSA);
+      if (isConfigOSA) {
+        isConfigOSA = false;
+        selectedOSA.setConfigSecret(secret);
         String template = getText(R.string.osa_configured).toString();
-        String msg = MessageFormat.format(template, selectedOSA.getDisplayName(),secret.getDescription());
+        String msg = MessageFormat.format(template,
+                selectedOSA.getDisplayName(), secret.getDescription());
         showToast(msg);
-    	} else {
+      } else {
         CharSequence password = secret.getPassword(false);
         if (password.length() == 0)
-        password = getText(R.string.no_password);
+          password = getText(R.string.no_password);
         showToast(password);
         // TODO(rogerta): to reliably record "view" access, we would want
-        // to checkpoint the secrets and save them here.  But doing so
+        // to checkpoint the secrets and save them here. But doing so
         // causes unacceptable delays is displaying the toast.
-        //FileUtils.saveSecrets(SecretsListActivity.this,
-        //                      secretsList_.getAllSecrets());
-    	}
+        // FileUtils.saveSecrets(SecretsListActivity.this,
+        // secretsList_.getAllSecrets());
+      }
     }
   }
 
@@ -274,7 +273,7 @@ public class SecretsListActivity extends ListActivity {
     // This method is invoked when the user performs a search from the global
     // search dialog.
 
-    // Get the search string.  Make it a full text search by ensuring the
+    // Get the search string. Make it a full text search by ensuring the
     // string begins with a dot.
     setIntent(intent);
     String filter = intent.getStringExtra(SearchManager.QUERY);
@@ -295,18 +294,17 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Check to see if the key guard is enabled.  If so, its means the device
-   * probably went to sleep due to inactivity.  If this is the case, this
+   * Check to see if the key guard is enabled. If so, its means the device
+   * probably went to sleep due to inactivity. If this is the case, this
    * activity is finished().
-   *
+   * 
    * @return True if the activity is finished, false otherwise.
    */
   private boolean checkKeyguard() {
-    // If the key guard has been displayed, exit this activity.  This returns
+    // If the key guard has been displayed, exit this activity. This returns
     // us to the login page requiring the user to enter his password again
     // before getting access again to his secrets.
-    KeyguardManager key_guard = (KeyguardManager) getSystemService(
-        KEYGUARD_SERVICE);
+    KeyguardManager key_guard = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
     boolean isInputRestricted = key_guard.inKeyguardRestrictedInputMode();
     if (isInputRestricted) {
       Log.d(LOG_TAG, "SecretsListActivity.checkKeyguard finishing");
@@ -340,7 +338,7 @@ public class SecretsListActivity extends ListActivity {
   protected void onResume() {
     Log.d(LOG_TAG, "SecretsListActivity.onResume");
     super.onResume();
-    
+
     // send roll call for OSAs
     OnlineAgentManager.sendRollCallBroadcast(this);
 
@@ -350,9 +348,9 @@ public class SecretsListActivity extends ListActivity {
       return;
 
     // Show instruction toast auto popup options menu if there are no secrets
-    // in the list.  This check used to be done in the onCreate() method above,
+    // in the list. This check used to be done in the onCreate() method above,
     // that could occasionally cause a crash when changing layout from
-    // portrait to landscape, or back.  Not sure why exactly, but I suspect
+    // portrait to landscape, or back. Not sure why exactly, but I suspect
     // its because the UI elements are not actually ready to be rendered until
     // onResume() is called.
     if (0 == secretsList.getAllSecrets().size() && !isEditing) {
@@ -409,50 +407,49 @@ public class SecretsListActivity extends ListActivity {
     boolean handled = false;
 
     // TODO(rogerta): when using this menu to finish the editing activity, for
-    // some reason the selected item in the list view is not highlighted.  Need
-    // to figure out what the interaction with the menu is.  This does not
+    // some reason the selected item in the list view is not highlighted. Need
+    // to figure out what the interaction with the menu is. This does not
     // happen when using the back button to finish the editing activity.
     switch (item.getItemId()) {
-      case R.id.list_add:
-          SetEditViews(AdapterView.INVALID_POSITION);
-          animateToEditView();
-          break;
-      case R.id.list_search:
-        onSearchRequested();
-        break;
-      case R.id.list_save:
-        saveSecret();
-        // NO BREAK
-      case R.id.list_discard:
-        animateFromEditView();
-        break;
-      case R.id.list_generate_password: {
-        String pwd = generatePassword();
-        EditText password = (EditText) findViewById(R.id.list_password);
-        password.setText(pwd);
-        break;
-      }
-      case R.id.list_backup:
-//        backupSecrets();
-        showDialog(DIALOG_BACKUP);
-        break;
-      case R.id.list_restore:
-        showDialog(DIALOG_CONFIRM_RESTORE);
-        break;
-      case R.id.list_sync:
-        showDialog(DIALOG_SYNC);
-        break;
-      case R.id.list_export:
-        exportSecrets();
-        break;
-      case R.id.list_import:
-        importSecrets();
-        break;
-      case R.id.list_menu_change_password:
-        showDialog(DIALOG_CHANGE_PASSWORD);
-        break;
-      default:
-        break;
+    case R.id.list_add:
+      SetEditViews(AdapterView.INVALID_POSITION);
+      animateToEditView();
+      break;
+    case R.id.list_search:
+      onSearchRequested();
+      break;
+    case R.id.list_save:
+      saveSecret();
+      // NO BREAK
+    case R.id.list_discard:
+      animateFromEditView();
+      break;
+    case R.id.list_generate_password: {
+      String pwd = generatePassword();
+      EditText password = (EditText) findViewById(R.id.list_password);
+      password.setText(pwd);
+      break;
+    }
+    case R.id.list_backup:
+      backupSecrets();
+      break;
+    case R.id.list_restore:
+      showDialog(DIALOG_CONFIRM_RESTORE);
+      break;
+    case R.id.list_sync:
+      showDialog(DIALOG_SYNC);
+      break;
+    case R.id.list_export:
+      exportSecrets();
+      break;
+    case R.id.list_import:
+      importSecrets();
+      break;
+    case R.id.list_menu_change_password:
+      showDialog(DIALOG_CHANGE_PASSWORD);
+      break;
+    default:
+      break;
     }
 
     return handled;
@@ -460,10 +457,9 @@ public class SecretsListActivity extends ListActivity {
 
   @Override
   public void onCreateContextMenu(ContextMenu menu, View v,
-      ContextMenuInfo menuInfo) {
+                                  ContextMenuInfo menuInfo) {
     hideToast();
-    AdapterView.AdapterContextMenuInfo  info =
-        (AdapterContextMenuInfo) menuInfo;
+    AdapterView.AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
     cmenuPosition = info.position;
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.list_cmenu, menu);
@@ -475,44 +471,43 @@ public class SecretsListActivity extends ListActivity {
   public boolean onContextItemSelected(MenuItem item) {
     boolean handled = false;
     switch (item.getItemId()) {
-      case R.id.list_edit:
-        SetEditViews(cmenuPosition);
-        animateToEditView();
-        break;
-      case R.id.list_delete:
-        if (AdapterView.INVALID_POSITION != cmenuPosition) {
-          showDialog(DIALOG_DELETE_SECRET);
-        }
-        break;
-      case R.id.list_access: {
-        // TODO(rogerta): maybe just stuff the index into the intent instead
-        // of serializing the whole secret, it seems to be slow.
-        Secret secret = secretsList.getSecret(cmenuPosition);
-        Intent intent = new Intent(this, AccessLogActivity.class);
-        intent.putExtra(EXTRA_ACCESS_LOG, secret);
-        startActivity(intent);
-        break;
+    case R.id.list_edit:
+      SetEditViews(cmenuPosition);
+      animateToEditView();
+      break;
+    case R.id.list_delete:
+      if (AdapterView.INVALID_POSITION != cmenuPosition) {
+        showDialog(DIALOG_DELETE_SECRET);
       }
-      case R.id.list_copy_password_to_clipboard:
-      case R.id.list_copy_username_to_clipboard: {
-        Secret secret = secretsList.getSecret(cmenuPosition);
-        ClipboardManager cm = (ClipboardManager) getSystemService(
-            CLIPBOARD_SERVICE);
-        int typeId;
-        if (item.getItemId() == R.id.list_copy_password_to_clipboard) {
-          cm.setText(secret.getPassword(false));
-          typeId = R.string.password_copied_to_clipboard;
-        } else {
-          cm.setText(secret.getUsername());
-          typeId = R.string.username_copied_to_clipboard;
-        }
-        String template = getText(R.string.copied_to_clipboard).toString();
-        String typeOfCopy = getText(typeId).toString();
-        String msg = MessageFormat.format(template, secret.getDescription(),
-                                          typeOfCopy);
-        showToast(msg);
-        break;
+      break;
+    case R.id.list_access: {
+      // TODO(rogerta): maybe just stuff the index into the intent instead
+      // of serializing the whole secret, it seems to be slow.
+      Secret secret = secretsList.getSecret(cmenuPosition);
+      Intent intent = new Intent(this, AccessLogActivity.class);
+      intent.putExtra(EXTRA_ACCESS_LOG, secret);
+      startActivity(intent);
+      break;
+    }
+    case R.id.list_copy_password_to_clipboard:
+    case R.id.list_copy_username_to_clipboard: {
+      Secret secret = secretsList.getSecret(cmenuPosition);
+      ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+      int typeId;
+      if (item.getItemId() == R.id.list_copy_password_to_clipboard) {
+        cm.setText(secret.getPassword(false));
+        typeId = R.string.password_copied_to_clipboard;
+      } else {
+        cm.setText(secret.getUsername());
+        typeId = R.string.username_copied_to_clipboard;
       }
+      String template = getText(R.string.copied_to_clipboard).toString();
+      String typeOfCopy = getText(typeId).toString();
+      String msg = MessageFormat.format(template, secret.getDescription(),
+              typeOfCopy);
+      showToast(msg);
+      break;
+    }
     }
 
     return handled;
@@ -569,26 +564,29 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
-  /** Restore secrets from the given restore point.
-   *
-   * @param rp The name of the restore point to restore from.
-   * @param info A CipherInfo structure describing the decryption cipher to use. 
-   * @param askForPassword If the restore fails, show a dialog asking the
-   *     user for the password to restore from the backup.
-   *
-   * @return True if the restore succeeded, false otherwise. 
+  /**
+   * Restore secrets from the given restore point.
+   * 
+   * @param rp
+   *          The name of the restore point to restore from.
+   * @param info
+   *          A CipherInfo structure describing the decryption cipher to use.
+   * @param askForPassword
+   *          If the restore fails, show a dialog asking the user for the
+   *          password to restore from the backup.
+   * 
+   * @return True if the restore succeeded, false otherwise.
    */
   private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info,
                                  boolean askForPassword) {
     // Restore everything to the SD card.
-//    ArrayList<Secret> secrets = FileUtils.restoreSecrets(this, rp, info);
     SecretsCollection secrets = FileUtils.restoreSecrets(this, rp, info);
     if (null == secrets) {
       if (askForPassword) {
         restorePoint = rp;
         showDialog(DIALOG_ENTER_RESTORE_PASSWORD);
       }
-      
+
       return false;
     }
 
@@ -604,7 +602,7 @@ public class SecretsListActivity extends ListActivity {
     byte[] salt = SecurityUtils.getSalt();
     int rounds = SecurityUtils.getRounds();
     if (FileUtils.backupSecrets(this, cipher, salt, rounds,
-    		                        secretsList.getAllSecrets())) {
+            secretsList.getAllSecrets())) {
       showToast(R.string.backup_succeeded);
     } else {
       showToast(R.string.error_save_secrets);
@@ -612,351 +610,300 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /** Holds the currently chosen item in the restore dialog. */
-//  private class RestoreDialogState {
-//    public int selected = 0;
-//    private List<String> restorePoints;
-//
-//    /** Get an array of choices for the restore dialog. */
-//    public CharSequence[] getRestoreChoices() {
-//      restorePoints = FileUtils.getRestorePoints(SecretsListActivity.this);
-//      return restorePoints.toArray(new CharSequence[restorePoints.size()]);
-//    }
-//
-//    public String getSelectedRestorePoint() {
-//      return restorePoints.get(selected);
-//    }
-//  }
+  private class RestoreDialogState {
+    public int selected = 0;
+
+    private List<String> restorePoints;
+
+    /** Get an array of choices for the restore dialog. */
+    public CharSequence[] getRestoreChoices() {
+      restorePoints = FileUtils.getRestorePoints(SecretsListActivity.this);
+      return restorePoints.toArray(new CharSequence[restorePoints.size()]);
+    }
+
+    public String getSelectedRestorePoint() {
+      return restorePoints.get(selected);
+    }
+  }
 
   @Override
   public Dialog onCreateDialog(final int id) {
-  	Log.d(LOG_TAG, "SecretsListActivity.onCreateDialog, id="+id);
+    Log.d(LOG_TAG, "SecretsListActivity.onCreateDialog, id=" + id);
     Dialog dialog = null;
 
     switch (id) {
-      case DIALOG_DELETE_SECRET: {
-        // NOTE: the assumption at this point is that position is valid,
-        // otherwise we would never get here because of the check done
-        // in onOptionsItemSelected().
-        DialogInterface.OnClickListener listener =
-            new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int which) {
-                if (DialogInterface.BUTTON1 == which) {
-                  deleteSecret(cmenuPosition);
-                }
-              }
-            };
-
-        // NOTE: the message part of this dialog is dynamic, so its value is
-        // set in onPrepareDialog() below.  However, its important to set it
-        // to something here, even the empty string, so that the setMessage()
-        // call done later actually has an effect.
-        dialog = new AlertDialog.Builder(this)
-            .setTitle(R.string.list_menu_delete)
-            .setIcon(android.R.drawable.ic_dialog_alert)
-            .setMessage(EMPTY_STRING)
-            .setPositiveButton(R.string.login_reset_password_pos, listener)
-            .setNegativeButton(R.string.login_reset_password_neg, null)
-            .create();
-        break;
-      }
-      case DIALOG_CONFIRM_RESTORE: {
-      	DialogInterface.OnClickListener itemListener =
-            new DialogInterface.OnClickListener() {
-
-              public void onClick(DialogInterface dialog, int which) {
-                AlertDialog alertDialog = (AlertDialog) dialog;
-                selectedOSA = (OnlineSecretsAgent) alertDialog.getListView().getItemAtPosition(which);
-                Log.d(LOG_TAG, "Selected restore app: " + selectedOSA.getDisplayName() + ":" + selectedOSA.getClassId());
-                dialog.dismiss();
-                if (selectedOSA.getClassId().equals("localrp")) {
-                	SecurityUtils.CipherInfo info = SecurityUtils.getCipherInfo();
-                  if (restoreSecrets(selectedOSA.getDisplayName(), info, true))
-                    showToast(R.string.restore_succeeded);
-                } else {
-                	OnlineAgentManager.sendRestoreRequest(selectedOSA, secretsList.getAllSecrets(),
-                      SecretsListActivity.this, osaHandler, new OnlineAgentManager.SecretsReceivedListener() {
-                        @Override
-                        public void run() {
-                          Log.d(LOG_TAG, "Secret received listener called " + this.secrets);
-                          if (this.secrets != null) {
-                            LoginActivity.restoreSecrets(this.secrets);
-                            secretsList.notifyDataSetInvalidated();
-                            setTitle();
-                            showToast(R.string.restore_succeeded);
-                          } else {
-                            showToast(R.string.restore_failed);
-                          }
-                        }
-                      });
-                }
-              }
-            };
-
-//        OnlineBackupAdapter adapter = new OnlineBackupAdapter(SecretsListActivity.this, android.R.layout.select_dialog_singlechoice,
-//          android.R.id.text1, false, true);
-        OnlineAgentAdapter adapter = new OnlineAgentAdapter(SecretsListActivity.this, android.R.layout.select_dialog_singlechoice,
-              android.R.id.text1, false, OnlineAgentAdapter.TYPE_RESTORE);
-        adapter.updateAppList(secretsList);
-        dialog = new AlertDialog.Builder(this)
-            .setTitle(R.string.dialog_restore_title)
-            .setIcon(android.R.drawable.ic_dialog_alert)
-            .setSingleChoiceItems(adapter,
-                                  0,
-                                  itemListener)
-            .create();
-        break;
-      }
-      case DIALOG_IMPORT_SUCCESS: {
-        DialogInterface.OnClickListener listener =
-          new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-              if (DialogInterface.BUTTON1 == which) {
-                deleteImportedFile();
-              }
-
-              importedFile = null;
-            }
-          };
-
-        dialog = new AlertDialog.Builder(this)
-            .setTitle(R.string.list_menu_import)
-            .setIcon(android.R.drawable.ic_dialog_info)
-            .setMessage(EMPTY_STRING)
-            .setPositiveButton(R.string.login_reset_password_pos, listener)
-            .setNegativeButton(R.string.login_reset_password_neg, null)
-            .create();
-        break;
-      }
-      case DIALOG_CHANGE_PASSWORD: {
-        DialogInterface.OnClickListener listener =
-          new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogi, int which) {
-              AlertDialog dialog = (AlertDialog) dialogi;
-              TextView password1 = (TextView) dialog.findViewById(
-                  R.id.password);
-              TextView password2 = (TextView) dialog.findViewById(
-                  R.id.password_validation);
-              String password = password1.getText().toString();
-              String p2 = password2.getText().toString();
-              if (!password.equals(p2) || password.length() == 0) {
-                showToast(R.string.invalid_password);
-                return;
-              }
-
-              SeekBar bar = (SeekBar) dialog.findViewById(R.id.cipher_strength);
-              byte[] salt = SecurityUtils.getSalt();
-              int rounds = bar.getProgress() + PROGRESS_ROUNDS_OFFSET;
-
-              SecurityUtils.CipherInfo info = SecurityUtils.createCiphers(
-                  password, salt, rounds);
-              if (null != info) {
-                SecurityUtils.saveCiphers(info);
-                showToast(R.string.password_changed);
-              } else {
-                showToast(R.string.error_reset_password);
-              }
-            }
-          };
-
-        LayoutInflater inflater = getLayoutInflater();
-        View view = inflater.inflate(R.layout.change_password, getListView(),
-                                     false);
-
-        dialog = new AlertDialog.Builder(this)
-            .setTitle(R.string.list_menu_change_password)
-            .setIcon(android.R.drawable.ic_dialog_info)
-            .setView(view)
-            .setPositiveButton(R.string.list_menu_change_password, listener)
-            .create();
-        final Dialog dialogFinal = dialog;
-        
-        SeekBar bar = (SeekBar) view.findViewById(R.id.cipher_strength);
-        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-          @Override
-          public void onProgressChanged(SeekBar seekBar, int progress,
-              boolean fromUser) {
-            setCipherStrengthLabel(dialogFinal, progress +
-                                   PROGRESS_ROUNDS_OFFSET);
+    case DIALOG_DELETE_SECRET: {
+      // NOTE: the assumption at this point is that position is valid,
+      // otherwise we would never get here because of the check done
+      // in onOptionsItemSelected().
+      DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          if (DialogInterface.BUTTON1 == which) {
+            deleteSecret(cmenuPosition);
           }
-          @Override
-          public void onStartTrackingTouch(SeekBar seekBar) {
-          }
-          @Override
-          public void onStopTrackingTouch(SeekBar seekBar) {
-          }});
-        break;
-      }
-      case DIALOG_ENTER_RESTORE_PASSWORD: {
-        DialogInterface.OnClickListener listener =
-          new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogi, int which) {
-              AlertDialog dialog = (AlertDialog) dialogi;
-              TextView password1 = (TextView) dialog.findViewById(
-                  R.id.password);
+        }
+      };
 
-              String password = password1.getText().toString();
-              FileUtils.SaltAndRounds saltAndRounds =
-                  FileUtils.getSaltAndRounds(null, restorePoint);
-              
-              String message = null;
-              
-              SecurityUtils.CipherInfo info = SecurityUtils.createCiphers(
-                  password, saltAndRounds.salt, saltAndRounds.rounds);
-              if (restoreSecrets(restorePoint, info, false)) {
-                SecurityUtils.clearCiphers();
-                SecurityUtils.saveCiphers(info);
-                message = getText(R.string.password_changed).toString();
-                message += '\n';
-                message += getText(R.string.restore_succeeded).toString();
-              } else {
-                // Try an old encryption cipher.  This may be a restore point
-                // created by an older version of Secrets.
-                Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
-                    password, saltAndRounds.salt, saltAndRounds.rounds);
-                SecretsCollection secrets = FileUtils.restoreSecretsV2(
+      // NOTE: the message part of this dialog is dynamic, so its value is
+      // set in onPrepareDialog() below. However, its important to set it
+      // to something here, even the empty string, so that the setMessage()
+      // call done later actually has an effect.
+      dialog = new AlertDialog.Builder(this)
+              .setTitle(R.string.list_menu_delete)
+              .setIcon(android.R.drawable.ic_dialog_alert)
+              .setMessage(EMPTY_STRING)
+              .setPositiveButton(R.string.login_reset_password_pos, listener)
+              .setNegativeButton(R.string.login_reset_password_neg, null)
+              .create();
+      break;
+    }
+    case DIALOG_CONFIRM_RESTORE: {
+      final RestoreDialogState state = new RestoreDialogState();
+
+      DialogInterface.OnClickListener itemListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          state.selected = which;
+          dialog.dismiss();
+          SecurityUtils.CipherInfo info = SecurityUtils.getCipherInfo();
+          if (restoreSecrets(state.getSelectedRestorePoint(), info, true))
+            showToast(R.string.restore_succeeded);
+        }
+      };
+
+      dialog = new AlertDialog.Builder(this)
+              .setTitle(R.string.dialog_restore_title)
+              .setIcon(android.R.drawable.ic_dialog_alert)
+              .setSingleChoiceItems(state.getRestoreChoices(), state.selected,
+                      itemListener).create();
+      break;
+    }
+    case DIALOG_IMPORT_SUCCESS: {
+      DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+          if (DialogInterface.BUTTON1 == which) {
+            deleteImportedFile();
+          }
+
+          importedFile = null;
+        }
+      };
+
+      dialog = new AlertDialog.Builder(this)
+              .setTitle(R.string.list_menu_import)
+              .setIcon(android.R.drawable.ic_dialog_info)
+              .setMessage(EMPTY_STRING)
+              .setPositiveButton(R.string.login_reset_password_pos, listener)
+              .setNegativeButton(R.string.login_reset_password_neg, null)
+              .create();
+      break;
+    }
+    case DIALOG_CHANGE_PASSWORD: {
+      DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialogi, int which) {
+          AlertDialog dialog = (AlertDialog) dialogi;
+          TextView password1 = (TextView) dialog.findViewById(R.id.password);
+          TextView password2 = (TextView) dialog
+                  .findViewById(R.id.password_validation);
+          String password = password1.getText().toString();
+          String p2 = password2.getText().toString();
+          if (!password.equals(p2) || password.length() == 0) {
+            showToast(R.string.invalid_password);
+            return;
+          }
+
+          SeekBar bar = (SeekBar) dialog.findViewById(R.id.cipher_strength);
+          byte[] salt = SecurityUtils.getSalt();
+          int rounds = bar.getProgress() + PROGRESS_ROUNDS_OFFSET;
+
+          SecurityUtils.CipherInfo info = SecurityUtils.createCiphers(password,
+                  salt, rounds);
+          if (null != info) {
+            SecurityUtils.saveCiphers(info);
+            showToast(R.string.password_changed);
+          } else {
+            showToast(R.string.error_reset_password);
+          }
+        }
+      };
+
+      LayoutInflater inflater = getLayoutInflater();
+      View view = inflater.inflate(R.layout.change_password, getListView(),
+              false);
+
+      dialog = new AlertDialog.Builder(this)
+              .setTitle(R.string.list_menu_change_password)
+              .setIcon(android.R.drawable.ic_dialog_info).setView(view)
+              .setPositiveButton(R.string.list_menu_change_password, listener)
+              .create();
+      final Dialog dialogFinal = dialog;
+
+      SeekBar bar = (SeekBar) view.findViewById(R.id.cipher_strength);
+      bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int progress,
+                                      boolean fromUser) {
+          setCipherStrengthLabel(dialogFinal, progress + PROGRESS_ROUNDS_OFFSET);
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar) {
+        }
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar) {
+        }
+      });
+      break;
+    }
+    case DIALOG_ENTER_RESTORE_PASSWORD: {
+      DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialogi, int which) {
+          AlertDialog dialog = (AlertDialog) dialogi;
+          TextView password1 = (TextView) dialog.findViewById(R.id.password);
+
+          String password = password1.getText().toString();
+          FileUtils.SaltAndRounds saltAndRounds = FileUtils.getSaltAndRounds(
+                  null, restorePoint);
+
+          String message = null;
+
+          SecurityUtils.CipherInfo info = SecurityUtils.createCiphers(password,
+                  saltAndRounds.salt, saltAndRounds.rounds);
+          if (restoreSecrets(restorePoint, info, false)) {
+            SecurityUtils.clearCiphers();
+            SecurityUtils.saveCiphers(info);
+            message = getText(R.string.password_changed).toString();
+            message += '\n';
+            message += getText(R.string.restore_succeeded).toString();
+          } else {
+            // Try an old encryption cipher. This may be a restore point
+            // created by an older version of Secrets.
+            Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(password,
+                    saltAndRounds.salt, saltAndRounds.rounds);
+            SecretsCollection secrets = FileUtils.restoreSecretsV2(
                     SecretsListActivity.this, restorePoint, cipher2,
                     saltAndRounds.salt, saltAndRounds.rounds);
 
-                if (secrets == null) {
-                  // Try an even old encryption cipher.
-                  Cipher cipher1 = SecurityUtils.createDecryptionCipherV1(
-                      password);
-                  secrets = FileUtils.restoreSecretsV1(
-                      SecretsListActivity.this, restorePoint, cipher1);
-                }
-
-                if (secrets != null) {
-                  LoginActivity.restoreSecrets(secrets);
-                  secretsList.notifyDataSetChanged();
-                  setTitle();
-                  message = getText(R.string.restore_succeeded).toString();
-                }
-              }
-              
-              if (message == null)
-                message = getText(R.string.restore_failed).toString();
-              
-              showToast(message);
+            if (secrets == null) {
+              // Try an even old encryption cipher.
+              Cipher cipher1 = SecurityUtils.createDecryptionCipherV1(password);
+              secrets = FileUtils.restoreSecretsV1(SecretsListActivity.this,
+                      restorePoint, cipher1);
             }
-          };
 
-        LayoutInflater inflater = getLayoutInflater();
-        View view = inflater.inflate(R.layout.change_password, getListView(),
-                                     false);
+            if (secrets != null) {
+              LoginActivity.restoreSecrets(secrets);
+              secretsList.notifyDataSetChanged();
+              setTitle();
+              message = getText(R.string.restore_succeeded).toString();
+            }
+          }
 
-        // For this dialog, we don't want to show the seek bar nor the
-        // confirmation password field.
-        view.findViewById(R.id.cipher_strength).setVisibility(View.GONE);
-        view.findViewById(R.id.cipher_strength_label).setVisibility(View.GONE);
-        view.findViewById(R.id.password_validation).setVisibility(View.GONE);
-            view.findViewById(R.id.password_validation_label)
-            .setVisibility(View.GONE);
+          if (message == null)
+            message = getText(R.string.restore_failed).toString();
 
-        dialog = new AlertDialog.Builder(this)
-            .setTitle(R.string.login_enter_password)
-            .setIcon(android.R.drawable.ic_dialog_info)
-            .setView(view)
-            .setPositiveButton(R.string.list_menu_restore, listener)
-            .create();
-        break;
-      }
-      case DIALOG_BACKUP:
-      case DIALOG_SYNC:
-      case DIALOG_CONFIG_SYNC:
-			case DIALOG_CONFIG_ONLINE_BACKUP_APP: {
-				Log.d(LOG_TAG, "Showing backup/config dialog");
-				DialogInterface.OnClickListener itemListener = new DialogInterface.OnClickListener() {
-					
-					public void onClick(DialogInterface dialog, int which) {
-						AlertDialog alertDialog = (AlertDialog) dialog;
-						selectedOSA = (OnlineSecretsAgent) alertDialog.getListView().getItemAtPosition(which);
-						Log.d(LOG_TAG, "Selected app: " + selectedOSA.getDisplayName());
-						dialog.dismiss();
-	
-						if (id == DIALOG_CONFIG_ONLINE_BACKUP_APP) {
-							showToast(R.string.osa_config_instructions);
-							isConfigOSA = true;
-						} else if (id == DIALOG_CONFIG_SYNC) {
-							showToast(R.string.osa_config_instructions_sync);
-							isConfigOSA = true;
-						} else {
-							if (selectedOSA.getClassId().equals(OnlineSecretsAgent.SD_CARD_CLASSID)) {
-								backupSecrets();
-							} else if (selectedOSA.getClassId().equals("configure")) {
-								if (id == DIALOG_CONFIG_ONLINE_BACKUP_APP) {
-									showDialog(DIALOG_CONFIG_ONLINE_BACKUP_APP);
-								} else {
-									showDialog(DIALOG_CONFIG_SYNC);
-								}
-								// showDialog(DIALOG_CONFIG_ONLINE_BACKUP_APP);
-							} else {
-								// send to the OSA
-								if (id == DIALOG_SYNC) { // sync operation
-									if (!OnlineAgentManager.sendSecrets(selectedOSA, LoginActivity.getSecrets(),
-                      SecretsListActivity.this, osaHandler, new OnlineAgentManager.SecretsReceivedListener() {
-                    @Override
-                    public void run() {
-                      Log.d(LOG_TAG, "Secret received listener called " + this.secrets);
-                      if (this.secrets != null) {
-                      	SecretsCollection allSecrets = LoginActivity.getSecrets();
-                      	allSecrets.syncSecrets(this.secrets);
-                      	allSecrets.setLastSyncTimestamp(System.currentTimeMillis());
-                        secretsList.notifyDataSetInvalidated();
-                        setTitle();
-                        showToast(R.string.sync_succeeded);
-                      } else {
-                        showToast(R.string.sync_failed);
-                      }
-                    }
-                  })) {
-										showToast(R.string.error_osa_sync_secrets);
-									}
-								} else { // backup operation
-									if (OnlineAgentManager										.sendSecrets(selectedOSA, LoginActivity.getSecrets(), SecretsListActivity.this)) {
-										String template = getText(R.string.osa_sent).toString();
-										String msg = MessageFormat.format(template, selectedOSA.getDisplayName());
-										showToast(msg);
-									} else {
-										showToast(R.string.error_osa_backup_secrets);
-									}
-								}
-							}
-						}
-					}
-				};
-				int adapterType = id == DIALOG_BACKUP || id == DIALOG_CONFIG_ONLINE_BACKUP_APP ? OnlineAgentAdapter.TYPE_BACKUP
-						: (id == DIALOG_SYNC || id == DIALOG_CONFIG_SYNC ? OnlineAgentAdapter.TYPE_SYNC
-								: OnlineAgentAdapter.TYPE_RESTORE);
-				boolean adapterConfigMode = (id == DIALOG_CONFIG_ONLINE_BACKUP_APP || id == DIALOG_CONFIG_SYNC);
-				// OnlineBackupAdapter adapter = new OnlineBackupAdapter(SecretsListActivity.this,
-				// 															 android.R.layout.select_dialog_singlechoice,android.R.id.text1, id == DIALOG_CONFIG_ONLINE_BACKUP_APP, false);
-				OnlineAgentAdapter adapter = new OnlineAgentAdapter(SecretsListActivity.this,
-						android.R.layout.select_dialog_singlechoice, android.R.id.text1, adapterConfigMode, adapterType);
-				adapter.updateAppList(secretsList);
-				adapter.notifyDataSetChanged();
-				String title = id == DIALOG_BACKUP ? getString(R.string.dialog_backup_title)
-						: (id == DIALOG_SYNC ? getString(R.string.dialog_sync_title) : getString(R.string.dialog_configure_title));
-				dialog = new AlertDialog.Builder(this).setTitle(title).setIcon(android.R.drawable.ic_dialog_alert)
-						.setSingleChoiceItems(adapter, 0, itemListener).create();
-				break;
-			}
-      default:
-        break;
+          showToast(message);
+        }
+      };
+
+      LayoutInflater inflater = getLayoutInflater();
+      View view = inflater.inflate(R.layout.change_password, getListView(),
+              false);
+
+      // For this dialog, we don't want to show the seek bar nor the
+      // confirmation password field.
+      view.findViewById(R.id.cipher_strength).setVisibility(View.GONE);
+      view.findViewById(R.id.cipher_strength_label).setVisibility(View.GONE);
+      view.findViewById(R.id.password_validation).setVisibility(View.GONE);
+      view.findViewById(R.id.password_validation_label)
+              .setVisibility(View.GONE);
+
+      dialog = new AlertDialog.Builder(this)
+              .setTitle(R.string.login_enter_password)
+              .setIcon(android.R.drawable.ic_dialog_info).setView(view)
+              .setPositiveButton(R.string.list_menu_restore, listener).create();
+      break;
+    }
+    case DIALOG_SYNC:
+    case DIALOG_CONFIG_SYNC: {
+      Log.d(LOG_TAG, "Showing sync/config dialog");
+      DialogInterface.OnClickListener itemListener = 
+              new DialogInterface.OnClickListener() {
+
+        public void onClick(DialogInterface dialog, int which) {
+          AlertDialog alertDialog = (AlertDialog) dialog;
+          selectedOSA = (OnlineSyncAgent) alertDialog.getListView()
+                  .getItemAtPosition(which);
+          Log.d(LOG_TAG, "Selected app: " + selectedOSA.getDisplayName());
+          dialog.dismiss();
+
+          if (id == DIALOG_CONFIG_SYNC) {
+            showToast(R.string.osa_config_instructions);
+            isConfigOSA = true;
+          } else {
+            if (selectedOSA.getClassId().equals("configure")) {
+              showDialog(DIALOG_CONFIG_SYNC);
+            } else {
+              // send to the OSA
+              if (!OnlineAgentManager.sendSecrets(selectedOSA,
+                      LoginActivity.getSecrets(), SecretsListActivity.this,
+                      osaHandler,
+                      new OnlineAgentManager.SecretsReceivedListener() {
+                        @Override
+                        public void run() {
+                          Log.d(LOG_TAG, "Secret received listener called "
+                                  + this.secrets);
+                          if (this.secrets != null) {
+                            SecretsCollection allSecrets = LoginActivity
+                                    .getSecrets();
+                            allSecrets.syncSecrets(this.secrets);
+                            allSecrets.setLastSyncTimestamp(System
+                                    .currentTimeMillis());
+                            secretsList.notifyDataSetInvalidated();
+                            setTitle();
+                            showToast(R.string.sync_succeeded);
+                          } else {
+                            showToast(R.string.sync_failed);
+                          }
+                        }
+                      })) {
+                showToast(R.string.error_osa_secrets);
+              }
+            }
+          }
+        }
+      };
+
+      boolean adapterConfigMode = (id == DIALOG_CONFIG_SYNC);
+      OnlineAgentAdapter adapter = new OnlineAgentAdapter(
+              SecretsListActivity.this,
+              android.R.layout.select_dialog_singlechoice, android.R.id.text1,
+              adapterConfigMode);
+      adapter.updateAppList(secretsList);
+      adapter.notifyDataSetChanged();
+      String title = (id == DIALOG_SYNC ? getString(R.string.dialog_sync_title)
+              : getString(R.string.dialog_configure_title));
+      dialog = new AlertDialog.Builder(this).setTitle(title)
+              .setIcon(android.R.drawable.ic_dialog_alert)
+              .setSingleChoiceItems(adapter, 0, itemListener).create();
+      break;
+    }
+    default:
+      break;
     }
 
     return dialog;
   }
 
   private void setCipherStrengthLabel(Dialog dialog, int rounds) {
-    String template =
-      getText(R.string.cipher_strength_label).toString();
+    String template = getText(R.string.cipher_strength_label).toString();
     String msg = MessageFormat.format(template, rounds);
-    TextView text = (TextView) dialog.findViewById(
-        R.id.cipher_strength_label);
+    TextView text = (TextView) dialog.findViewById(R.id.cipher_strength_label);
     text.setText(msg);
   }
 
@@ -964,60 +911,57 @@ public class SecretsListActivity extends ListActivity {
   protected void onPrepareDialog(int id, Dialog dialog) {
     super.onPrepareDialog(id, dialog);
 
-    switch(id) {
-      case DIALOG_DELETE_SECRET: {
-        AlertDialog alert = (AlertDialog) dialog;
-        Secret secret = secretsList.getSecret(cmenuPosition);
-        String template = getText(R.string.edit_menu_delete_secret_message).
-            toString();
-        String msg = MessageFormat.format(template, secret.getDescription());
-        alert.setMessage(msg);
-        break;
-      }
-      case DIALOG_IMPORT_SUCCESS: {
-        AlertDialog alert = (AlertDialog) dialog;
-        String template =
-            getText(R.string.edit_menu_import_secrets_message).toString();
-        String msg = MessageFormat.format(template, importedFile.getName());
-        alert.setMessage(msg);
-        break;
-      }
-      case DIALOG_CHANGE_PASSWORD: {
-        SeekBar bar = (SeekBar) dialog.findViewById(R.id.cipher_strength);
-        int rounds = SecurityUtils.getRounds();
-        bar.setProgress(rounds - PROGRESS_ROUNDS_OFFSET);
-        setCipherStrengthLabel(dialog, rounds);
-        TextView password1 = (TextView) dialog.findViewById(
-            R.id.password);
-        password1.setText("");
-        TextView password2 = (TextView) dialog.findViewById(
-            R.id.password_validation);
-        password2.setText("");
-        password1.requestFocus();
-        break;
-      }
-      case DIALOG_ENTER_RESTORE_PASSWORD: {
-        TextView password1 = (TextView) dialog.findViewById(R.id.password);
-        password1.setText("");
-        break;
-      }
-      case DIALOG_BACKUP:
-      case DIALOG_SYNC:
-      case DIALOG_CONFIG_SYNC:
-      case DIALOG_CONFIRM_RESTORE:
-      case DIALOG_CONFIG_ONLINE_BACKUP_APP: {
-        AlertDialog alert = (AlertDialog) dialog;
-        OnlineAgentAdapter adapter = (OnlineAgentAdapter)alert.getListView().getAdapter();
-        adapter.updateAppList(secretsList);
-        break;
-      }
+    switch (id) {
+    case DIALOG_DELETE_SECRET: {
+      AlertDialog alert = (AlertDialog) dialog;
+      Secret secret = secretsList.getSecret(cmenuPosition);
+      String template = getText(R.string.edit_menu_delete_secret_message)
+              .toString();
+      String msg = MessageFormat.format(template, secret.getDescription());
+      alert.setMessage(msg);
+      break;
+    }
+    case DIALOG_IMPORT_SUCCESS: {
+      AlertDialog alert = (AlertDialog) dialog;
+      String template = getText(R.string.edit_menu_import_secrets_message)
+              .toString();
+      String msg = MessageFormat.format(template, importedFile.getName());
+      alert.setMessage(msg);
+      break;
+    }
+    case DIALOG_CHANGE_PASSWORD: {
+      SeekBar bar = (SeekBar) dialog.findViewById(R.id.cipher_strength);
+      int rounds = SecurityUtils.getRounds();
+      bar.setProgress(rounds - PROGRESS_ROUNDS_OFFSET);
+      setCipherStrengthLabel(dialog, rounds);
+      TextView password1 = (TextView) dialog.findViewById(R.id.password);
+      password1.setText("");
+      TextView password2 = (TextView) dialog
+              .findViewById(R.id.password_validation);
+      password2.setText("");
+      password1.requestFocus();
+      break;
+    }
+    case DIALOG_ENTER_RESTORE_PASSWORD: {
+      TextView password1 = (TextView) dialog.findViewById(R.id.password);
+      password1.setText("");
+      break;
+    }
+    case DIALOG_SYNC:
+    case DIALOG_CONFIG_SYNC: {
+      AlertDialog alert = (AlertDialog) dialog;
+      OnlineAgentAdapter adapter = (OnlineAgentAdapter) alert.getListView()
+              .getAdapter();
+      adapter.updateAppList(secretsList);
+      break;
+    }
     }
   }
 
   /**
-   * Trap the "back" button to simulate going back from the secret edit
-   * view to the list view.  Note this needs to be done in key-down and not
-   * key-up, since the system's default action for "back" happen on key-down.
+   * Trap the "back" button to simulate going back from the secret edit view to
+   * the list view. Note this needs to be done in key-down and not key-up, since
+   * the system's default action for "back" happen on key-down.
    */
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -1031,7 +975,7 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Called before the view is to be destroyed, so we can save state.  Its
+   * Called before the view is to be destroyed, so we can save state. Its
    * important to use this method for saving state if the user happens to
    * open/close the keyboard while the view is displayed.
    */
@@ -1078,7 +1022,7 @@ public class SecretsListActivity extends ListActivity {
     // the UI thread.
     //
     // The issue is that we cannot give the user feedback about the save,
-    // unless I use a notification (need to look into that).  Also, because
+    // unless I use a notification (need to look into that). Also, because
     // the process hangs around, this thread should continue running until
     // completion even if the user switches to another task/application.
     List<Secret> secrets = secretsList.getAllSecrets();
@@ -1094,7 +1038,7 @@ public class SecretsListActivity extends ListActivity {
    * due to a configuration change, such as the keyboard being opened or closed.
    * Its called after onPause() and onSaveInstanceState(), but before
    * onDestroy().
-   *
+   * 
    * When this is called, I will set a boolean value so that onDestroy() will
    * not clear the secrets data.
    */
@@ -1109,7 +1053,7 @@ public class SecretsListActivity extends ListActivity {
   @Override
   protected void onDestroy() {
     // Don't clear the secrets if this is a configuration change, since we
-    // are going to need it immediately anyway.  We do want to clear it in
+    // are going to need it immediately anyway. We do want to clear it in
     // other circumstances, otherwise the login activity will ignore attempt
     // to login again.
     if (!isConfigChange) {
@@ -1121,10 +1065,11 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Set the secret specified by the given position in the list into the
-   * edit fields used to modify the secret.  Position 0 means "add secret".
-   *
-   * @param position Position of secret to edit.
+   * Set the secret specified by the given position in the list into the edit
+   * fields used to modify the secret. Position 0 means "add secret".
+   * 
+   * @param position
+   *          Position of secret to edit.
    */
   private void SetEditViews(int position) {
     editingPosition = position;
@@ -1161,11 +1106,11 @@ public class SecretsListActivity extends ListActivity {
 
   /**
    * Save the current values in the edit views into the current secret being
-   * edited.  If the current secret is at position 0, this means add a new
+   * edited. If the current secret is at position 0, this means add a new
    * secret.
-   *
+   * 
    * Secrets will be added in alphabetical order by description.
-   *
+   * 
    * All secrets are flushed to persistent storage.
    */
   private void saveSecret() {
@@ -1176,7 +1121,7 @@ public class SecretsListActivity extends ListActivity {
     EditText notes = (EditText) findViewById(R.id.list_notes);
 
     // If all the text views are blank, then don't do anything if we are
-    // supposed to be adding a secret.  Also, if all the views are
+    // supposed to be adding a secret. Also, if all the views are
     // the same as the current secret, don't do anything either.
     Secret secret;
     String description_text = description.getText().toString();
@@ -1186,22 +1131,21 @@ public class SecretsListActivity extends ListActivity {
     String note_text = notes.getText().toString();
 
     if (AdapterView.INVALID_POSITION == editingPosition) {
-      if (0 == description.getText().length() &&
-          0 == username.getText().length() &&
-          0 == password.getText().length() &&
-          0 == email.getText().length() &&
-          0 == notes.getText().length())
+      if (0 == description.getText().length()
+              && 0 == username.getText().length()
+              && 0 == password.getText().length()
+              && 0 == email.getText().length() && 0 == notes.getText().length())
         return;
 
       secret = new Secret();
     } else {
       secret = secretsList.getSecret(editingPosition);
 
-      if (description_text.equals(secret.getDescription()) &&
-          username_text.equals(secret.getUsername()) &&
-          password_text.equals(secret.getPassword(false)) &&
-          email_text.equals(secret.getEmail()) &&
-          note_text.equals(secret.getNote()))
+      if (description_text.equals(secret.getDescription())
+              && username_text.equals(secret.getUsername())
+              && password_text.equals(secret.getPassword(false))
+              && email_text.equals(secret.getEmail())
+              && note_text.equals(secret.getNote()))
         return;
 
       secretsList.remove(editingPosition);
@@ -1212,7 +1156,7 @@ public class SecretsListActivity extends ListActivity {
     secret.setPassword(password.getText().toString(), true);
     secret.setEmail(email.getText().toString());
     secret.setNote(notes.getText().toString());
-    
+
     // CTW set last changed timestamp
     secret.setTimestamp(System.currentTimeMillis());
 
@@ -1221,20 +1165,21 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Delete the secret at the given position. If the user is currently editing
-   * a secret, he is returned to the list. */
+   * Delete the secret at the given position. If the user is currently editing a
+   * secret, he is returned to the list.
+   */
   public void deleteSecret(int position) {
     if (AdapterView.INVALID_POSITION != position) {
       secretsList.remove(position);
       secretsList.notifyDataSetChanged();
 
       // TODO(rogerta): is this is really a performance issue to save here?
-      //if (!FileUtils.saveSecrets(this, secretsList_.getAllSecrets()))
-      //  showToast(R.string.error_save_secrets);
+      // if (!FileUtils.saveSecrets(this, secretsList_.getAllSecrets()))
+      // showToast(R.string.error_save_secrets);
       if (isEditing) {
         // We need to clear the edit position so that when the animation is
         // done, the code does not try to make visible a secret that no longer
-        // exists.  This was causing a crash (issue 16).
+        // exists. This was causing a crash (issue 16).
         editingPosition = AdapterView.INVALID_POSITION;
         animateFromEditView();
       } else {
@@ -1244,25 +1189,27 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Show a toast on the screen with the given message.  If a toast is already
+   * Show a toast on the screen with the given message. If a toast is already
    * being displayed, the message is replaced and timer is restarted.
-   *
-   * @param message Resource id of the text to display in the toast.
+   * 
+   * @param message
+   *          Resource id of the text to display in the toast.
    */
   private void showToast(int message) {
     showToast(getText(message));
   }
 
   /**
-   * Show a toast on the screen with the given message.  If a toast is already
+   * Show a toast on the screen with the given message. If a toast is already
    * being displayed, the message is replaced and timer is restarted.
-   *
-   * @param message Text to display in the toast.
+   * 
+   * @param message
+   *          Text to display in the toast.
    */
   private void showToast(CharSequence message) {
     if (null == toast) {
       toast = Toast.makeText(SecretsListActivity.this, message,
-          Toast.LENGTH_LONG);
+              Toast.LENGTH_LONG);
       toast.setGravity(Gravity.CENTER, 0, 0);
     } else {
       toast.setText(message);
@@ -1284,11 +1231,11 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Start the view animation that transitions from the list of secrets to
-   * the secret edit view.
+   * Start the view animation that transitions from the list of secrets to the
+   * secret edit view.
    */
   private void animateToEditView() {
-    assert(!isEditing);
+    assert (!isEditing);
     isEditing = true;
 
     // Cancel any toast and soft keyboard that may currently be displayed.
@@ -1310,9 +1257,11 @@ public class SecretsListActivity extends ListActivity {
           showToast(getText(R.string.edit_instructions));
         }
       }
+
       @Override
       public void onAnimationRepeat(Animation animation) {
       }
+
       @Override
       public void onAnimationStart(Animation animation) {
       }
@@ -1322,11 +1271,11 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Start the view animation that transitions from the secret edit view to
-   * the list of secrets.
+   * Start the view animation that transitions from the secret edit view to the
+   * list of secrets.
    */
   private void animateFromEditView() {
-    assert(isEditing);
+    assert (isEditing);
     isEditing = false;
 
     OS.hideSoftKeyboard(this, getListView());
@@ -1342,7 +1291,7 @@ public class SecretsListActivity extends ListActivity {
         if (AdapterView.INVALID_POSITION != editingPosition) {
           ListView listView = getListView();
           listView.requestFocus();
-          
+
           int first = listView.getFirstVisiblePosition();
           int last = listView.getLastVisiblePosition();
           if (editingPosition < first || editingPosition > last) {
@@ -1356,9 +1305,11 @@ public class SecretsListActivity extends ListActivity {
           showToast(getText(R.string.list_instructions));
         }
       }
+
       @Override
       public void onAnimationRepeat(Animation animation) {
       }
+
       @Override
       public void onAnimationStart(Animation animation) {
       }
@@ -1371,12 +1322,9 @@ public class SecretsListActivity extends ListActivity {
     StringBuilder builder = new StringBuilder(8);
     try {
       SecureRandom r = SecureRandom.getInstance("SHA1PRNG");
-      final String p = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-                       "abcdefghijklmnopqrstuvwxyz" +
-                       "abcdefghijklmnopqrstuvwxyz" +
-                       "0123456789" +
-                       "0123456789" +
-                       "~!@#$%^&*()_+`-=[]{}|;':,./<>?";
+      final String p = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+              + "abcdefghijklmnopqrstuvwxyz" + "abcdefghijklmnopqrstuvwxyz"
+              + "0123456789" + "0123456789" + "~!@#$%^&*()_+`-=[]{}|;':,./<>?";
 
       for (int i = 0; i < 8; ++i)
         builder.append(p.charAt(r.nextInt(128)));
