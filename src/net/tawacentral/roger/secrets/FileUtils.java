@@ -33,12 +33,9 @@ import java.util.List;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
 
 import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
@@ -644,103 +641,6 @@ public class FileUtils {
   }
 
   /**
-   * Constructs secrets from the supplied encrypted byte stream
-   * 
-   * @param secrets
-   *          encrypted byte array
-   * @return list of secrets
-   */
-  public static SecretsCollection getSecretsFromEncryptedJSONStream(
-          byte[] secrets) {
-    Cipher cipher = SecurityUtils.getDecryptionCipher();
-    return getSecretsFromEncryptedJSONStream(cipher, secrets);
-  }
-
-  /**
-   * Constructs secrets from the supplied encrypted byte stream
-   * 
-   * @param cipher cipher to use
-   * @param secrets encrypted byte array
-   * @return list of secrets
-   */
-  public static SecretsCollection getSecretsFromEncryptedJSONStream(Cipher cipher,
-                                                                    byte[] secrets) {
-    if (cipher == null || secrets == null || secrets.length == 0)
-      return null;
-
-    try {
-      byte[] secretStrBytes = cipher.doFinal(secrets);
-      JSONObject jsonValues = new JSONObject(
-              new String(secretStrBytes, "UTF-8"));
-      /* get the secrets */
-      JSONArray jsonSecrets = jsonValues.getJSONArray("secrets");
-      SecretsCollection secretList = new SecretsCollection();
-      for (int i = 0; i < jsonSecrets.length(); i++) {
-        secretList.add(Secret.fromJSONString(jsonSecrets.getString(i)));
-      }
-      /* get the last sync date */
-      if (jsonValues.has("syncdate")) {
-        secretList.setLastSyncTimestamp(jsonValues.getLong("syncdate"));
-      } else {
-        Log.w(LOG_TAG, "No sync date in JSON stream - set to default");
-        secretList.setLastSyncTimestamp(0);
-      }
-      return secretList;
-    } catch (Exception e) {
-      Log.e(LOG_TAG, "Error restoring secret stream", e);
-    }
-    return null;
-  }
-
-  /**
-   * Returns an encrypted json stream representing the user's secrets.
-   *
-   * @param cipher The encryption cipher to use with the file.
-   * @param secrets The list of secrets.
-   * @return byte array of secrets
-   */
-  public static byte[] putSecretsToEncryptedJSONStream(Cipher cipher,
-                                                       List<Secret> secrets) {
-    Log.d(LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream");
-
-    if (null == cipher)
-      return null;
-
-    CipherOutputStream output = null;
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    JSONObject jsonValues = new JSONObject();
-    boolean success = false;
-    try {
-      output = new CipherOutputStream(baos, cipher);
-      JSONArray jsonSecrets = new JSONArray();
-      for (Secret secret : secrets) {
-        jsonSecrets.put(secret.toJSONString());
-      }
-      jsonValues.put("secrets", jsonSecrets);
-      if (secrets instanceof SecretsCollection) {
-        jsonValues.put("syncdate",
-                ((SecretsCollection) secrets).getLastSyncTimestamp());
-      } else {
-        Log.w(LOG_TAG, "No sync date in stored secrets - not SecretsCollection");
-      }
-      output.write(jsonValues.toString().getBytes("UTF-8"));
-      success = true;
-    } catch (Exception ex) {
-      Log.d(LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream " + ex);
-    } finally {
-      try {
-        if (null != output)
-          output.close();
-      } catch (IOException ex) {}
-    }
-
-    if (!success) {
-      throw new RuntimeException("Failed creating stream");
-    }
-    return baos.toByteArray();
-  }
-
-  /**
    * Writes the secrets to the given output stream encrypted with the given
    * cipher.
    * 
@@ -761,25 +661,26 @@ public class FileUtils {
     output.write(salt.length);
     output.write(salt);
     output.write(rounds);
-    output.write(putSecretsToEncryptedJSONStream(cipher, secrets));
+    output.write(SecretsCollection.putSecretsToEncryptedJSONStream(cipher, secrets));
   	output.flush();
   }
   
   /**
    * Read the secrets from the given input stream, decrypting with the given
    * cipher.
-   *
-   * @param input The input stream to read the secrets from.
-   * @param cipher The cipher to decrypt the secrets with.
+   * 
+   * @param input
+   *          The input stream to read the secrets from.
+   * @param cipher
+   *          The cipher to decrypt the secrets with.
    * @return The secrets read from the stream.
    * @throws IOException
-   * @throws ClassNotFoundException 
+   * @throws ClassNotFoundException
    */
   private static SecretsCollection readSecrets(InputStream input,
-                                               Cipher cipher,
-                                               byte[] salt,
-                                               int rounds)
-      throws IOException, ClassNotFoundException {
+                                               Cipher cipher, byte[] salt,
+                                               int rounds) throws IOException,
+          ClassNotFoundException {
     SaltAndRounds pair = getSaltAndRounds(input);
     if (!Arrays.equals(pair.salt, salt) || pair.rounds != rounds) {
       return null;
@@ -787,16 +688,21 @@ public class FileUtils {
     BufferedInputStream bis = new BufferedInputStream(input);
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
-    	// read the whole stream into the buffer
-    	int nRead;
-    	byte[] data = new byte[4096];
-    	while ((nRead = bis.read(data, 0, data.length)) != -1) {
-    	  buffer.write(data, 0, nRead);
-    	}
-    	buffer.flush();
-    	return getSecretsFromEncryptedJSONStream(cipher, buffer.toByteArray());
+      // read the whole stream into the buffer
+      int nRead;
+      byte[] data = new byte[4096];
+      while ((nRead = bis.read(data, 0, data.length)) != -1) {
+        buffer.write(data, 0, nRead);
+      }
+      buffer.flush();
+      return SecretsCollection.getSecretsFromEncryptedJSONStream(cipher,
+              buffer.toByteArray());
     } finally {
-    	try {if (null != bis) bis.close();} catch (IOException ex) {}
+      try {
+        if (null != bis)
+          bis.close();
+      } catch (IOException ex) {
+      }
     }
   }
   
