@@ -40,7 +40,7 @@ limitations under the License.
 <string name="sync_succeeded">Sync succeeded.</string>
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
 <string name="restore_file_too_old">Time to backup your secrets?</string>
-<string name="sync_failed">Uh oh.  Unable to sync your secrets.  Check with the sync host - maybe it timed out? If so, try again.</string>
+<string name="sync_failed">Uh oh.  Unable to sync your secrets.  Check with the Sync agent app for more details.</string>
 
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
 <string name="export_failed">Uh oh.  Unable to export your secrets.</string>
@@ -125,20 +125,17 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_name_format">Access log for {0}</string>
 
 <!-- String assocated with online agent support -->
-<string name="permission_osa_label">Uses Secrets</string>
-<string name="permission_osa_desc">Accesses encrypted Secrets</string>
-<string name="sd_card">SD Card</string>
-<string name="osa_config_instructions">Please select the secret to use for this backup application.</string>
-<string name="osa_config_instructions_sync">Please select the secret to use for this sync application.</string>
-<string name="list_osa_configure">Configure Online Agent</string>
+<string name="permission_osa_label">Uses unencrypted Secrets</string>
+<string name="permission_osa_desc">Allows an application to read and write all your secrets.
+    A malicious application could send your secrets to anyone or post then online for everyone to see.</string>
+<string name="osa_config_instructions">Please select the secret to use for this Online Sync Agent.</string>
+<string name="list_osa_configure">Configure Online Sync Agent</string>
 <string name="list_menu_sync">Sync</string>
 <string name="osa_configured">{0} configured to use {1}</string>
 <string name="osa_sent">Secrets sent to {0} application</string>
-<string name="dialog_backup_title">Backup to:</string>
 <string name="dialog_sync_title">Sync with:</string>
 <string name="dialog_configure_title">Select agent to configure:</string>
-<string name="error_osa_backup_secrets">Unable to backup your secrets.</string>   
-<string name="error_osa_sync_secrets">Unable to sync your secrets.</string>
+<string name="error_osa_secrets">Unable to sync your secrets.</string>
 
 <!-- the following string are used to format a string that indicate when a
      given secret was created or last viewed, modified, or exported.  The
