@@ -21,8 +21,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.util.Log;
 
 /**
  * Represents one secret.  The assumption is that each secret is describable,
@@ -99,6 +102,27 @@ public class Secret implements Serializable {
     /** Returns the time stamp associated with this log entry. */
     public long getTime() {
       return time_;
+    }
+    
+    private String putLogEntryToJSONString() 
+            throws JSONException {
+      JSONObject jsonValues = new JSONObject();
+      jsonValues.put("type", getType());
+      jsonValues.put("time", getTime());
+      return jsonValues.toString();
+    }
+    
+    /**
+     * Generate LogEntry from json string
+     * @param jsonString
+     * @return LogEntry
+     * @throws JSONException
+     */
+    public static LogEntry getLogEntryFromJSONString(String jsonString)
+            throws JSONException {
+      JSONObject jsonValues = new JSONObject(jsonString);
+      return new LogEntry(jsonValues.getInt("type"), 
+                           jsonValues.getLong("time"));
     }
   }
 
@@ -286,6 +310,7 @@ public class Secret implements Serializable {
 
   /**
    * Convert secret to a JSON string
+   * @param includeLog 
    * @return JSON string
    * @throws JSONException
    */
@@ -297,7 +322,13 @@ public class Secret implements Serializable {
     jsonSecret.put("email", email);
     jsonSecret.put("note", note);
     jsonSecret.put("timestamp", timestamp);
-//    Log.d(LOG_TAG, "JSON: " + jsonSecret.toString());
+
+    JSONArray jsonLog = new JSONArray();
+    for (LogEntry logEntry : access_log) {
+      jsonLog.put(logEntry.putLogEntryToJSONString());
+    }
+    jsonSecret.put("log", jsonLog);
+
     return jsonSecret.toString();
   }
 
@@ -316,6 +347,14 @@ public class Secret implements Serializable {
     secret.email = jsonSecret.getString("email");
     secret.note = jsonSecret.getString("note");
     secret.timestamp = jsonSecret.getLong("timestamp");
+    if (jsonSecret.has("log")) {
+      JSONArray jsonLog = jsonSecret.getJSONArray("log");
+      ArrayList<LogEntry> log = new ArrayList<LogEntry>(jsonLog.length());
+      for (int i = 0; i < jsonLog.length(); i++) {
+        log.add(LogEntry.getLogEntryFromJSONString(jsonLog.getString(i)));
+      }
+      secret.access_log = log;
+    }
     return secret;
   }
   
