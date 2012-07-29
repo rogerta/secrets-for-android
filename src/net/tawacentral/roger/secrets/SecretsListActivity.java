@@ -212,8 +212,8 @@ public class SecretsListActivity extends ListActivity {
         int position = getListView().pointToPosition((int) e.getX(),
                 (int) e.getY());
         // Log.d(LOG_TAG, "SecretsListActivity.onSingleTapConfirmed position=" +
-        // position);
-        onItemClicked(position);
+        //          position + ", isConfigOSA=" + isConfigOSA);
+//        onItemClicked(position);
         return true;
       }
 
@@ -246,7 +246,7 @@ public class SecretsListActivity extends ListActivity {
     if (AdapterView.INVALID_POSITION != position) {
       Secret secret = getSecret(position);
       // Log.d(LOG_TAG, "SecretsListActivity.onItemClicked isConfigOSA=" +
-      // isConfigOSA);
+      //           isConfigOSA);
       if (isConfigOSA) {
         isConfigOSA = false;
         selectedOSA.setConfigSecret(secret);
