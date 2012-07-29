@@ -1025,7 +1025,7 @@ public class SecretsListActivity extends ListActivity {
     // unless I use a notification (need to look into that). Also, because
     // the process hangs around, this thread should continue running until
     // completion even if the user switches to another task/application.
-    List<Secret> secrets = secretsList.getAllSecrets();
+    SecretsCollection secrets = secretsList.getAllSecrets();
     Cipher cipher = SecurityUtils.getEncryptionCipher();
     byte[] salt = SecurityUtils.getSalt();
     int rounds = SecurityUtils.getRounds();

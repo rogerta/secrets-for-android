@@ -14,6 +14,9 @@
 
 package net.tawacentral.roger.secrets;
 
+import java.util.ArrayList;
+import java.util.TreeSet;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,10 +25,6 @@ import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeSet;
 
 /**
  * Maintains a user's list of secrets.  Implements all required interfaces to
@@ -48,8 +47,8 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   //
   // allSecrets is marked as final because its used as a lock for certain
   // member functions, and we don't ever want the instance to change.
-  private ArrayList<Secret> secrets;
-  private final ArrayList<Secret> allSecrets;
+  private SecretsCollection secrets;
+  private final SecretsCollection allSecrets;
 
   // These members are used to maintain the auto complete lists for the
   // username and email fields.  I need to use the tree set because I don't
@@ -71,7 +70,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
    * @param context Context of the application, used for getting resources.
    * @param secrets The list of user secrets.  This list cannot be null.
    */
-  SecretsListAdapter(SecretsListActivity activity, ArrayList<Secret> secrets) {
+  SecretsListAdapter(SecretsListActivity activity, SecretsCollection secrets) {
     this.activity = activity;
     inflater = LayoutInflater.from(this.activity);
     allSecrets = secrets;
@@ -279,7 +278,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     protected void publishResults(CharSequence prefix,
                                   FilterResults results) {
       // NOTE: this function is *always* called from the UI thread.
-      secrets = (ArrayList<Secret>) results.values;
+      secrets.replaceContents((ArrayList<Secret>) results.values);
       notifyDataSetChanged();
       activity.setTitle();
     }
@@ -312,14 +311,14 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   }
 
   /**
-   * Get the array of secrets backing this adapter.  Its expected that callers
+   * Get the secrets backing this adapter.  Its expected that callers
    * of this method will not modify the returned list.
    *
    * Any filter applied to this adapter will not affect the secrets returned.
    * This method is meant to get all the user's secrets, and is used mainly
    * for saving the list of secrets.
    */
-  public List<Secret> getAllSecrets() {
+  public SecretsCollection getAllSecrets() {
     return allSecrets;
   }
 
