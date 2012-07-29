@@ -15,7 +15,6 @@
 package net.tawacentral.roger.secrets;
 
 import java.io.File;
-import java.util.List;
 
 import javax.crypto.Cipher;
 
@@ -35,7 +34,7 @@ import android.os.IBinder;
  * @author rogerta
  */
 public class SaveService extends Service {
-  private static List<Secret> secrets;
+  private static SecretsCollection secrets;
   private static Cipher cipher;
   private static byte[] salt;
   private static int rounds;
@@ -47,13 +46,13 @@ public class SaveService extends Service {
    * Queue a background save of the secrets.
    * 
    * @param context The activity requesting the save.
-   * @param secrets The list of secrets to save.
+   * @param secrets The collection of secrets to save.
    * @param cipher The encryption cipher.
    * @param salt The salt used to create the cipher.
    * @param rounds The number of rounds for bcrypt.
    */
   public static synchronized void execute(Context context,
-                                          List<Secret> secrets,
+                                          SecretsCollection secrets,
                                           Cipher cipher,
                                           byte[] salt,
                                           int rounds) {
@@ -66,8 +65,10 @@ public class SaveService extends Service {
     context.startService(intent);
   }
 
-  public SaveService() {
-  }
+  /**
+   * Constructor
+   */
+  public SaveService() {}
 
   @Override
   public IBinder onBind(Intent arg0) {
@@ -93,7 +94,7 @@ public class SaveService extends Service {
     super.onStart(intent, startId);
 
     synchronized (SaveService.class) {
-      final List<Secret> secrets = SaveService.secrets;
+      final SecretsCollection secrets = SaveService.secrets;
       final Cipher cipher = SaveService.cipher;
       final File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
       final byte[] salt = SaveService.salt;
