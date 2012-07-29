@@ -5,18 +5,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
+
+import net.tawacentral.roger.secrets.Secret.LogEntry;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.util.Log;
-
-import net.tawacentral.roger.secrets.Secret.LogEntry;
 
 /**
  * Class that represents a secrets collection. Introduced to hold meta-info for
@@ -45,6 +44,16 @@ public class SecretsCollection extends ArrayList<Secret> {
    */
   public SecretsCollection(Collection<? extends Secret> collection) {
     super(collection);
+  }
+
+  /**
+   * Replace contents with those from the supplied collection
+   * 
+   * @param collection
+   */
+  public void replaceContents(Collection<? extends Secret> collection) {
+    clear();
+    addAll(collection);
   }
 
   /**
@@ -107,7 +116,7 @@ public class SecretsCollection extends ArrayList<Secret> {
    * @return byte array of secrets
    */
   public static byte[] putSecretsToEncryptedJSONStream(Cipher cipher,
-                                                       List<Secret> secrets) {
+                                                   SecretsCollection secrets) {
     /**TODO This should not be a static method */
     Log.d(FileUtils.LOG_TAG, "FileUtils.putSecretsToEncryptedJSONStream");
 
@@ -125,13 +134,14 @@ public class SecretsCollection extends ArrayList<Secret> {
         jsonSecrets.put(secret.toJSONString());
       }
       jsonValues.put("secrets", jsonSecrets);
-      if (secrets instanceof SecretsCollection) {
-        jsonValues.put("syncdate",
-                ((SecretsCollection) secrets).getLastSyncTimestamp());
-      } else {
-        Log.w(FileUtils.LOG_TAG,
-                "No sync date in stored secrets - not SecretsCollection");
-      }
+      jsonValues.put("syncdate", secrets.getLastSyncTimestamp());
+//      if (secrets instanceof SecretsCollection) {
+//        jsonValues.put("syncdate",
+//                ((SecretsCollection) secrets).getLastSyncTimestamp());
+//      } else {
+//        Log.w(FileUtils.LOG_TAG,
+//                "No sync date in stored secrets - not SecretsCollection");
+//      }
       output.write(jsonValues.toString().getBytes("UTF-8"));
       success = true;
     } catch (Exception ex) {
