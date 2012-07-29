@@ -326,7 +326,7 @@ public class FileUtils {
    * @param cipher The encryption cipher to use with the file.
    * @param salt The salt used to create the cipher.
    * @param rounds The number of rounds for bcrypt.
-   * @param secrets The list of secrets to save.
+   * @param secrets The collection of secrets to save.
    * @return True if saved successfully.
    */
   public static int saveSecrets(Context context,
@@ -334,7 +334,7 @@ public class FileUtils {
                                 Cipher cipher,
                                 byte[] salt,
                                 int rounds,
-                                List<Secret> secrets) {
+                                SecretsCollection secrets) {
     Log.d(LOG_TAG, "FileUtils.saveSecrets");
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.saveSecrets: got lock");
@@ -410,7 +410,7 @@ public class FileUtils {
                                       Cipher cipher,
                                       byte[] salt,
                                       int rounds,
-                                      List<Secret> secrets) {
+                                      SecretsCollection secrets) {
     Log.d(LOG_TAG, "FileUtils.backupSecrets");
 
     if (null == cipher)
@@ -656,7 +656,7 @@ public class FileUtils {
                                    Cipher cipher,
                                    byte[] salt,
                                    int rounds,
-                                   List<Secret> secrets) throws IOException {
+                                   SecretsCollection secrets) throws IOException {
     output.write(SIGNATURE);
     output.write(salt.length);
     output.write(salt);
