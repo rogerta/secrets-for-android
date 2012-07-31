@@ -25,8 +25,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
-
 /**
  * Represents one secret.  The assumption is that each secret is describable,
  * uses a combination of username/password, and may require a separate email
@@ -168,31 +166,6 @@ public class Secret implements Serializable {
   public String getUsername() {
     return username;
   }
-
-  /**
-   * Sets the password for the secret, updating the access log with a
-   * CHANGED entry.
-   *
-   * <p>If the most recent entry is a VIEWED, and that view was pretty recent,
-   * then replace the VIEWED with a CHANGED.  This is to handle the case
-   * when the user edits a secret, we don't want to accumulate too many
-   * log entries.
-   */
-//  public void setPassword(String password) {
-//    long now = System.currentTimeMillis();
-//    LogEntry entry = access_log.get(0);
-//    if (now - entry.getTime() < THRESHOLD_MS) {
-//      if (entry.getType() == LogEntry.VIEWED) {
-//        access_log.remove(0);
-//        access_log.add(0, new LogEntry(LogEntry.CHANGED, now));
-//      }
-//    } else {
-//      access_log.add(0, new LogEntry(LogEntry.CHANGED, entry.getTime()));
-//      pruneAccessLog();
-//    }
-//
-//    this.password = password;
-//  }
 
   /**
    * Sets the password for the secret, updating the access log with a
