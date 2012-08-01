@@ -1,5 +1,7 @@
 package net.tawacentral.roger.secrets;
 
+import java.util.Collection;
+
 import android.content.Context;
 import android.widget.ArrayAdapter;
 
@@ -39,19 +41,27 @@ public class OnlineAgentAdapter extends ArrayAdapter<OnlineSyncAgent> {
   public void updateAppList(SecretsListAdapter secretsList) {
     clear();
     if (showAllApps) {
-      for (OnlineSyncAgent app : OnlineAgentManager.getInstalledAgents()) {
-        add(app);
-       }
+      addAllAgents(OnlineAgentManager.getInstalledAgents());
     } else {
       // add suitable configured OSAs to the list
-      for (OnlineSyncAgent app : OnlineAgentManager.getConfiguredAgents()) {
-        add(app);
-      }
+      addAllAgents(OnlineAgentManager.getConfiguredAgents());
       // only show the configure option if at least 1 OSA is installed.
       if (OnlineAgentManager.getInstalledAgents().size() > 0) {
         add(new OnlineSyncAgent(
                 context.getString(R.string.list_osa_configure), "configure"));
       }
+    }
+  }
+  
+  /*
+   * This is a substitute for ArrayAdapter.addAll() which is not available
+   * below API level 11.
+   * 
+   * @param agents
+   */
+  private void addAllAgents(Collection<OnlineSyncAgent> agents) {
+    for (OnlineSyncAgent agent : agents) {
+      add(agent);
     }
   }
  
