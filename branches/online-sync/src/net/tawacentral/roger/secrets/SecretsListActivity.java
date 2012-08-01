@@ -112,8 +112,6 @@ public class SecretsListActivity extends ListActivity {
   private String restorePoint; // That file that should be restored from
   private boolean isConfigOSA; // is the user selecing a secret for an OSA?
   private OnlineSyncAgent selectedOSA; // currently selected agent
-  private Handler osaHandler; // handler used when waiting for an OSA to send
-                              // secrets for restore
 
   /** Called when the activity is first created. */
   @Override
@@ -137,7 +135,7 @@ public class SecretsListActivity extends ListActivity {
     }
 
     /* Create a handler for the thread to receive messages */
-    osaHandler = new Handler();
+    OnlineAgentManager.setHandler(new Handler());
 
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
@@ -625,6 +623,26 @@ public class SecretsListActivity extends ListActivity {
       return restorePoints.get(selected);
     }
   }
+  
+  /**
+   * Callback from OSA listener with new/updated secrets.
+   * 
+   * @param newSecrets
+   */
+  public synchronized void syncSecrets(SecretsCollection newSecrets) {
+    Log.d(LOG_TAG, "SecretsListActivity.syncSecrets, secrets: "
+            + (newSecrets == null ? newSecrets : newSecrets.size()));
+    if (newSecrets != null) {
+      SecretsCollection allSecrets = secretsList.getAllSecrets();
+      allSecrets.syncSecrets(newSecrets);
+      allSecrets.setLastSyncTimestamp(System.currentTimeMillis());
+      secretsList.notifyDataSetInvalidated();
+      setTitle();
+      showToast(R.string.sync_succeeded);
+    } else {
+      showToast(R.string.sync_failed);
+    }
+  }
 
   @Override
   public Dialog onCreateDialog(final int id) {
@@ -849,29 +867,9 @@ public class SecretsListActivity extends ListActivity {
             if (selectedOSA.getClassId().equals("configure")) {
               showDialog(DIALOG_CONFIG_SYNC);
             } else {
-              // send to the OSA
+              // send secrets to the OSA
               if (!OnlineAgentManager.sendSecrets(selectedOSA,
-                      LoginActivity.getSecrets(), SecretsListActivity.this,
-                      osaHandler,
-                      new OnlineAgentManager.SecretsReceivedListener() {
-                        @Override
-                        public void run() {
-                          Log.d(LOG_TAG, "Secret received listener called "
-                                  + this.secrets);
-                          if (this.secrets != null) {
-                            SecretsCollection allSecrets = LoginActivity
-                                    .getSecrets();
-                            allSecrets.syncSecrets(this.secrets);
-                            allSecrets.setLastSyncTimestamp(System
-                                    .currentTimeMillis());
-                            secretsList.notifyDataSetInvalidated();
-                            setTitle();
-                            showToast(R.string.sync_succeeded);
-                          } else {
-                            showToast(R.string.sync_failed);
-                          }
-                        }
-                      })) {
+                      secretsList.getAllSecrets(), SecretsListActivity.this)) {
                 showToast(R.string.error_osa_secrets);
               }
             }
