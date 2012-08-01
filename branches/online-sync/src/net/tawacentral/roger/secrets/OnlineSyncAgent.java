@@ -1,5 +1,10 @@
 package net.tawacentral.roger.secrets;
 
+import java.security.SecureRandom;
+
+import net.tawacentral.roger.secrets.OnlineAgentManager.SecretsReceivedListener;
+
+
 /**
  * Represents an Online Sync Agent application.
  * 
@@ -10,25 +15,32 @@ public class OnlineSyncAgent {
 	private String classId;
 	private Secret configSecret;
 	
+	/*
+	 * The response key is an randomly generated string that is provided to the
+	 * OSA as part of the sync request and must be returned in the response in
+	 * order for it to be accepted. The key is changed when the response is
+	 * received to ensure that any subsequent or unsolicited responses are
+	 * rejected.
+	 */
+	private static final int RESPONSEKEY_LENGTH = 8;
+	private String responseKey;
+
   /*
-   * "available" indicates if the agent is available. Agents are required to
+   * available indicates if the agent is available. Agents are required to
    * respond to a roll call broadcast every time the app is resumed. Previously
    * known agents that do not respond are marked as not available but remain
    * configured.
    */
   private boolean available = true;
+  
+  private SecretsReceivedListener listener;
 
-	/**
+  /**
 	 * Constructor
 	 * @param displayName
 	 * @param classId
 	 */
   public OnlineSyncAgent(String displayName, String classId) {
-    if (displayName == null || classId == null || displayName.equals("")
-            || classId.equals("")) {
-      throw new IllegalArgumentException(
-              "displayName and classId are required!");
-    }
     this.displayName = displayName;
     this.classId = classId;
   }
@@ -81,25 +93,39 @@ public class OnlineSyncAgent {
 		this.available = available;
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
+  /**
+   * Get the response key
+   * @return the responseKey
+   */
+  public String getResponseKey() {
+    return responseKey;
+  }
 
-		OnlineSyncAgent that = (OnlineSyncAgent) o;
-		if (!classId.equals(that.classId))
-			return false;
-		return displayName.equals(that.displayName);
-	}
+  /**
+   * Generate a new response key
+   */
+  public void generateResponseKey() {
+    SecureRandom random = new SecureRandom();
+    byte[] keyBytes = new byte[RESPONSEKEY_LENGTH];
+    random.nextBytes(keyBytes);
+    this.responseKey = new String(keyBytes);
+  }
 
-	@Override
-	public int hashCode() {
-		int result = displayName.hashCode();
-		result = 31 * result + classId.hashCode();
-		return result;
-	}
+  /**
+   * Get the secrets received listener
+   * @return the listener
+   */
+  public SecretsReceivedListener getListener() {
+    return listener;
+  }
+
+  /**
+   * Set the secrets received listener
+   * @param listener the listener to set
+   */
+  public void setSecretsReceivedlistener(SecretsReceivedListener listener) {
+    this.listener = listener;
+  }
 
 	@Override
 	public String toString() {
