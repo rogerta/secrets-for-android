@@ -39,7 +39,7 @@ Keep in mind that if you just enabled backups as described above, it may take a 
 This section applies to phones that have a slot for an SD card.
 
 == Phones with no Internal Memory ==
-If your old and new phones both accept SD cards and have no internal storage, then its possible to use an SD card to transfer your secrets to your new phone.  This assumes that you have access to your old phone and new phone at the same time.  If so, do the following:
+If your old and new phones both accept SD cards and have no internal storage, like an HTC G1 or Nexus One, then its possible to use an SD card to transfer your secrets to your new phone.  This assumes that you have access to your old phone and new phone at the same time.  If so, do the following:
 
 _On the old phone_
   * place the SD card in the phone
