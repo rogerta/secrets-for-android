@@ -51,24 +51,28 @@ Before beginning, make sure that the USB computer connection mode on the phones 
 Don't forget to do the above steps on both phones.
 
 == Copying the backup file from the old phone to the PC ==
+_Backup secrets on old phone_
   * if your old phone has an SD card slot, make sure you place an SD card in it
   * Start *_Secrets for Android_* and enter the app
   * choose the "Backup" menu item
   * exit *_Secrets for Android_*
+
+_Copy backup to PC_
   * connect the old phone to the PC using a USB cable
-  * on the PC, open "My Computer"
-  * open the icon that represents your phone
-  * open the icon labeled "Internal"
+  * if a window called AutoPlay opens, click "Open device to view files", otherwise click on the "Start" button, click on "Computer", and then double click on the your phone
+  * double click on  "Internal storage"
   * find the file called "secrets" and copy it to your computer's desktop
 
 == Copying the backup file from the PC to your new phone ==
+_Copy backup to new phone_
   * if your new phone has an SD card slot, make sure you place an SD card in it
   * connect the new phone to the PC using a USB cable
-  * on the PC, open "My Computer"
-  * open the icon that represents your phone
-  * open the icon labeled "Internal"
-  * copy the "secrets" file from your computer's desktop to the "Internal" storage
+  * if a window called AutoPlay opens, click "Open device to view files", otherwise click on the "Start" button, click on "Computer", and then double click on the your phone
+  * double click on  "Internal storage"
+  * copy the "secrets" file from your computer's desktop to the "Internal storage"
   * remove the USB cable from the phone and the PC
+
+_Restore secrets on new phone_
   * install *_Secrets for Android_* on your new phone and enter the app
   * make sure to use the *exact* same master password as you used on the old phone
   * choose the "Restore" menu item
