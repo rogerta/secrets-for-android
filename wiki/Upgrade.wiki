@@ -62,7 +62,7 @@ _Backup secrets on old phone_
 
 _Copy backup to PC_
   * connect the old phone to the PC using a USB cable
-  * if a window called AutoPlay opens, click "Open device to view files", otherwise:
+  * if a window called `AutoPlay` opens, click "Open device to view files", otherwise:
     * click on the "Start" button
     * click on "Computer", and then
     * double click on the icon for your phone listed in "Portable devices"
@@ -76,7 +76,7 @@ _Copy backup to PC_
 _Copy backup to new phone_
   * if your new phone has an SD card slot, make sure you place an SD card in it
   * connect the new phone to the PC using a USB cable
-  * if a window called AutoPlay opens, click "Open device to view files", otherwise:
+  * if a window called `AutoPlay` opens, click "Open device to view files", otherwise:
     * click on the "Start" button
     * click on "Computer", and then
     * double click on the icon for your phone listed in "Portable devices"
