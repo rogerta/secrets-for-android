@@ -1,7 +1,5 @@
 #summary How to transfer your secrets to a new phone.
 
-|| UNDER CONSTRUCTION ||
-
 = Introduction =
 
 Changing mobile phone seems inevitable.  Maybe the phone is lost or stolen, maybe it breaks, or maybe you just want the latest and greatest.  Easily transferring secrets to a new phone is an important issue for all users of *_Secrets for Android_*.
@@ -46,7 +44,7 @@ Before beginning, make sure that the USB computer connection mode on the phones 
   * tap "Storage"
   * tap MENU and select "USB computer connection"
   * Under "Connect as", make sure that "Media device (MTP)" is selected
-  * tap HOME to exit the Settings app
+  * exit the Settings app
 
 Don't forget to do the above steps on both phones.
 
@@ -59,16 +57,23 @@ _Backup secrets on old phone_
 
 _Copy backup to PC_
   * connect the old phone to the PC using a USB cable
-  * if a window called AutoPlay opens, click "Open device to view files", otherwise click on the "Start" button, click on "Computer", and then double click on the your phone
-  * double click on  "Internal storage"
+  * if a window called AutoPlay opens, click "Open device to view files", otherwise:
+    * click on the "Start" button
+    * click on "Computer", and then
+    * double click on the icon for your phone listed in "Portable devices"
+  * double click on "Internal storage"
   * find the file called "secrets" and copy it to your computer's desktop
+  * remove the USB cable from the phone and the PC
 
 == Copying the backup file from the PC to your new phone ==
 _Copy backup to new phone_
   * if your new phone has an SD card slot, make sure you place an SD card in it
   * connect the new phone to the PC using a USB cable
-  * if a window called AutoPlay opens, click "Open device to view files", otherwise click on the "Start" button, click on "Computer", and then double click on the your phone
-  * double click on  "Internal storage"
+  * if a window called AutoPlay opens, click "Open device to view files", otherwise:
+    * click on the "Start" button
+    * click on "Computer", and then
+    * double click on the icon for your phone listed in "Portable devices"
+  * double click on "Internal storage"
   * copy the "secrets" file from your computer's desktop to the "Internal storage"
   * remove the USB cable from the phone and the PC
 
