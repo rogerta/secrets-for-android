@@ -1,18 +1,20 @@
 #summary How to transfer your secrets to a new phone.
 
+|| UNDER CONSTRUCTION ||
+
 = Introduction =
 
 Changing mobile phone seems inevitable.  Maybe the phone is lost or stolen, maybe it breaks, or maybe you just want the latest and greatest.  Easily transferring secrets to a new phone is an important issue for all users of *_Secrets for Android_*.
 
-This page describes several ways to ensure that your secrets make it to your new phone.  Note that for best results you will need to perform some actions before you stop using your existing phone.  Please take the time to follow the recommended steps below before disaster strikes!  These steps work for Android tablets as well.
+This page describes two ways to ensure that your secrets make it to your new phone.  Note that for best results you will need to perform some actions before you stop using your existing phone.  Please take the time to follow the recommended steps below before disaster strikes!  These steps work for Android tablets as well.
 
-= Online Backup =
+= Method 1: Online Backup =
 
 Android provides a built-in mechanism to backup your apps and data to your Google account.  This is by far the easiest way to transfer secrets to a new phone.  It may also be the only way to do so in the case of lost, stolen or damaged phones.
 
 Online backup must be enabled before it will function and is normally done when you first configure your phone.  If you didn't do it then or want to check if its enabled, do the following:
 
-(steps for Android 4)
+(steps for Android 4+)
   * start the "Settings" apps
   * tap "Backup & reset"
   * make sure that the items "Back up my data" and "Automatic restore" are checked
@@ -34,20 +36,29 @@ If all is working correctly, you will see the name and time of the most recent b
 
 Keep in mind that if you just enabled backups as described above, it may take a day or so before the dashboard will show anything.
 
-= SD Card =
+= Method 2: Manual Transfer =
 
-This section applies to phones that have a slot for an SD card.
+If you are not using online backup, then you must manually transfer your secrets from your old phone to your new phone.  Android phones fall into one of three categories:
 
-== Phones with no Internal Memory ==
-If your old and new phones both accept SD cards and have no internal storage, like an HTC G1 or Nexus One, then its possible to use an SD card to transfer your secrets to your new phone.  This assumes that you have access to your old phone and new phone at the same time.  If so, do the following:
+  # phones with SD card memory only, like an HTC Nexus One
+  # phones with both internal memory and SD card memory, like a Motorola ATRIX
+  # phones with only internal memory, like a Samsung Galaxy Nexus
 
-_On the old phone_
+The process needed to transfer your secrets depends on the categories of both your old phone and your new phone.  To transfer your secrets, do the following:
+
+  * Find the category which describes your *old* phone
+  * Follow the instructions for copying the backup file from the phone and onto the PC
+  * Find the category which describes your *new* phone
+  * Follow the instructions for copying the backup file from the PC and onto the phone
+
+== Phones with SD card memory only ==
+_Copying the backup file from the phone and onto the PC_
   * place the SD card in the phone
   * Start *_Secrets for Android_* and enter the app
   * choose the "Backup" menu item
-  * remove the SD card from the phone.  Make sure to unmount the SD card first or turn off the phone
+  *  unmount the SD card and remove it from the phone
 
-_On the new phone_
+_Copying the backup file from the PC and onto your phone_
   * place the SD card in the phone
   * install *_Secrets for Android_* and enter the app
   * make sure to use the *exact* same master password as you used on the old phone
