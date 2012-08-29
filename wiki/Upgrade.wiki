@@ -38,49 +38,37 @@ Keep in mind that if you just enabled backups as described above, it may take a 
 
 = Method 2: Manual Transfer =
 
-If you are not using online backup, then you must manually transfer your secrets from your old phone to your new phone.  Android phones fall into one of three categories:
+If you are not using online backup, then you must manually transfer your secrets from your old phone to your new phone.  These instructions should apply to any phone running Android 2.3.3 or later.  A PC is also required.
 
-  # phones with SD card memory only, like an HTC Nexus One
-  # phones with both internal memory and SD card memory, like a Motorola ATRIX
-  # phones with only internal memory, like a Samsung Galaxy Nexus
+Before beginning, make sure that the USB computer connection mode on the phones --- both the old phone and new phone ---  is set correctly by doing the following:
 
-The process needed to transfer your secrets depends on the categories of both your old phone and your new phone.  To transfer your secrets, do the following:
+  * start the "Settings" apps
+  * tap "Storage"
+  * tap MENU and select "USB computer connection"
+  * Under "Connect as", make sure that "Media device (MTP)" is selected
+  * tap HOME to exit the Settings app
 
-  * Find the category which describes your *old* phone
-  * Follow the instructions for copying the backup file from the phone and onto the PC
-  * Find the category which describes your *new* phone
-  * Follow the instructions for copying the backup file from the PC and onto the phone
+Don't forget to do the above steps on both phones.
 
-== Phones with SD card memory only ==
-_Copying the backup file from the phone and onto the PC_
-  * place the SD card in the phone
+== Copying the backup file from the old phone to the PC ==
+  * if your old phone has an SD card slot, make sure you place an SD card in it
   * Start *_Secrets for Android_* and enter the app
   * choose the "Backup" menu item
-  *  unmount the SD card and remove it from the phone
+  * exit *_Secrets for Android_*
+  * connect the old phone to the PC using a USB cable
+  * on the PC, open "My Computer"
+  * open the icon that represents your phone
+  * open the icon labeled "Internal"
+  * find the file called "secrets" and copy it to your computer's desktop
 
-_Copying the backup file from the PC and onto your phone_
-  * place the SD card in the phone
-  * install *_Secrets for Android_* and enter the app
-  * make sure to use the *exact* same master password as you used on the old phone
-  * choose the "Restore" menu item
-
-== Phones with Internal Memory ==
-If either your new or old phone has internal memory, even if it accepts SD cards, its possible to transfer your secrets to your phone with the help of a PC or Mac.  If so, do the following:
-
-_On the old phone_
-  * Start *_Secrets for Android_* and enter the app
-  * choose the "Backup" menu item
-
-_On the PC or Mac_
-  * connect your *old* phone to the PC or Mac with a USB cable
-  * locate the device or drive that represents the phone
-  * locate the file called {{{secrets}}} (at the root of the device or drive) and copy it your desktop
-  * disconnect the phone from the PC or Mac
-  * connect your *new* phone to the PC or Mac with a USB cable
-  * copy the {{{secrets}}} file from your desktop to the root of the device or drive representing the phone
-  * disconnect the phone from the PC or Mac
-
-_On the new phone_
-  * install *_Secrets for Android_* and enter the app
+== Copying the backup file from the PC to your new phone ==
+  * if your new phone has an SD card slot, make sure you place an SD card in it
+  * connect the new phone to the PC using a USB cable
+  * on the PC, open "My Computer"
+  * open the icon that represents your phone
+  * open the icon labeled "Internal"
+  * copy the "secrets" file from your computer's desktop to the "Internal" storage
+  * remove the USB cable from the phone and the PC
+  * install *_Secrets for Android_* on your new phone and enter the app
   * make sure to use the *exact* same master password as you used on the old phone
   * choose the "Restore" menu item
