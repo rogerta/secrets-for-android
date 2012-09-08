@@ -14,11 +14,13 @@
 
 package net.tawacentral.roger.secrets;
 
+import android.annotation.SuppressLint;
 import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
@@ -70,6 +72,15 @@ public class FileUtils {
     public int rounds;
   }
 
+  /** Name of the preferences file for backup. */
+  public static final String PREFS_FILE_NAME = "backup";
+
+  /**
+   * Name of last backup preference. Long value as number or millis as
+   * returned by System.currentTimeMillis().
+   */
+  public static final String PREF_LAST_BACKUP_DATE = "last_backup_date";
+  
   /** Name of the secrets file. */
   public static final String SECRETS_FILE_NAME = "secrets";
 
@@ -131,14 +142,24 @@ public class FileUtils {
     return file.exists();
   }
 
-  /** Is the restore file too old? */
-  public static boolean isRestoreFileTooOld() {
-    File file = new File(SECRETS_FILE_NAME_SDCARD);
-    if (!file.exists())
-      return false;
-    
-    long lastModified = file.lastModified();
+  /**
+   * Is the restore file too old?  This function used to check the time stamp
+   * of the backup file in the SD card, but that should go away in favour of
+   * suggestion that users enable online backup.  Therefore this function now
+   * checks the time that the last online backup was performed.
+   * 
+   * @param ctx A context to get the preferences from.
+   * @return True the last backup is too old.
+   */
+  public static boolean isRestoreFileTooOld(Context ctx) {
     long now = System.currentTimeMillis();
+    SharedPreferences prefs = OS.getSharedPreferences(ctx, PREFS_FILE_NAME, 0);
+    long lastModified = prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
+    if (lastModified == 0) {
+      prefs.edit().putLong(PREF_LAST_BACKUP_DATE, now).commit();
+      lastModified = now;
+    }
+    
     long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week.
     
     return (now - lastModified) > oneWeeks;
@@ -865,6 +886,7 @@ public class FileUtils {
     return builder.toString();
   }
 
+  @SuppressLint("NewApi")
   static public class SecretsBackupAgent extends BackupAgentHelper {
     /** Tag for logging purposes. */
     public static final String LOG_TAG = "Secrets";
@@ -888,6 +910,12 @@ public class FileUtils {
       Log.d(LOG_TAG, "onBackup");
       synchronized (lock) {
         super.onBackup(oldState, data, newState);
+      }
+      SharedPreferences prefs = OS.getSharedPreferences(this, PREFS_FILE_NAME,
+                                                        0);
+      if (prefs != null) {
+        prefs.edit().putLong(PREF_LAST_BACKUP_DATE,
+                             System.currentTimeMillis()).apply();
       }
     }
     

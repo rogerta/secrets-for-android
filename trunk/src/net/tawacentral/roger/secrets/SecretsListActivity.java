@@ -341,7 +341,7 @@ public class SecretsListActivity extends ListActivity {
           openOptionsMenu();
         }
       });
-    } else if (FileUtils.isRestoreFileTooOld()) {
+    } else if (FileUtils.isRestoreFileTooOld(this)) {
       getListView().post(new Runnable() {
         @Override
         public void run() {
