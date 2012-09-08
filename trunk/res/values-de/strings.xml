@@ -35,7 +35,7 @@ limitations under the License.
 <string name="backup_succeeded">Datensicherung erfolgreich.</string>
 <string name="restore_succeeded">Datenwiederherstellung erfolgreich.</string>
 <string name="restore_failed">Uh oh.  Ihre Geheimnisse konnten nicht wiederhergestellt werden.  Stellen Sie sicher, dass das Passwort das Selbe ist, mit dem die Datensicherung erstellt wurde.</string>
-<string name="restore_file_too_old">Zeit ihre Geheimnisse zu sichern?</string>
+<string name="enable_online_backup">Aktivieren Sie Online-Datensicherung, um sicheren Schutz Ihrer Geheimnisse.</string>
 
 <string name="export_succeeded">Datei erfolgreich auf der SD-Karte gespeichert.\n\nACHTUNG: Die exportierte Datei ist nicht mit einem Passwort geschützt!</string>
 <string name="export_failed">Uh oh.  Ihre Geheimnisse konnten nicht exportiert werden.</string>
