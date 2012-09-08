@@ -35,7 +35,7 @@ limitations under the License.
 <string name="backup_succeeded">Backup succesvol.</string>
 <string name="restore_succeeded">Terugzetten succesvol.</string>
 <string name="restore_failed">Oh jee.  Niet in staat om uw gegevens terug te halen. Controleer of uw wachtwoord hetzelfde is als het wachtwoord wat u gebruikt heeft om de backup te maken.</string>
-<string name="restore_file_too_old">Tijd om uw geheimen op te slaan?</string>
+<string name="enable_online_backup">Schakel online backup te vrijwaren je geheimen.</string>
 
 <string name="export_succeeded">Bestand succesvol opgeslagen op de SD-kaart.\n\nVOORZICHTIG: Het gexporteerde bestand is niet met een wachtwoord beveiligd!</string>
 <string name="export_failed">Oh jee. Niet in staat om uw geheimen te exporteren.</string>

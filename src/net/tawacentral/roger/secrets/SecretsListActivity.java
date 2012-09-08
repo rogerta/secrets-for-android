@@ -345,8 +345,7 @@ public class SecretsListActivity extends ListActivity {
       getListView().post(new Runnable() {
         @Override
         public void run() {
-          showToast(getText(R.string.restore_file_too_old));
-          openOptionsMenu();
+          showToast(getText(R.string.enable_online_backup));
         }
       });
     }

@@ -35,7 +35,7 @@ limitations under the License.
 <string name="backup_succeeded">Copia de Seguridad exitosa.</string>
 <string name="restore_succeeded">Restauración exitosa.</string>
 <string name="restore_failed">No se pudieron restablecer los secretos.  Asegúrese que su contraseña es la misma que le utilizada para crear la copia de seguridad.</string>
-<string name="restore_file_too_old">Hora de hacer una copia de seguridad de tus secretos?</string>
+<string name="enable_online_backup">Habilitar copia de seguridad en línea para salvaguardar sus secretos.</string>
 
 <string name="export_succeeded">Archivo exportado a tarjeta SD de manera exitosa.\n\ATENCIÓN: El archivo exportado no esta protegido por contraseña!</string>
 <string name="export_failed">No fue posible exportar tus secretos.</string>
