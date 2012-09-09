@@ -362,12 +362,7 @@ public class LoginActivity extends Activity implements TextWatcher {
             secrets = FileUtils.loadSecretsV1(this, cipher1);
         }
 
-        if (null != secrets) {
-          // TODO: display a better message to the user telling them to do a
-          // backup right now, since any restore file is likely in a format
-          // that cannot be read anymore.
-          showToast(R.string.restore_file_too_old, Toast.LENGTH_LONG);
-        } else {
+        if (null == secrets) {
           // TODO(rogerta): need better error message here.  There are probably
           // many reasons that we might not be able to open the file.
           showToast(R.string.invalid_password, Toast.LENGTH_LONG);
