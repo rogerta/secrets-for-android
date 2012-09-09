@@ -117,13 +117,6 @@ public class SecretsListActivity extends ListActivity {
     super.onCreate(state);
     setContentView(R.layout.list);
 
-    // We should not get a search intent upon launch.
-    if (Intent.ACTION_SEARCH.equals(getIntent().getAction())) {
-      Log.e(LOG_TAG, "onCreate: not expecting a search intent");
-      finish();
-      return;
-    }
-
     // If for any reason we get here and there is no secrets list, then we
     // cannot continue.  Finish the activity and return.
     if (null == LoginActivity.getSecrets()) {
