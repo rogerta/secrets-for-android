@@ -78,7 +78,8 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_IMPORT_SUCCESS = 3;
   private static final int DIALOG_CHANGE_PASSWORD = 4;
   private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
-
+  private static final int RC_ACCESS_LOG = 1;
+  
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
   private static final String EMPTY_STRING = "";
@@ -110,8 +111,8 @@ public class SecretsListActivity extends ListActivity {
   private String restorePoint;  // That file that should be restored from
   // This activity will only allow it self to be resumed in specific
   // circumstances, so that leaving the application will force the user to
-  // renter the master password.  Older versions used to check the state of
-  // the keyguard, but this check is no longer reilable with Android 4.1.
+  // re-enter the master password.  Older versions used to check the state of
+  // the keyguard, but this check is no longer reliable with Android 4.1.
   private boolean allowNextResume;  // Allow the next onResume()
 
   /** Called when the activity is first created. */
@@ -302,7 +303,7 @@ public class SecretsListActivity extends ListActivity {
     // Don't allow this activity to continue if it has not been explicitly
     // allowed.
     if (!allowNextResume) {
-      Log.d(LOG_TAG, "SecretsListActivity.onResume not allowed");
+      Log.d(LOG_TAG, "onResume not allowed");
       finish();
       return;
     }
@@ -445,7 +446,7 @@ public class SecretsListActivity extends ListActivity {
         Secret secret = secretsList.getSecret(cmenuPosition);
         Intent intent = new Intent(this, AccessLogActivity.class);
         intent.putExtra(EXTRA_ACCESS_LOG, secret);
-        startActivity(intent);
+        startActivityForResult(intent, RC_ACCESS_LOG);
         allowNextResume = true;
         break;
       }
@@ -472,6 +473,19 @@ public class SecretsListActivity extends ListActivity {
     }
 
     return handled;
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode,
+                                  int resultCode,
+                                  Intent data) {
+    if (requestCode == RC_ACCESS_LOG) {
+      if (resultCode != RESULT_OK)
+        finish();
+    } else {
+      // This is an error, abort.
+      finish();
+    }
   }
 
   /** Import from a CSV file on the SD card. */

@@ -20,6 +20,8 @@ import android.app.KeyguardManager;
 import android.app.ListActivity;
 import android.content.Context;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.ArrayAdapter;
 
 import java.text.MessageFormat;
@@ -36,8 +38,17 @@ import java.util.List;
  * @author rogerta
  */
 public class AccessLogActivity extends ListActivity {
+  /** Tag for logging purposes. */
+  public static final String LOG_TAG = "AccessLogActivity";
+
   private static final long ONE_MINUTE_IN_SECS = 60;
   private static final long ONE_HOUR_IN_SECS = 3600;
+
+  // This activity will only allow it self to be resumed in specific
+  // circumstances, so that leaving the application will force the user to
+  // re-enter the master password.  Older versions used to check the state of
+  // the keyguard, but this check is no longer reliable with Android 4.1.
+  private boolean allowNextResume;  // Allow the next onResume()
 
   /** Called when the activity is first created. */
   @Override
@@ -62,23 +73,36 @@ public class AccessLogActivity extends ListActivity {
 
     setListAdapter(new ArrayAdapter<String>(this, R.layout.access_log,
                                             strings));
+    allowNextResume = true;
   }
 
   @Override
   protected void onResume() {
     super.onResume();
-    checkKeyguard();
+
+    // Don't allow this activity to continue if it has not been explicitly
+    // allowed.
+    if (!allowNextResume) {
+      Log.d(LOG_TAG, "onResume not allowed");
+      finish();
+      return;
+    }
+
+    allowNextResume = false;
   }
 
-  private void checkKeyguard() {
-    // If the keyguard is being displayed, exit this activity.  This returns
-    // the user to the activity list page, which will in turn return the user
-    // to the login page, requiring the user to enter his password again before
-    // get access again to his secrets.
-    KeyguardManager keyGuard = (KeyguardManager) getSystemService(
-        KEYGUARD_SERVICE);
-    if (keyGuard.inKeyguardRestrictedInputMode())
-      finish();
+  /**
+   * Trap the "back" button to signal to the parent activity that the user
+   * pressed back and therefore should be allowed to resume.  This activity
+   * has no other user interaction, so leave the activity in any other way
+   * should cause the parent to not resume.
+   */
+  @Override
+  public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if (KeyEvent.KEYCODE_BACK == keyCode)
+      setResult(RESULT_OK);
+
+    return super.onKeyDown(keyCode, event);
   }
 
   /**
@@ -113,14 +137,14 @@ public class AccessLogActivity extends ListActivity {
     c.set(Calendar.SECOND, 0);
     c.set(Calendar.MILLISECOND, 0);
     long midnight = c.getTimeInMillis();
-    
+
     c.add(Calendar.DAY_OF_YEAR, -1);
     long yesterdayMidnight = c.getTimeInMillis();
 
     long time = entry.getTime();
     long diff = (now - time) / 1000;
     String verb;
-    
+
     switch(entry.getType()) {
       case LogEntry.CREATED:
         verb = context.getText(R.string.log_created).toString();
