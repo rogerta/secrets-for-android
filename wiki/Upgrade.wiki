@@ -1,4 +1,5 @@
 #summary How to transfer your secrets to a new phone.
+#labels Featured
 
 = Introduction =
 
