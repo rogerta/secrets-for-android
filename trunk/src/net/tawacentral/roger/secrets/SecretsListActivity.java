@@ -25,7 +25,6 @@ import javax.crypto.Cipher;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.KeyguardManager;
 import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.DialogInterface;
@@ -109,6 +108,11 @@ public class SecretsListActivity extends ListActivity {
   private File importedFile;  // File that was imported
   private boolean isConfigChange;  // being destroyed for config change?
   private String restorePoint;  // That file that should be restored from
+  // This activity will only allow it self to be resumed in specific
+  // circumstances, so that leaving the application will force the user to
+  // renter the master password.  Older versions used to check the state of
+  // the keyguard, but this check is no longer reilable with Android 4.1.
+  private boolean allowNextResume;  // Allow the next onResume()
 
   /** Called when the activity is first created. */
   @Override
@@ -225,6 +229,7 @@ public class SecretsListActivity extends ListActivity {
     });
 
     registerForContextMenu(getListView());
+    allowNextResume = true;
   }
 
   private void onItemClicked(int position) {
@@ -257,6 +262,7 @@ public class SecretsListActivity extends ListActivity {
 
     getListView().setFilterText(filter);
     getListView().requestFocus();
+    allowNextResume = true;
   }
 
   @Override
@@ -266,28 +272,6 @@ public class SecretsListActivity extends ListActivity {
       return true;
 
     return super.onSearchRequested();
-  }
-
-  /**
-   * Check to see if the key guard is enabled.  If so, its means the device
-   * probably went to sleep due to inactivity.  If this is the case, this
-   * activity is finished().
-   *
-   * @return True if the activity is finished, false otherwise.
-   */
-  private boolean checkKeyguard() {
-    // If the key guard has been displayed, exit this activity.  This returns
-    // us to the login page requiring the user to enter his password again
-    // before getting access again to his secrets.
-    KeyguardManager key_guard = (KeyguardManager) getSystemService(
-        KEYGUARD_SERVICE);
-    boolean isInputRestricted = key_guard.inKeyguardRestrictedInputMode();
-    if (isInputRestricted) {
-      Log.d(LOG_TAG, "SecretsListActivity.checkKeyguard finishing");
-      finish();
-    }
-
-    return isInputRestricted;
   }
 
   /** Set the title for this activity. */
@@ -315,11 +299,16 @@ public class SecretsListActivity extends ListActivity {
     Log.d(LOG_TAG, "SecretsListActivity.onResume");
     super.onResume();
 
-    // If checkKeyguard() returns true, then this activity has been finished.
-    // We don't want to execute any more in this function.
-    if (checkKeyguard())
+    // Don't allow this activity to continue if it has not been explicitly
+    // allowed.
+    if (!allowNextResume) {
+      Log.d(LOG_TAG, "SecretsListActivity.onResume not allowed");
+      finish();
       return;
-
+    }
+    
+    allowNextResume = false;
+    
     // Show instruction toast auto popup options menu if there are no secrets
     // in the list.  This check used to be done in the onCreate() method above,
     // that could occasionally cause a crash when changing layout from
@@ -457,6 +446,7 @@ public class SecretsListActivity extends ListActivity {
         Intent intent = new Intent(this, AccessLogActivity.class);
         intent.putExtra(EXTRA_ACCESS_LOG, secret);
         startActivity(intent);
+        allowNextResume = true;
         break;
       }
       case R.id.list_copy_password_to_clipboard:
