@@ -19,6 +19,7 @@ import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
+import android.app.backup.FullBackupDataOutput;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.ParcelFileDescriptor;
@@ -892,14 +893,14 @@ public class FileUtils {
   @SuppressLint("NewApi")
   static public class SecretsBackupAgent extends BackupAgentHelper {
     /** Tag for logging purposes. */
-    public static final String LOG_TAG = "Secrets";
+    public static final String LOG_TAG_AGENT = "SecretsBackupAgent";
 
     /** Key in backup set for file data. */
     private static final String KEY ="file";
 
     @Override
     public void onCreate() {
-      Log.d(LOG_TAG, "onCreate");
+      Log.d(LOG_TAG_AGENT, "onCreate");
 
       FileBackupHelper helper = new FileBackupHelper(this,
           FileUtils.SECRETS_FILE_NAME);
@@ -910,7 +911,7 @@ public class FileUtils {
     public void onBackup(ParcelFileDescriptor oldState,
                          BackupDataOutput data,
                          ParcelFileDescriptor newState) throws IOException {
-      Log.d(LOG_TAG, "onBackup");
+      Log.d(LOG_TAG_AGENT, "onBackup");
       synchronized (lock) {
         super.onBackup(oldState, data, newState);
       }
@@ -926,10 +927,33 @@ public class FileUtils {
     public void onRestore(BackupDataInput data,
                           int appVersionCode,
                           ParcelFileDescriptor newState)  throws IOException {
-      Log.d(LOG_TAG, "onRestore");
+      Log.d(LOG_TAG_AGENT, "onRestore");
       synchronized (lock) {
         super.onRestore(data, appVersionCode, newState);
       }
+    }
+
+    @Override
+    public void onDestroy() {
+      Log.d(LOG_TAG_AGENT, "onDestroy");
+      super.onDestroy();
+    }
+
+    @Override
+    public void onFullBackup(FullBackupDataOutput data) throws IOException {
+      Log.d(LOG_TAG_AGENT, "onFullBackup");
+      super.onFullBackup(data);
+    }
+
+    @Override
+    public void onRestoreFile(ParcelFileDescriptor data,
+        long size,
+        File destination,
+        int type,
+        long mode,
+        long mtime) throws IOException {
+      Log.d(LOG_TAG_AGENT, "onRestoreFile");
+      super.onRestoreFile(data, size, destination, type, mode, mtime);
     }
   }
 }
