@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,29 +19,41 @@ import android.util.Log;
 /**
  * Receives broadcasts from Online Sync Agents.
  * 
- * @author Ryan Dearing
  * @author Chris Wood
  */
 public class OnlineAgentManager extends BroadcastReceiver {
-  private static final String LOG_TAG = "Secrets";
+  private static final String LOG_TAG = "Secrets.OnlineAgentManager";
+  
+  private static final String SECRETS_PERMISSION = "net.tawacentral.roger.secrets.permission.SECRETS";
+  
+  private static final String ROLLCALL = "net.tawacentral.roger.secrets.OSARollCall";
+  private static final String ROLLCALL_RESPONSE = "net.tawacentral.roger.secrets.OSARollCallResponse";
+  private static final String SYNC_RESPONSE = "net.tawacentral.roger.secrets.OSASyncResponse";
+  
+  private static final String CLASS_ID = "classId";
+  private static final String DISPLAY_NAME = "displayName";
+  private static final String RESPONSE_KEY = "responseKey";
+  private static final String SECRETS_ID = "secrets";
+  private static final String USERNAME_ID = "username";
+  private static final String EMAIL_ID = "email";
+  private static final String PASSWORD_ID = "password";
+  private static final String NOTE_ID = "note";
   
   private static Map<String,OnlineSyncAgent> INSTALLED_AGENTS
                                     = new HashMap<String,OnlineSyncAgent>();
 
   /* handler and listener for the current operation */
   private static Handler handler;
-//  private static SecretsReceivedListener secretsListener;
 
   @Override
   public void onReceive(Context context, Intent intent) {
     Log.d(LOG_TAG, "OSA received msg: " + intent.getAction());
     
     // handle roll call responses
-    if (intent.getAction().equals(
-            "net.tawacentral.roger.secrets.OSARollCallResponse")
+    if (intent.getAction().equals(ROLLCALL_RESPONSE)
             && intent.getExtras() != null) {
-      String classId = (String) intent.getExtras().get("classId");
-      String displayName = (String) intent.getExtras().get("displayName");
+      String classId = (String) intent.getExtras().get(CLASS_ID);
+      String displayName = (String) intent.getExtras().get(DISPLAY_NAME);
       if (classId == null || classId.length() == 0 || displayName == null
               || displayName.length() == 0) {
         // invalid info, so do not add it
@@ -47,7 +62,6 @@ public class OnlineAgentManager extends BroadcastReceiver {
       } else {
         Log.d(LOG_TAG, "Received OSA rollcall resp: " + classId + " "
                 + displayName);
-
         if (!INSTALLED_AGENTS.containsKey(classId)) {
           INSTALLED_AGENTS.put(classId, new OnlineSyncAgent(displayName,
                   classId));
@@ -58,20 +72,26 @@ public class OnlineAgentManager extends BroadcastReceiver {
       }
       
     // handle sync response
-    } else if (intent.getAction().equals(
-            "net.tawacentral.roger.secrets.OSASyncResponse")
+    } else if (intent.getAction().equals(SYNC_RESPONSE)
             && validateResponse(intent)) {
-      String classId = (String) intent.getExtras().get("classId");
-      String secretsString = intent.getStringExtra("secrets");
-      final SecretsCollection secrets = SecretsCollection
-              .getSecretsFromJSONString(secretsString);
+      String classId = (String) intent.getExtras().get(CLASS_ID);
+      String secretsString = intent.getStringExtra(SECRETS_ID);
+      SecretsCollection secrets = null;
+      if (secretsString != null) {
+        try {
+          secrets = SecretsCollection
+                  .fromJSON(new JSONObject(secretsString));
+        } catch (JSONException e) {
+          Log.e(LOG_TAG, "Received invalid JSON secrets data", e);
+        }
+      }
       OnlineSyncAgent agent = INSTALLED_AGENTS.get(classId);
       agent.getListener().setSecrets(secrets);
       
       // run the listener code to process the received secrets
       handler.post(agent.getListener());
 
-      // change the response key to prevent a second response being accepted/
+      // change the response key to prevent a second response being accepted
       agent.generateResponseKey();
     }
   }
@@ -84,8 +104,8 @@ public class OnlineAgentManager extends BroadcastReceiver {
   private boolean validateResponse(Intent intent) {
     boolean validity = false;
     if (intent.getExtras() != null) {
-      String classId = (String) intent.getExtras().get("classId");
-      String responseKey = (String) intent.getExtras().get("responseKey");
+      String classId = (String) intent.getExtras().get(CLASS_ID);
+      String responseKey = (String) intent.getExtras().get(RESPONSE_KEY);
       OnlineSyncAgent agent = INSTALLED_AGENTS.get(classId);
       if (agent != null) {
         if (responseKey != null && responseKey.length() > 0 &&
@@ -168,11 +188,9 @@ public class OnlineAgentManager extends BroadcastReceiver {
   public static void sendRollCallBroadcast(Context context) {
     for (OnlineSyncAgent agent : INSTALLED_AGENTS.values()) {
       agent.setAvailable(false);
-    }
-    Intent broadcastIntent = new Intent(
-            "net.tawacentral.roger.secrets.OSARollCall");
-    context.sendBroadcast(broadcastIntent,
-            "net.tawacentral.roger.secrets.permission.SECRETS");
+    }    
+    Intent broadcastIntent = new Intent(ROLLCALL);
+    context.sendBroadcast(broadcastIntent, SECRETS_PERMISSION);    
     Log.d(LOG_TAG, "sent broadcast");
   }
 
@@ -200,21 +218,20 @@ public class OnlineAgentManager extends BroadcastReceiver {
     if (secret != null) {
       try {
         Intent secretsIntent = new Intent(agent.getClassId());
-        secretsIntent.putExtra("responseKey", agent.getResponseKey());
-        String secretString = secrets.putSecretsToJSONString();
+        secretsIntent.putExtra(RESPONSE_KEY, agent.getResponseKey());
+        String secretString = secrets.toJSON().toString();
+        secretsIntent.putExtra(SECRETS_ID, secretString);
 
         /* pass values from the configured secret */
-        secretsIntent.putExtra("secrets", secretString);
-        secretsIntent.putExtra("username", secret.getUsername());
-        secretsIntent.putExtra("email", secret.getEmail());
-        secretsIntent.putExtra("password", secret.getPassword(false));
-        secretsIntent.putExtra("note", secret.getNote());
+        secretsIntent.putExtra(USERNAME_ID, secret.getUsername());
+        secretsIntent.putExtra(EMAIL_ID, secret.getEmail());
+        secretsIntent.putExtra(PASSWORD_ID, secret.getPassword(false));
+        secretsIntent.putExtra(NOTE_ID, secret.getNote());
 
-        activity.sendBroadcast(secretsIntent,
-                "net.tawacentral.roger.secrets.permission.SECRETS");
+        activity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
         Log.d(LOG_TAG, "Secrets sent to OSA " + agent.getClassId());
         return true;
-      } catch (RuntimeException e) {
+      } catch (Exception e) {
         Log.e(LOG_TAG, "Error sending secrets to OSA", e);
         // ignore the exception, false will be returned below
       }
