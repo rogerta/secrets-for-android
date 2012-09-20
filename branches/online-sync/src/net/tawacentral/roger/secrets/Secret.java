@@ -32,11 +32,23 @@ import org.json.JSONObject;
  *
  * @author rogerta
  */
+
+@SuppressWarnings("javadoc")
 public class Secret implements Serializable {
   private static final long serialVersionUID = -116450416616138469L;
   private static final int THRESHOLD_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
+  
+  // Secret field names
+  private static final String SECRET_DESCRIPTION = "description";
+  private static final String SECRET_USERNAME = "username";
+  private static final String SECRET_PASSWORD = "password";
+  private static final String SECRET_EMAIL = "email";
+  private static final String SECRET_NOTE = "note";
+  private static final String SECRET_ACCESS_LOG = "log";
+  private static final String SECRET_TIMESTAMP = "timestamp";
 
+  // Secret fields
   private String description;
   private String username;
   private String password;
@@ -58,7 +70,8 @@ public class Secret implements Serializable {
    *
    * @author rogerta
    */
-  public static final class LogEntry implements Serializable {
+  
+    public static final class LogEntry implements Serializable {
     private static final long serialVersionUID = -9024951856209882415L;
 
     // Log entry types.
@@ -67,6 +80,10 @@ public class Secret implements Serializable {
     public static final int CHANGED = 3;
     public static final int EXPORTED = 4;
     public static final int SYNCED = 5;
+    
+    // Log field names
+    private static final String LOG_TYPE = "type";
+    private static final String LOG_TIME = "time";
 
     private int type_;
     private long time_;
@@ -102,25 +119,23 @@ public class Secret implements Serializable {
       return time_;
     }
     
-    private String putLogEntryToJSONString() 
-            throws JSONException {
+    private JSONObject toJSON() throws JSONException {
       JSONObject jsonValues = new JSONObject();
-      jsonValues.put("type", getType());
-      jsonValues.put("time", getTime());
-      return jsonValues.toString();
+      jsonValues.put(LOG_TYPE, getType());
+      jsonValues.put(LOG_TIME, getTime());
+      return jsonValues;
     }
     
     /**
-     * Generate LogEntry from json string
-     * @param jsonString
+     * Generate LogEntry from json object
+     * @param json object
      * @return LogEntry
      * @throws JSONException
      */
-    public static LogEntry getLogEntryFromJSONString(String jsonString)
+    public static LogEntry fromJSON(JSONObject jsonValues)
             throws JSONException {
-      JSONObject jsonValues = new JSONObject(jsonString);
-      return new LogEntry(jsonValues.getInt("type"), 
-                           jsonValues.getLong("time"));
+      return new LogEntry(jsonValues.getInt(LOG_TYPE), 
+                           jsonValues.getLong(LOG_TIME));
     }
   }
 
@@ -199,7 +214,7 @@ public class Secret implements Serializable {
    *   
    * @param type VIEWED, CHANGED, EXPORTED, SYNCED
    */
-  public void createLogEntry(int type) {
+  private void createLogEntry(int type) {
     if (!(type == LogEntry.VIEWED ||
         type == LogEntry.CHANGED ||
         type == LogEntry.EXPORTED ||
@@ -272,59 +287,62 @@ public class Secret implements Serializable {
 	/**
 	 * Update this secret from another
 	 * @param from source secret
+	 * @param reason Log entry value
 	 */
-	public void update(Secret from) {
+	public void update(Secret from, int reason) {
+	  if (!(reason == LogEntry.CHANGED || reason == LogEntry.SYNCED)) {
+	    return;
+	  }
 		setPassword(from.password, false);
 		username = from.getUsername();
 		email = from.getEmail();
 		note = from.getNote();
 		timestamp = System.currentTimeMillis();
+		createLogEntry(reason);
 	}
 
   /**
-   * Convert secret to a JSON string
-   * @param includeLog 
-   * @return JSON string
+   * Convert secret to a JSON OBJECT
+   * @return JSON repreentation of a secret
    * @throws JSONException
    */
-  public String toJSONString() throws JSONException {
+  public JSONObject toJSON() throws JSONException {
     JSONObject jsonSecret = new JSONObject();
-    jsonSecret.put("description", description);
-    jsonSecret.put("username", username);
-    jsonSecret.put("password", password);
-    jsonSecret.put("email", email);
-    jsonSecret.put("note", note);
-    jsonSecret.put("timestamp", timestamp);
+    jsonSecret.put(SECRET_DESCRIPTION, description);
+    jsonSecret.put(SECRET_USERNAME, username);
+    jsonSecret.put(SECRET_PASSWORD, password);
+    jsonSecret.put(SECRET_EMAIL, email);
+    jsonSecret.put(SECRET_NOTE, note);
+    jsonSecret.put(SECRET_TIMESTAMP, timestamp);
 
     JSONArray jsonLog = new JSONArray();
     for (LogEntry logEntry : access_log) {
-      jsonLog.put(logEntry.putLogEntryToJSONString());
+      jsonLog.put(logEntry.toJSON());
     }
-    jsonSecret.put("log", jsonLog);
+    jsonSecret.put(SECRET_ACCESS_LOG, jsonLog);
 
-    return jsonSecret.toString();
+    return jsonSecret;
   }
 
   /**
-   * Convert JSON string to a Secret
-   * @param json JSON string
+   * Convert JSON object to a Secret
+   * @param jsonSecret JSON object
    * @return instance of a Secret
    * @throws JSONException
    */
-  public static Secret fromJSONString(String json) throws JSONException {
+  public static Secret fromJSON(JSONObject jsonSecret) throws JSONException {
     Secret secret = new Secret();
-    JSONObject jsonSecret = new JSONObject(json);
-    secret.description = jsonSecret.getString("description");
-    secret.username = jsonSecret.getString("username");
-    secret.password = jsonSecret.getString("password");
-    secret.email = jsonSecret.getString("email");
-    secret.note = jsonSecret.getString("note");
-    secret.timestamp = jsonSecret.getLong("timestamp");
-    if (jsonSecret.has("log")) {
-      JSONArray jsonLog = jsonSecret.getJSONArray("log");
+    secret.description = jsonSecret.getString(SECRET_DESCRIPTION);
+    secret.username = jsonSecret.getString(SECRET_USERNAME);
+    secret.password = jsonSecret.getString(SECRET_PASSWORD);
+    secret.email = jsonSecret.getString(SECRET_EMAIL);
+    secret.note = jsonSecret.getString(SECRET_NOTE);
+    secret.timestamp = jsonSecret.getLong(SECRET_TIMESTAMP);
+    if (jsonSecret.has(SECRET_ACCESS_LOG)) {
+      JSONArray jsonLog = jsonSecret.getJSONArray(SECRET_ACCESS_LOG);
       ArrayList<LogEntry> log = new ArrayList<LogEntry>(jsonLog.length());
       for (int i = 0; i < jsonLog.length(); i++) {
-        log.add(LogEntry.getLogEntryFromJSONString(jsonLog.getString(i)));
+        log.add(LogEntry.fromJSON((JSONObject)jsonLog.get(i)));
       }
       secret.access_log = log;
     }
