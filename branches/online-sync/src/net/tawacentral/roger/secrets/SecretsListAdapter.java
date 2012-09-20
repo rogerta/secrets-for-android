@@ -278,7 +278,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     protected void publishResults(CharSequence prefix,
                                   FilterResults results) {
       // NOTE: this function is *always* called from the UI thread.
-      secrets.replaceContents((ArrayList<Secret>) results.values);
+      secrets = new SecretsCollection((ArrayList<Secret>) results.values);
       notifyDataSetChanged();
       activity.setTitle();
     }
