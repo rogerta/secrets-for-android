@@ -661,7 +661,7 @@ public class FileUtils {
     output.write(salt.length);
     output.write(salt);
     output.write(rounds);
-    output.write(SecretsCollection.putSecretsToEncryptedJSONStream(cipher, secrets));
+    output.write(secrets.toEncryptedJSONStream(cipher));
   	output.flush();
   }
   
@@ -695,7 +695,7 @@ public class FileUtils {
         buffer.write(data, 0, nRead);
       }
       buffer.flush();
-      return SecretsCollection.getSecretsFromEncryptedJSONStream(cipher,
+      return SecretsCollection.fromEncryptedJSONStream(cipher,
               buffer.toByteArray());
     } finally {
       try {
