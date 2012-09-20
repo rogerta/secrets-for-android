@@ -16,7 +16,7 @@ public class OnlineSyncAgent {
 	private Secret configSecret;
 	
 	/*
-	 * The response key is an randomly generated string that is provided to the
+	 * The response key is a randomly generated string that is provided to the
 	 * OSA as part of the sync request and must be returned in the response in
 	 * order for it to be accepted. The key is changed when the response is
 	 * received to ensure that any subsequent or unsolicited responses are
@@ -26,7 +26,7 @@ public class OnlineSyncAgent {
 	private String responseKey;
 
   /*
-   * available indicates if the agent is available. Agents are required to
+   * "available" indicates if that agent is available. Agents are required to
    * respond to a roll call broadcast every time the app is resumed. Previously
    * known agents that do not respond are marked as not available but remain
    * configured.
