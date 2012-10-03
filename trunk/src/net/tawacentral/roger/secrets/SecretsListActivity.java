@@ -324,14 +324,15 @@ public class SecretsListActivity extends ListActivity {
           openOptionsMenu();
         }
       });
-    } else if (FileUtils.isRestoreFileTooOld(this)) {
+    } /* take out until I figure out why backups are not being done
+      else if (FileUtils.isRestoreFileTooOld(this)) {
       getListView().post(new Runnable() {
         @Override
         public void run() {
           showToast(getText(R.string.enable_online_backup));
         }
       });
-    }
+    }*/
   }
 
   @Override
