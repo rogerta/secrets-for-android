@@ -16,7 +16,6 @@ package net.tawacentral.roger.secrets;
 
 import net.tawacentral.roger.secrets.Secret.LogEntry;
 
-import android.app.KeyguardManager;
 import android.app.ListActivity;
 import android.content.Context;
 import android.os.Bundle;
