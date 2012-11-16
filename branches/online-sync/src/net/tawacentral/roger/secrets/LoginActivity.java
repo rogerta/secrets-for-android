@@ -16,6 +16,7 @@ package net.tawacentral.roger.secrets;
 
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.Collections;
 
 import javax.crypto.Cipher;
 
@@ -379,6 +380,7 @@ public class LoginActivity extends Activity implements TextWatcher {
       }
     }
 
+    Collections.sort(secrets);
     passwordString = null;
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
