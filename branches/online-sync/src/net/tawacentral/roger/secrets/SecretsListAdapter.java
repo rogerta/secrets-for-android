@@ -49,6 +49,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   // member functions, and we don't ever want the instance to change.
   private SecretsCollection secrets;
   private final SecretsCollection allSecrets;
+  private SecretsCollection deletedSecrets = new SecretsCollection();
 
   // These members are used to maintain the auto complete lists for the
   // username and email fields.  I need to use the tree set because I don't
@@ -65,7 +66,8 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   private SecretsFilter filter;
 
   /**
-   * Create a new secret list adapter for the UI from the given list.
+   * Create a new secret list adapter for the UI from the given list. Deleted
+   * secrets are removed and held in a separate collection.
    *
    * @param context Context of the application, used for getting resources.
    * @param secrets The list of user secrets.  This list cannot be null.
@@ -73,7 +75,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   SecretsListAdapter(SecretsListActivity activity, SecretsCollection secrets) {
     this.activity = activity;
     inflater = LayoutInflater.from(this.activity);
-    allSecrets = secrets;
+    allSecrets = removeDeleted(secrets);
     this.secrets = allSecrets;
 
     // Fill in the auto complete adapters with the initial data from the
@@ -106,6 +108,21 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
 
     usernameAdapter.setNotifyOnChange(true);
     emailAdapter.setNotifyOnChange(true);
+  }
+  
+  /* Separate the deleted secrets in the input collection and place in
+   * deletedSecrets. Return a list with no deletions.
+   */
+  private SecretsCollection removeDeleted(SecretsCollection includesDeleted) {
+    SecretsCollection allUndeleted = new SecretsCollection();
+    for (Secret secret : includesDeleted) {
+      if (secret.isDeleted()) {
+        deletedSecrets.add(secret);
+      } else {
+        allUndeleted.add(secret);
+      }
+    }
+    return allUndeleted;
   }
 
   @Override
@@ -202,7 +219,6 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   private class SecretsFilter extends Filter {
     @Override
     // TODO(rogerta): the clone() method does not support generics.
-    @SuppressWarnings("unchecked")
     protected FilterResults performFiltering(CharSequence prefix) {
       // NOTE: this function is *always* called from a background thread, and
       // not the UI thread.
@@ -211,7 +227,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
       FilterResults results = new FilterResults();
       String prefixString = null == prefix ? null
                                            : prefix.toString().toLowerCase();
-      ArrayList<Secret> secrets;
+      SecretsCollection secrets;
 
       // if the prefix starts with a dot, then this is interpreted as a full
       // text search.  This means that a given secret matches the "prefix",
@@ -238,7 +254,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         // members that we will access here are immutable.  If this ever changes
         // then the locking strategy will need to get smarter.
         synchronized (allSecrets) {
-          secrets = (ArrayList<Secret>) allSecrets.clone();
+          secrets = new SecretsCollection();
         }
 
         // We loop backwards because we may be removing elements from the array
@@ -311,7 +327,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   }
 
   /**
-   * Get the secrets backing this adapter.  Its expected that callers
+   * Get the secrets backing this adapter.  It's expected that callers
    * of this method will not modify the returned list.
    *
    * Any filter applied to this adapter will not affect the secrets returned.
@@ -321,9 +337,50 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   public SecretsCollection getAllSecrets() {
     return allSecrets;
   }
+  
+  /**
+   * Return a collection of all secrets including deleted ones.
+   * The collection is a shallow copy of all secrets - the caller should not
+   * modify them.
+   * @return secrets collection
+   */
+  public SecretsCollection getAllAndDeletedSecrets() {
+    int i,j;
+    Secret deletedSecret;
+    
+    if (deletedSecrets.size() == 0) {
+      return allSecrets;
+    }
+    if (allSecrets.size() == 0) {
+      return deletedSecrets;
+    }
+    // merge the two collections backwards so indicies yet to be processed are
+    // not disturbed.
+    SecretsCollection allAndDeletedSecrets = new SecretsCollection(allSecrets);
+    synchronized (allSecrets) {
+      j = deletedSecrets.size() - 1;
+      deletedSecret = deletedSecrets.get(j);
+      alldone:
+      for (i = allAndDeletedSecrets.size() - 1; i >= 0; --i) {
+        Secret s = allAndDeletedSecrets.get(i);
+        while(deletedSecret.compareTo(s) > 0 || i == 0) {
+          if (i == 0) {
+            allAndDeletedSecrets.add(i, deletedSecret);
+          } else {
+            allAndDeletedSecrets.add(i+1, deletedSecret);
+          }
+          if (--j > -1) {
+            deletedSecret = deletedSecrets.get(j);
+          } else break alldone;
+        }
+      }
+    }
+    return allAndDeletedSecrets;
+  }
 
   /** Remove the secret at the given position. */
   public Secret remove(int position) {
+    int i;
     // NOTE: i will not remove usernames and emails from the auto complete
     // adapters.  For one, it would be expensive, and two, I actually think
     // this behaviour is good.  The adapters will be reset the next time the
@@ -341,6 +398,17 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         position = allSecrets.indexOf(secret);
         allSecrets.remove(position);
       }
+      // add the deleted secret to the deleted secrets list, removing it
+      // first in case it was deleted previously.
+      deletedSecrets.remove(secret);
+      for (i = 0; i < deletedSecrets.size(); ++i) {
+        Secret s = deletedSecrets.get(i);
+        if (secret.compareTo(s) < 0)
+          break;
+      }
+      deletedSecrets.add(i, secret);
+      secret.setDeleted(true);
+      secret.setTimestamp(System.currentTimeMillis());
     }
 
     return secret;
@@ -363,7 +431,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     synchronized (allSecrets) {
       for (i = 0; i < allSecrets.size(); ++i) {
         Secret s = allSecrets.get(i);
-        if (secret.getDescription().compareToIgnoreCase(s.getDescription()) < 0)
+        if (secret.compareTo(s) < 0)
           break;
       }
       allSecrets.add(i, secret);
@@ -371,11 +439,14 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
       if (secrets != allSecrets) {
         for (i = 0; i < secrets.size(); ++i) {
           Secret s = secrets.get(i);
-          if (secret.getDescription().compareToIgnoreCase(s.getDescription()) < 0)
+          if (secret.compareTo(s) < 0)
             break;
         }
         secrets.add(i, secret);
       }
+      
+      // in case a secret of the same name has been previously removed
+      deletedSecrets.remove(secret);
     }
 
     // Add the username and email to the auto complete adapters.
@@ -390,6 +461,27 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     }
 
     return i;
+  }
+  
+  /**
+   * Used by sync agent for updating secrets list(s).
+   * 
+   * Adds, updates or deletes secrets 
+   * 
+   * @param changedSecrets secrets that are new or updated
+   */
+  public void syncSecrets(SecretsCollection changedSecrets) {
+    if (changedSecrets != null) {
+      synchronized (allSecrets) {
+        allSecrets.syncSecrets(changedSecrets);
+        allSecrets.setLastSyncTimestamp(System.currentTimeMillis());
+        if (secrets != allSecrets) {
+          secrets.syncSecrets(changedSecrets);
+        }
+        deletedSecrets.clear();
+      }
+      notifyDataSetInvalidated();
+    }
   }
 
   /** Gets the auto complete adapter used for completing usernames. */
