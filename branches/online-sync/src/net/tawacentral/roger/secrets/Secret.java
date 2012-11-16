@@ -34,7 +34,7 @@ import org.json.JSONObject;
  */
 
 @SuppressWarnings("javadoc")
-public class Secret implements Serializable {
+public class Secret implements Comparable<Secret>, Serializable {
   private static final long serialVersionUID = -116450416616138469L;
   private static final int THRESHOLD_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
@@ -47,6 +47,7 @@ public class Secret implements Serializable {
   private static final String SECRET_NOTE = "note";
   private static final String SECRET_ACCESS_LOG = "log";
   private static final String SECRET_TIMESTAMP = "timestamp";
+  private static final String SECRET_DELETED = "deleted";
 
   // Secret fields
   private String description;
@@ -58,6 +59,9 @@ public class Secret implements Serializable {
   
   /* creation or modification timestamp */
   private long timestamp = System.currentTimeMillis();
+  
+  /* soft deletion indicator */
+  private boolean deleted;
 
   /**
    * An immutable class that represents one entry in the access log.  Each
@@ -285,6 +289,20 @@ public class Secret implements Serializable {
 	}
 	
 	/**
+   * @return the deleted
+   */
+  public boolean isDeleted() {
+    return deleted;
+  }
+
+  /**
+   * @param deleted the deleted to set
+   */
+  public void setDeleted(boolean deleted) {
+    this.deleted = deleted;
+  }
+
+  /**
 	 * Update this secret from another
 	 * @param from source secret
 	 * @param reason Log entry value
@@ -314,6 +332,7 @@ public class Secret implements Serializable {
     jsonSecret.put(SECRET_EMAIL, email);
     jsonSecret.put(SECRET_NOTE, note);
     jsonSecret.put(SECRET_TIMESTAMP, timestamp);
+    jsonSecret.put(SECRET_DELETED, deleted);
 
     JSONArray jsonLog = new JSONArray();
     for (LogEntry logEntry : access_log) {
@@ -338,6 +357,9 @@ public class Secret implements Serializable {
     secret.email = jsonSecret.getString(SECRET_EMAIL);
     secret.note = jsonSecret.getString(SECRET_NOTE);
     secret.timestamp = jsonSecret.getLong(SECRET_TIMESTAMP);
+    if (jsonSecret.has(SECRET_DELETED)) {
+      secret.deleted = jsonSecret.getBoolean(SECRET_DELETED);
+    }
     if (jsonSecret.has(SECRET_ACCESS_LOG)) {
       JSONArray jsonLog = jsonSecret.getJSONArray(SECRET_ACCESS_LOG);
       ArrayList<LogEntry> log = new ArrayList<LogEntry>(jsonLog.length());
@@ -357,6 +379,26 @@ public class Secret implements Serializable {
     sb.append(",e=").append(email);
 //    sb.append(",n=").append(note);
     return sb.toString();
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof Secret) {
+      return ((Secret)o).description.equalsIgnoreCase(description);
+    } else {
+      return false;
+    }
+  }
+
+  /* (non-Javadoc)
+   * @see java.lang.Comparable#compareTo(java.lang.Object)
+   */
+  @Override
+  public int compareTo(Secret anotherSecret) {
+    return description.compareToIgnoreCase(anotherSecret.description);
   }
 
   /**
