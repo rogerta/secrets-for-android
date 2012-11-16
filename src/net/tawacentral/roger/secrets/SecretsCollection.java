@@ -40,6 +40,16 @@ public class SecretsCollection extends ArrayList<Secret> {
   }
 
   /**
+   * Construct from another SecretsCollection
+   * 
+   * @param collection
+   */
+  public SecretsCollection(SecretsCollection collection) {
+    super(collection);
+    lastSyncTimestamp = collection.lastSyncTimestamp;
+  }
+
+  /**
    * Construct from another collection
    * 
    * @param collection
@@ -64,37 +74,38 @@ public class SecretsCollection extends ArrayList<Secret> {
   }
 
   /**
-   * Add or update the current secrets from the given collection.
+   * Add, update or delete the current secrets in the given collection.
    * 
    * Assumes that the collection sort sequences are the same. 
    * 
-   * @param newSecrets
-   *          - added or changed secrets
+   * @param changedSecrets
+   *          - added, changed or deleted secrets
    */
-  public void syncSecrets(SecretsCollection newSecrets) {
-    for (Secret newSecret : newSecrets) {
+  public void syncSecrets(SecretsCollection changedSecrets) {
+    for (Secret changedSecret : changedSecrets) {
       boolean done = false;
       for (int i = 0; i < size(); i++) {
         Secret existingSecret = get(i);
-        int compare = newSecret.getDescription().compareTo(
-                existingSecret.getDescription());
-        /*
-         * TODO(ctw) Roger says the following block is unnecessary. I think this
-         * needs to be looked at further - it questions the ordering of
-         * the collection.
-         */
-        if (compare < 0) {
-          add(i, newSecret);
+        int compare = changedSecret.compareTo(existingSecret);
+        if (compare < 0 && !changedSecret.isDeleted()) {
+          add(i, changedSecret);
           done = true;
+          Log.d(LOG_TAG, "syncSecrets: added '" + changedSecret.getDescription() + "'");
           break;
         } else if (compare == 0) {
-          existingSecret.update(newSecret, LogEntry.SYNCED);
+          if (changedSecret.isDeleted()) {
+            remove(existingSecret);
+            Log.d(LOG_TAG, "syncSecrets: removed '" + changedSecret.getDescription() + "'");
+          } else {
+            existingSecret.update(changedSecret, LogEntry.SYNCED);
+            Log.d(LOG_TAG, "syncSecrets: updated '" + changedSecret.getDescription() + "'");
+          }
           done = true;
           break;
         }
       }
-      if (!done) {
-        add(newSecret);
+      if (!done && !changedSecret.isDeleted()) {
+        add(changedSecret);
       }
     }
   }
@@ -198,6 +209,19 @@ public class SecretsCollection extends ArrayList<Secret> {
       Log.e(LOG_TAG, "fromEncryptedJSONStream", e);
       throw new IOException("fromEncryptedJSONStream failed: " + e.getMessage());
     }
+  }
+
+  /* (non-Javadoc)
+   * ArrayList.clone() produces a shallow copy of the collection.
+   * Here we just add the lastSyncTimestamp field.
+   * Logically equivalent to the copy constructor
+   * @see java.util.ArrayList#clone()
+   */
+  @Override
+  public SecretsCollection clone() {
+    SecretsCollection newCollection = (SecretsCollection) super.clone();
+    newCollection.lastSyncTimestamp = lastSyncTimestamp;
+    return newCollection;
   }
 
 }
