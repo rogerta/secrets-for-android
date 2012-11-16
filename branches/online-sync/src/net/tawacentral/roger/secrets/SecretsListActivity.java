@@ -627,16 +627,13 @@ public class SecretsListActivity extends ListActivity {
   /**
    * Callback from OSA listener with new/updated secrets.
    * 
-   * @param newSecrets
+   * @param changedSecrets
    */
-  public synchronized void syncSecrets(SecretsCollection newSecrets) {
+  public void syncSecrets(SecretsCollection changedSecrets) {
     Log.d(LOG_TAG, "SecretsListActivity.syncSecrets, secrets: "
-            + (newSecrets == null ? newSecrets : newSecrets.size()));
-    if (newSecrets != null) {
-      SecretsCollection allSecrets = secretsList.getAllSecrets();
-      allSecrets.syncSecrets(newSecrets);
-      allSecrets.setLastSyncTimestamp(System.currentTimeMillis());
-      secretsList.notifyDataSetInvalidated();
+            + (changedSecrets == null ? changedSecrets : changedSecrets.size()));
+    if (changedSecrets != null) {
+      secretsList.syncSecrets(changedSecrets);
       setTitle();
       showToast(R.string.sync_succeeded);
     } else {
@@ -869,7 +866,8 @@ public class SecretsListActivity extends ListActivity {
             } else {
               // send secrets to the OSA
               if (!OnlineAgentManager.sendSecrets(selectedOSA,
-                      secretsList.getAllSecrets(), SecretsListActivity.this)) {
+                      secretsList.getAllAndDeletedSecrets(),
+                      SecretsListActivity.this)) {
                 showToast(R.string.error_osa_secrets);
               }
             }
@@ -1023,7 +1021,7 @@ public class SecretsListActivity extends ListActivity {
     // unless I use a notification (need to look into that). Also, because
     // the process hangs around, this thread should continue running until
     // completion even if the user switches to another task/application.
-    SecretsCollection secrets = secretsList.getAllSecrets();
+    SecretsCollection secrets = secretsList.getAllAndDeletedSecrets();
     Cipher cipher = SecurityUtils.getEncryptionCipher();
     byte[] salt = SecurityUtils.getSalt();
     int rounds = SecurityUtils.getRounds();
