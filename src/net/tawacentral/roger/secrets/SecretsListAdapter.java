@@ -380,7 +380,6 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
 
   /** Remove the secret at the given position. */
   public Secret remove(int position) {
-    int i;
     // NOTE: i will not remove usernames and emails from the auto complete
     // adapters.  For one, it would be expensive, and two, I actually think
     // this behaviour is good.  The adapters will be reset the next time the
@@ -398,6 +397,18 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         position = allSecrets.indexOf(secret);
         allSecrets.remove(position);
       }
+    }
+
+    return secret;
+  }
+  
+  /** Remove the secret at the given position and then delete the secret
+   *  from the secrets collection */
+  public Secret delete(int position) {
+    int i;
+    Secret secret;
+    synchronized (allSecrets) {
+      secret = remove(position);
       // add the deleted secret to the deleted secrets list, removing it
       // first in case it was deleted previously.
       deletedSecrets.remove(secret);
