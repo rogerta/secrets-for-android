@@ -1166,7 +1166,7 @@ public class SecretsListActivity extends ListActivity {
    */
   public void deleteSecret(int position) {
     if (AdapterView.INVALID_POSITION != position) {
-      secretsList.remove(position);
+      secretsList.delete(position);
       secretsList.notifyDataSetChanged();
 
       // TODO(rogerta): is this is really a performance issue to save here?
