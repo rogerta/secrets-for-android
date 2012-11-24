@@ -13,7 +13,6 @@ import net.tawacentral.roger.secrets.OnlineAgentManager.SecretsReceivedListener;
 public class OnlineSyncAgent {
 	private String displayName;
 	private String classId;
-	private Secret configSecret;
 	
 	/*
 	 * The response key is a randomly generated string that is provided to the
@@ -59,22 +58,6 @@ public class OnlineSyncAgent {
 	 */
 	public String getClassId() {
 		return classId;
-	}
-
-	/**
-	 * Get the secret used to configure this agent
-	 * @return the configSecret or null if none
-	 */
-	public Secret getConfigSecret() {
-		return configSecret;
-	}
-
-	/**
-	 * Set the secret used to configure this agent
-	 * @param configSecret the configSecret to set
-	 */
-	public void setConfigSecret(Secret configSecret) {
-		this.configSecret = configSecret;
 	}
 
 	/**

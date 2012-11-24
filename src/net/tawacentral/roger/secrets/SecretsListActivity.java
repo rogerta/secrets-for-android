@@ -19,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -81,7 +82,7 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_CHANGE_PASSWORD = 4;
   private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
   private static final int DIALOG_SYNC = 6;
-  private static final int DIALOG_CONFIG_SYNC = 7;
+//  private static final int DIALOG_CONFIG_SYNC = 7;
 
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
@@ -110,7 +111,6 @@ public class SecretsListActivity extends ListActivity {
   private File importedFile; // File that was imported
   private boolean isConfigChange; // being destroyed for config change?
   private String restorePoint; // That file that should be restored from
-  private boolean isConfigOSA; // is the user selecing a secret for an OSA?
   private OnlineSyncAgent selectedOSA; // currently selected agent
 
   /** Called when the activity is first created. */
@@ -243,26 +243,15 @@ public class SecretsListActivity extends ListActivity {
   private void onItemClicked(int position) {
     if (AdapterView.INVALID_POSITION != position) {
       Secret secret = getSecret(position);
-      // Log.d(LOG_TAG, "SecretsListActivity.onItemClicked isConfigOSA=" +
-      //           isConfigOSA);
-      if (isConfigOSA) {
-        isConfigOSA = false;
-        selectedOSA.setConfigSecret(secret);
-        String template = getText(R.string.osa_configured).toString();
-        String msg = MessageFormat.format(template,
-                selectedOSA.getDisplayName(), secret.getDescription());
-        showToast(msg);
-      } else {
-        CharSequence password = secret.getPassword(false);
-        if (password.length() == 0)
-          password = getText(R.string.no_password);
-        showToast(password);
-        // TODO(rogerta): to reliably record "view" access, we would want
-        // to checkpoint the secrets and save them here. But doing so
-        // causes unacceptable delays is displaying the toast.
-        // FileUtils.saveSecrets(SecretsListActivity.this,
-        // secretsList_.getAllSecrets());
-      }
+      CharSequence password = secret.getPassword(false);
+      if (password.length() == 0)
+        password = getText(R.string.no_password);
+      showToast(password);
+      // TODO(rogerta): to reliably record "view" access, we would want
+      // to checkpoint the secrets and save them here. But doing so
+      // causes unacceptable delays is displaying the toast.
+      // FileUtils.saveSecrets(SecretsListActivity.this,
+      // secretsList_.getAllSecrets());
     }
   }
 
@@ -435,7 +424,7 @@ public class SecretsListActivity extends ListActivity {
       showDialog(DIALOG_CONFIRM_RESTORE);
       break;
     case R.id.list_sync:
-      showDialog(DIALOG_SYNC);
+      syncRequested();
       break;
     case R.id.list_export:
       exportSecrets();
@@ -624,20 +613,43 @@ public class SecretsListActivity extends ListActivity {
     }
   }
   
+  private void syncRequested() {
+    Collection<OnlineSyncAgent> agents = OnlineAgentManager.getAvailableAgents();
+    if (agents.size() > 1) {
+      // show selection dialog if more than one agent available
+      showDialog(DIALOG_SYNC);
+    } else if (agents.size() == 1) {
+      // send secrets to the one available OSA
+      if (!OnlineAgentManager.sendSecrets(agents.iterator().next(),
+              secretsList.getAllAndDeletedSecrets(),
+              SecretsListActivity.this)) {
+        showToast(R.string.error_osa_secrets);
+      }
+    } else {
+      // no agents available
+      showToast(R.string.no_osa_installed);
+    }
+  }
+  
   /**
    * Callback from OSA listener with new/updated secrets.
    * 
    * @param changedSecrets
+   * @param agentName 
    */
-  public void syncSecrets(SecretsCollection changedSecrets) {
+  public void syncSecrets(SecretsCollection changedSecrets, String agentName) {
     Log.d(LOG_TAG, "SecretsListActivity.syncSecrets, secrets: "
             + (changedSecrets == null ? changedSecrets : changedSecrets.size()));
     if (changedSecrets != null) {
       secretsList.syncSecrets(changedSecrets);
       setTitle();
-      showToast(R.string.sync_succeeded);
+      String template = getText(R.string.sync_succeeded).toString();
+      String msg = MessageFormat.format(template, agentName);
+      showToast(msg);
     } else {
-      showToast(R.string.sync_failed);
+      String template = getText(R.string.sync_failed).toString();
+      String msg = MessageFormat.format(template, agentName);
+      showToast(msg);
     }
   }
 
@@ -844,9 +856,8 @@ public class SecretsListActivity extends ListActivity {
               .setPositiveButton(R.string.list_menu_restore, listener).create();
       break;
     }
-    case DIALOG_SYNC:
-    case DIALOG_CONFIG_SYNC: {
-      Log.d(LOG_TAG, "Showing sync/config dialog");
+    case DIALOG_SYNC: {
+      Log.d(LOG_TAG, "Showing sync selection dialog");
       DialogInterface.OnClickListener itemListener = 
               new DialogInterface.OnClickListener() {
 
@@ -857,33 +868,21 @@ public class SecretsListActivity extends ListActivity {
           Log.d(LOG_TAG, "Selected app: " + selectedOSA.getDisplayName());
           dialog.dismiss();
 
-          if (id == DIALOG_CONFIG_SYNC) {
-            showToast(R.string.osa_config_instructions);
-            isConfigOSA = true;
-          } else {
-            if (selectedOSA.getClassId().equals("configure")) {
-              showDialog(DIALOG_CONFIG_SYNC);
-            } else {
-              // send secrets to the OSA
-              if (!OnlineAgentManager.sendSecrets(selectedOSA,
-                      secretsList.getAllAndDeletedSecrets(),
-                      SecretsListActivity.this)) {
-                showToast(R.string.error_osa_secrets);
-              }
-            }
+          // send secrets to the OSA
+          if (!OnlineAgentManager.sendSecrets(selectedOSA,
+                  secretsList.getAllAndDeletedSecrets(),
+                  SecretsListActivity.this)) {
+            showToast(R.string.error_osa_secrets);
           }
         }
       };
 
-      boolean adapterConfigMode = (id == DIALOG_CONFIG_SYNC);
       OnlineAgentAdapter adapter = new OnlineAgentAdapter(
               SecretsListActivity.this,
-              android.R.layout.select_dialog_singlechoice, android.R.id.text1,
-              adapterConfigMode);
-      adapter.updateAppList(secretsList);
+              android.R.layout.select_dialog_singlechoice, android.R.id.text1);
+      adapter.updateAppList();
       adapter.notifyDataSetChanged();
-      String title = (id == DIALOG_SYNC ? getString(R.string.dialog_sync_title)
-              : getString(R.string.dialog_configure_title));
+      String title = getString(R.string.dialog_sync_title);
       dialog = new AlertDialog.Builder(this).setTitle(title)
               .setIcon(android.R.drawable.ic_dialog_alert)
               .setSingleChoiceItems(adapter, 0, itemListener).create();
@@ -943,12 +942,11 @@ public class SecretsListActivity extends ListActivity {
       password1.setText("");
       break;
     }
-    case DIALOG_SYNC:
-    case DIALOG_CONFIG_SYNC: {
+    case DIALOG_SYNC: {
       AlertDialog alert = (AlertDialog) dialog;
       OnlineAgentAdapter adapter = (OnlineAgentAdapter) alert.getListView()
               .getAdapter();
-      adapter.updateAppList(secretsList);
+      adapter.updateAppList();
       break;
     }
     }

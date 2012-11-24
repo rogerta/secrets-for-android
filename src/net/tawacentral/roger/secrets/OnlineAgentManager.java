@@ -34,10 +34,6 @@ public class OnlineAgentManager extends BroadcastReceiver {
   private static final String DISPLAY_NAME = "displayName";
   private static final String RESPONSE_KEY = "responseKey";
   private static final String SECRETS_ID = "secrets";
-  private static final String USERNAME_ID = "username";
-  private static final String EMAIL_ID = "email";
-  private static final String PASSWORD_ID = "password";
-  private static final String NOTE_ID = "note";
   
   private static Map<String,OnlineSyncAgent> INSTALLED_AGENTS
                                     = new HashMap<String,OnlineSyncAgent>();
@@ -154,26 +150,26 @@ public class OnlineAgentManager extends BroadcastReceiver {
   }
 
   /**
-   * Determines which agents are configured.
+   * Get available agents
    * 
-   * @return collection of configured OSAs
+   * @return collection of available agents
    */
-  public static Collection<OnlineSyncAgent> getConfiguredAgents() {
-    /* first count the configured agents */
-    int configured = 0;
+  public static Collection<OnlineSyncAgent> getAvailableAgents() {
+    /* first count the available agents */
+    int available = 0;
     for (OnlineSyncAgent agent : INSTALLED_AGENTS.values()) {
-      if (agent.getConfigSecret() != null && agent.isAvailable()) {
-        configured++;
+      if (agent.isAvailable()) {
+        available++;
       }
     }
-    List<OnlineSyncAgent> configuredAgents = new ArrayList<OnlineSyncAgent>(
-            configured);
+    List<OnlineSyncAgent> availableAgents = new ArrayList<OnlineSyncAgent>(
+            available);
     for (OnlineSyncAgent agent : INSTALLED_AGENTS.values()) {
-      if (agent.getConfigSecret() != null && agent.isAvailable()) {
-        configuredAgents.add(agent);
+      if ( agent.isAvailable()) {
+        availableAgents.add(agent);
       }
     }
-    return configuredAgents;
+    return availableAgents;
   }
 
   /**
@@ -195,9 +191,10 @@ public class OnlineAgentManager extends BroadcastReceiver {
   }
 
   /**
-   * Sends secrets to the specified OSA, this will also send the data from the
-   * configured secret. This returns true if secrets are successfully sent, 
-   * but makes no guarantees that the secrets were received.
+   * Sends secrets to the specified OSA. 
+   * 
+   * Returns true if secrets are successfully sent, but makes no guarantees
+   * that the secrets were received.
    * 
    * A one-time key is sent to the OSA and must be returned in the reply for
    * it to be consided valid.
@@ -210,31 +207,21 @@ public class OnlineAgentManager extends BroadcastReceiver {
   public static boolean sendSecrets(OnlineSyncAgent agent,
                                     SecretsCollection secrets, 
                                     SecretsListActivity activity) {
-    agent.setSecretsReceivedlistener(new SecretsReceivedListener(activity));
+    agent.setSecretsReceivedlistener(new SecretsReceivedListener(activity,
+            agent.getDisplayName()));
     agent.generateResponseKey();
-    Secret secret = agent.getConfigSecret();
-    // secret == null should not happen, because it would not be considered
-    // configured
-    if (secret != null) {
-      try {
-        Intent secretsIntent = new Intent(agent.getClassId());
-        secretsIntent.putExtra(RESPONSE_KEY, agent.getResponseKey());
-        String secretString = secrets.toJSON().toString();
-        secretsIntent.putExtra(SECRETS_ID, secretString);
+    try {
+      Intent secretsIntent = new Intent(agent.getClassId());
+      secretsIntent.putExtra(RESPONSE_KEY, agent.getResponseKey());
+      String secretString = secrets.toJSON().toString();
+      secretsIntent.putExtra(SECRETS_ID, secretString);
 
-        /* pass values from the configured secret */
-        secretsIntent.putExtra(USERNAME_ID, secret.getUsername());
-        secretsIntent.putExtra(EMAIL_ID, secret.getEmail());
-        secretsIntent.putExtra(PASSWORD_ID, secret.getPassword(false));
-        secretsIntent.putExtra(NOTE_ID, secret.getNote());
-
-        activity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
-        Log.d(LOG_TAG, "Secrets sent to OSA " + agent.getClassId());
-        return true;
-      } catch (Exception e) {
-        Log.e(LOG_TAG, "Error sending secrets to OSA", e);
-        // ignore the exception, false will be returned below
-      }
+      activity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
+      Log.d(LOG_TAG, "Secrets sent to OSA " + agent.getClassId());
+      return true;
+    } catch (Exception e) {
+      Log.e(LOG_TAG, "Error sending secrets to OSA", e);
+      // ignore the exception, false will be returned below
     }
     return false;
   }
@@ -246,9 +233,12 @@ public class OnlineAgentManager extends BroadcastReceiver {
   public static class SecretsReceivedListener implements Runnable {
     protected SecretsCollection secrets;
     private SecretsListActivity activity;
+    private String agentName;
 
-    protected SecretsReceivedListener(SecretsListActivity activity) {
+    protected SecretsReceivedListener(SecretsListActivity activity,
+            String agentName) {
       this.activity = activity;
+      this.agentName = agentName;
     }
 
     /**
@@ -266,12 +256,12 @@ public class OnlineAgentManager extends BroadcastReceiver {
     public void setSecrets(SecretsCollection secrets) {
       this.secrets = secrets;
     }
-    
+
     /**
      * Call back so the secrets are processed in the context of the activity.
      */
     public void run() {
-      activity.syncSecrets(secrets);
+      activity.syncSecrets(secrets, agentName);
     }
   }
 }
