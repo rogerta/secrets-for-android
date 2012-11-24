@@ -37,10 +37,10 @@ limitations under the License.
 
 <string name="backup_succeeded">Backup succeeded.</string>
 <string name="restore_succeeded">Restore succeeded.</string>
-<string name="sync_succeeded">Sync succeeded.</string>
+<string name="sync_succeeded">Sync with {0} succeeded.</string>
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
 <string name="restore_file_too_old">Time to backup your secrets?</string>
-<string name="sync_failed">Uh oh.  Unable to sync your secrets.  Check with the Sync agent app for more details.</string>
+<string name="sync_failed">Uh oh. Sync with {0} failed.  Check with the Sync agent app for more details.</string>
 
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
 <string name="export_failed">Uh oh.  Unable to export your secrets.</string>
@@ -116,6 +116,7 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="list_menu_restore">Restore</string>
 <string name="list_menu_import">Import</string>
 <string name="list_menu_export">Export</string>
+<string name="list_menu_sync">Sync</string>
 <string name="list_menu_copy_username_to_clipoboard">Copy Id</string>
 <string name="list_menu_copy_password_to_clipoboard">Copy PIN</string>
 <string name="list_menu_generate_password">Generate</string>
@@ -127,14 +128,10 @@ Are you sure you want to delete \'\'{0}\'\'?
 <!-- String assocated with online agent support -->
 <string name="permission_osa_label">Uses unencrypted Secrets</string>
 <string name="permission_osa_desc">Allows an application to read and write all your secrets.
-    A malicious application could send your secrets to anyone or post then online for everyone to see.</string>
-<string name="osa_config_instructions">Please select the secret to use for this Online Sync Agent.</string>
-<string name="list_osa_configure">Configure Online Sync Agent</string>
-<string name="list_menu_sync">Sync</string>
-<string name="osa_configured">{0} configured to use {1}</string>
+    A malicious application could send your secrets to anyone or post them online for everyone to see.</string>
 <string name="osa_sent">Secrets sent to {0} application</string>
 <string name="dialog_sync_title">Sync with:</string>
-<string name="dialog_configure_title">Select agent to configure:</string>
+<string name="no_osa_installed">Sorry, there are no sync agents installed.</string>
 <string name="error_osa_secrets">Unable to sync your secrets.</string>
 
 <!-- the following string are used to format a string that indicate when a
