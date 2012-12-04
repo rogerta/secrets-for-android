@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -207,5 +208,23 @@ public class OS {
     }
 
     return false;
+  }
+
+  public static SharedPreferences getSharedPreferences(Object ba,
+                                                       String name,
+                                                       int mode) {
+    if (!isAndroid22())
+      return null;
+
+    try {
+      Class<?> clazz = Class.forName("android.app.backup.BackupAgentHelper");
+      Method m = clazz.getMethod("getSharedPreferences", String.class,
+                                 int.class);
+      SharedPreferences prefs = (SharedPreferences) m.invoke(ba, name, mode);
+      return prefs;
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "getSharedPreferences", ex);
+      return null;
+    }
   }
 }

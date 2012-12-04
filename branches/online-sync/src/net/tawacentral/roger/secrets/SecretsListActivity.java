@@ -26,7 +26,6 @@ import javax.crypto.Cipher;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.KeyguardManager;
 import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.DialogInterface;
@@ -82,8 +81,9 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_CHANGE_PASSWORD = 4;
   private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
   private static final int DIALOG_SYNC = 6;
-//  private static final int DIALOG_CONFIG_SYNC = 7;
 
+  private static final int RC_ACCESS_LOG = 1;
+  
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
   private static final String EMPTY_STRING = "";
@@ -112,6 +112,11 @@ public class SecretsListActivity extends ListActivity {
   private boolean isConfigChange; // being destroyed for config change?
   private String restorePoint; // That file that should be restored from
   private OnlineSyncAgent selectedOSA; // currently selected agent
+  // This activity will only allow it self to be resumed in specific
+  // circumstances, so that leaving the application will force the user to
+  // re-enter the master password.  Older versions used to check the state of
+  // the keyguard, but this check is no longer reliable with Android 4.1.
+  private boolean allowNextResume;  // Allow the next onResume()
 
   /** Called when the activity is first created. */
   @Override
@@ -119,13 +124,6 @@ public class SecretsListActivity extends ListActivity {
     Log.d(LOG_TAG, "SecretsListActivity.onCreate");
     super.onCreate(state);
     setContentView(R.layout.list);
-
-    // We should not get a search intent upon launch.
-    if (Intent.ACTION_SEARCH.equals(getIntent().getAction())) {
-      Log.e(LOG_TAG, "onCreate: not expecting a search intent");
-      finish();
-      return;
-    }
 
     // If for any reason we get here and there is no secrets list, then we
     // cannot continue. Finish the activity and return.
@@ -204,7 +202,8 @@ public class SecretsListActivity extends ListActivity {
     // fixed for device that do not have a scroll wheel, in which case the
     // we do not need to handle onItemClicked(). However, the API to check
     // if the device has a scroll where was only introduced in Android 2.3.
-    GestureDetector.SimpleOnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
+    GestureDetector.SimpleOnGestureListener listener =
+        new GestureDetector.SimpleOnGestureListener() {
       @Override
       public boolean onSingleTapConfirmed(MotionEvent e) {
         int position = getListView().pointToPosition((int) e.getX(),
@@ -238,6 +237,7 @@ public class SecretsListActivity extends ListActivity {
     });
 
     registerForContextMenu(getListView());
+    allowNextResume = true;
   }
 
   private void onItemClicked(int position) {
@@ -269,6 +269,7 @@ public class SecretsListActivity extends ListActivity {
 
     getListView().setFilterText(filter);
     getListView().requestFocus();
+    allowNextResume = true;
   }
 
   @Override
@@ -278,27 +279,6 @@ public class SecretsListActivity extends ListActivity {
       return true;
 
     return super.onSearchRequested();
-  }
-
-  /**
-   * Check to see if the key guard is enabled. If so, its means the device
-   * probably went to sleep due to inactivity. If this is the case, this
-   * activity is finished().
-   * 
-   * @return True if the activity is finished, false otherwise.
-   */
-  private boolean checkKeyguard() {
-    // If the key guard has been displayed, exit this activity. This returns
-    // us to the login page requiring the user to enter his password again
-    // before getting access again to his secrets.
-    KeyguardManager key_guard = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
-    boolean isInputRestricted = key_guard.inKeyguardRestrictedInputMode();
-    if (isInputRestricted) {
-      Log.d(LOG_TAG, "SecretsListActivity.checkKeyguard finishing");
-      finish();
-    }
-
-    return isInputRestricted;
   }
 
   /** Set the title for this activity. */
@@ -329,11 +309,16 @@ public class SecretsListActivity extends ListActivity {
     // send roll call for OSAs
     OnlineAgentManager.sendRollCallBroadcast(this);
 
-    // If checkKeyguard() returns true, then this activity has been finished.
-    // We don't want to execute any more in this function.
-    if (checkKeyguard())
+    // Don't allow this activity to continue if it has not been explicitly
+    // allowed.
+    if (!allowNextResume) {
+      Log.d(LOG_TAG, "onResume not allowed");
+      finish();
       return;
-
+    }
+    
+    allowNextResume = false;
+    
     // Show instruction toast auto popup options menu if there are no secrets
     // in the list. This check used to be done in the onCreate() method above,
     // that could occasionally cause a crash when changing layout from
@@ -348,15 +333,15 @@ public class SecretsListActivity extends ListActivity {
           openOptionsMenu();
         }
       });
-    } else if (FileUtils.isRestoreFileTooOld()) {
+    } /* take out until I figure out why backups are not being done
+      else if (FileUtils.isRestoreFileTooOld(this)) {
       getListView().post(new Runnable() {
         @Override
         public void run() {
-          showToast(getText(R.string.restore_file_too_old));
-          openOptionsMenu();
+          showToast(getText(R.string.enable_online_backup));
         }
       });
-    }
+    }*/
   }
 
   @Override
@@ -458,46 +443,60 @@ public class SecretsListActivity extends ListActivity {
   public boolean onContextItemSelected(MenuItem item) {
     boolean handled = false;
     switch (item.getItemId()) {
-    case R.id.list_edit:
-      SetEditViews(cmenuPosition);
-      animateToEditView();
-      break;
-    case R.id.list_delete:
-      if (AdapterView.INVALID_POSITION != cmenuPosition) {
-        showDialog(DIALOG_DELETE_SECRET);
+      case R.id.list_edit:
+        SetEditViews(cmenuPosition);
+        animateToEditView();
+        break;
+      case R.id.list_delete:
+        if (AdapterView.INVALID_POSITION != cmenuPosition) {
+          showDialog(DIALOG_DELETE_SECRET);
+        }
+        break;
+      case R.id.list_access: {
+        // TODO(rogerta): maybe just stuff the index into the intent instead
+        // of serializing the whole secret, it seems to be slow.
+        Secret secret = secretsList.getSecret(cmenuPosition);
+        Intent intent = new Intent(this, AccessLogActivity.class);
+        intent.putExtra(EXTRA_ACCESS_LOG, secret);
+        startActivityForResult(intent, RC_ACCESS_LOG);
+        allowNextResume = true;
+        break;
       }
-      break;
-    case R.id.list_access: {
-      // TODO(rogerta): maybe just stuff the index into the intent instead
-      // of serializing the whole secret, it seems to be slow.
-      Secret secret = secretsList.getSecret(cmenuPosition);
-      Intent intent = new Intent(this, AccessLogActivity.class);
-      intent.putExtra(EXTRA_ACCESS_LOG, secret);
-      startActivity(intent);
-      break;
-    }
-    case R.id.list_copy_password_to_clipboard:
-    case R.id.list_copy_username_to_clipboard: {
-      Secret secret = secretsList.getSecret(cmenuPosition);
-      ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-      int typeId;
-      if (item.getItemId() == R.id.list_copy_password_to_clipboard) {
-        cm.setText(secret.getPassword(false));
-        typeId = R.string.password_copied_to_clipboard;
-      } else {
-        cm.setText(secret.getUsername());
-        typeId = R.string.username_copied_to_clipboard;
+      case R.id.list_copy_password_to_clipboard:
+      case R.id.list_copy_username_to_clipboard: {
+        Secret secret = secretsList.getSecret(cmenuPosition);
+        ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        int typeId;
+        if (item.getItemId() == R.id.list_copy_password_to_clipboard) {
+          cm.setText(secret.getPassword(false));
+          typeId = R.string.password_copied_to_clipboard;
+        } else {
+          cm.setText(secret.getUsername());
+          typeId = R.string.username_copied_to_clipboard;
+        }
+        String template = getText(R.string.copied_to_clipboard).toString();
+        String typeOfCopy = getText(typeId).toString();
+        String msg = MessageFormat.format(template, secret.getDescription(),
+                typeOfCopy);
+        showToast(msg);
+        break;
       }
-      String template = getText(R.string.copied_to_clipboard).toString();
-      String typeOfCopy = getText(typeId).toString();
-      String msg = MessageFormat.format(template, secret.getDescription(),
-              typeOfCopy);
-      showToast(msg);
-      break;
-    }
     }
 
     return handled;
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode,
+                                  int resultCode,
+                                  Intent data) {
+    if (requestCode == RC_ACCESS_LOG) {
+      if (resultCode != RESULT_OK)
+        finish();
+    } else {
+      // This is an error, abort.
+      finish();
+    }
   }
 
   /** Import from a CSV file on the SD card. */

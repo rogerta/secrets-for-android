@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
    the androidmanifest.xml file -->
-<string name="copyright">Versão 2.1 &#169; 2011 Google Inc.</string>
+<string name="copyright">Versão 2.2.1 &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Oopa! Senha Incorreta, por favor tente novamente.</string>
 <string name="no_password">&lt; sem senha &gt;</string>
@@ -35,7 +35,7 @@ limitations under the License.
 <string name="backup_succeeded">Backup bem sucedido.</string>
 <string name="restore_succeeded">Restauração bem sucedida.</string>
 <string name="restore_failed">Oh oh. Impossível restaurar seus segredos. Certifique-se que sua senha é a mesma usada para criar o backup.</string>
-<string name="restore_file_too_old">Hora de fazer um backup dos seus segredos?</string>
+<string name="enable_online_backup">Ativar backup online para guarda segura seus segredos.</string>
 
 <string name="export_succeeded">Arquivo exportado para o cartão SD com sucesso.\n\nCUIDADO: O arquivo exportado não é protegido por senha!</string>
 <string name="export_failed">Oh oh. Impossível exportar seus segredos.</string>
