@@ -28,7 +28,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 2.1 &#169; 2011 Google Inc.</string>
+<string name="copyright">Version 2.2.1 &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="no_password">&lt; No PIN &gt;</string>
@@ -39,7 +39,7 @@ limitations under the License.
 <string name="restore_succeeded">Restore succeeded.</string>
 <string name="sync_succeeded">Sync with {0} succeeded.</string>
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
-<string name="restore_file_too_old">Time to backup your secrets?</string>
+<string name="enable_online_backup">Enable online backup to safe guard your secrets.</string>
 <string name="sync_failed">Uh oh. Sync with {0} failed.  Check with the Sync agent app for more details.</string>
 
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>

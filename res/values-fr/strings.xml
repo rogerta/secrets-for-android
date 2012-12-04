@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 2.1 &#169; 2011 Google Inc.</string>
+<string name="copyright">Version 2.2.1 &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Le mot de passe n\'est pas valid, veuillez ressayer.</string>
 <string name="no_password">&lt; Pas de NIP &gt;</string>
@@ -35,7 +35,7 @@ limitations under the License.
 <string name="backup_succeeded">Backup réussi.</string>
 <string name="restore_succeeded">Restauration réussie.</string>
 <string name="restore_failed">Impossible de restaurer vos secrets. Assurez-vous que votre mot de passe est le même que celui utilisé pour créer le backup.</string>
-<string name="restore_file_too_old">Est-il temps de créer un backup de vos secrets?</string>
+<string name="enable_online_backup">Activer la sauvegarde en ligne pour garder vos secrets en sûreté.</string>
 
 <string name="export_succeeded">L\'export a réussi.\n\nATTENTION: Le fichier exporté n\'est pas protégé par votre mot de passe!</string>
 <string name="export_failed">Impossible d\'exporter vos secrets.</string>

@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Versione 2.1 &#169; 2011 Google Inc.</string>
+<string name="copyright">Versione 2.2.1 &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Ops! La password non é valida, per favore riprova.</string>
 <string name="no_password">&lt; Nessun PIN &gt;</string>
@@ -35,7 +35,7 @@ limitations under the License.
 <string name="backup_succeeded">Copia di sicurezza riuscita.</string>
 <string name="restore_succeeded">Ripristino riuscito.</string>
 <string name="restore_failed">Ahi.  Non posso ripristinare i tuoi Secrets.  Assicurarsi che la password sia la stessa usata per creare la copia di sicurezza.</string>
-<string name="restore_file_too_old">E\' tempo di fare una copia di sicurezza dei tuoi Secrets?</string>
+<string name="enable_online_backup">Attiva copia di sicurezza online per salvaguardare i tuoi segreti.</string>
 
 <string name="export_succeeded">Esportazione del file sulla scheda SD riuscita.\n\nATTENZIONE: Il file salvato sulla scheda SD non é protetto con una password!</string>
 <string name="export_failed">Ahi.  Non ho potuto fare un\' esportazione dei tuoi Secrets.</string>

@@ -37,11 +37,14 @@ import javax.crypto.CipherInputStream;
 import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
 
 
+import android.annotation.SuppressLint;
 import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
+import android.app.backup.FullBackupDataOutput;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
@@ -51,11 +54,11 @@ import au.com.bytecode.opencsv.CSVWriter;
  * Helper class to manage reading and writing the secrets file.  The file
  * is encrypted using the ciphers created by the SecurityUtils helper
  * functions.
- * 
+ *
  * Methods that touch the main secrets files are thread safe.  This allows
  * the file to be saved in a background thread so that the UI is not blocked
  * in the most common use cases.  Note that stopping the app and restarting
- * it again may still cause the UI to block if the write take a long time. 
+ * it again may still cause the UI to block if the write take a long time.
  *
  * @author rogerta
  */
@@ -70,6 +73,15 @@ public class FileUtils {
     public byte[] salt;
     public int rounds;
   }
+
+  /** Name of the preferences file for backup. */
+  public static final String PREFS_FILE_NAME = "backup";
+
+  /**
+   * Name of last backup preference. Long value as number or millis as
+   * returned by System.currentTimeMillis().
+   */
+  public static final String PREF_LAST_BACKUP_DATE = "last_backup_date";
 
   /** Name of the secrets file. */
   public static final String SECRETS_FILE_NAME = "secrets";
@@ -132,53 +144,66 @@ public class FileUtils {
     return file.exists();
   }
 
-  /** Is the restore file too old? */
-  public static boolean isRestoreFileTooOld() {
-    File file = new File(SECRETS_FILE_NAME_SDCARD);
-    if (!file.exists())
-      return false;
-    
-    long lastModified = file.lastModified();
+  /**
+   * Is the restore file too old?  This function used to check the time stamp
+   * of the backup file in the SD card, but that should go away in favour of
+   * suggestion that users enable online backup.  Therefore this function now
+   * checks the time that the last online backup was performed.
+   *
+   * @param ctx A context to get the preferences from.
+   * @return True the last backup is too old.
+   */
+  public static boolean isRestoreFileTooOld(Context ctx) {
     long now = System.currentTimeMillis();
+    SharedPreferences prefs = OS.getSharedPreferences(ctx, PREFS_FILE_NAME, 0);
+    if (prefs == null)
+      return false;
+
+    long lastModified = prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
+    if (lastModified == 0) {
+      prefs.edit().putLong(PREF_LAST_BACKUP_DATE, now).commit();
+      lastModified = now;
+    }
+
     long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week.
-    
+
     return (now - lastModified) > oneWeeks;
   }
-  
+
   /** Is the restore point too old? */
   private static boolean isRestorePointTooOld(File file) {
     long lastModified = file.lastModified();
     long now = System.currentTimeMillis();
     long twoDays = 2 * 24 * 60 * 60 * 1000;  // 2 days.
-    
+
     return (now - lastModified) > twoDays;
   }
-  
+
   /**
    * Get all existing restore points, including the restore file on the SD card
    * if it exists.
-   * 
+   *
    * @param context Activity context in which the save is called.
    * @return A list of all possible restore points.
    */
   public static List<String> getRestorePoints(Context context) {
-    String[] filenames = context.fileList(); 
+    String[] filenames = context.fileList();
     ArrayList<String> list = new ArrayList<String>(filenames.length + 1);
     if (restoreFileExist())
       list.add(SECRETS_FILE_NAME_SDCARD);
-    
+
     for (String filename : filenames) {
       if (filename.startsWith(RP_PREFIX))
         list.add(filename);
     }
-    
+
     return list;
   }
-  
+
   /**
    * Cleanup any residual data files from a previous bad run, if any.  The
    * algorithm is as follows:
-   * 
+   *
    * - delete any file with "new" in the name.  These are possibly partial
    *   writes, so their contents is undefined.
    * - if no secrets file exists, rename the most recent auto restore point
@@ -234,12 +259,12 @@ public class FileUtils {
       while (oldCount > 10) {
         File oldest = null;
         int oldestIndex = -1;
-        
+
         for (int i = 0; i < filenames.length; ++i) {
           String filename = filenames[i];
           if (null == filename)
             continue;
-          
+
           File f = context.getFileStreamPath(filename);
           if (null == oldest || f.lastModified() < oldest.lastModified()) {
             oldest = f;
@@ -253,7 +278,7 @@ public class FileUtils {
           // recent.
           if (!FileUtils.isRestorePointTooOld(oldest))
             break;
-          
+
           oldest.delete();
           --oldCount;
           filenames[oldestIndex] = null;
@@ -295,7 +320,7 @@ public class FileUtils {
    * @param input The stream to read the salt and rounds from.
    * @return the salt and rounds
    *
-   * @throws IOException 
+   * @throws IOException
    */
   public static SaltAndRounds getSaltAndRounds(InputStream input)
       throws IOException {
@@ -338,7 +363,7 @@ public class FileUtils {
     Log.d(LOG_TAG, "FileUtils.saveSecrets");
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.saveSecrets: got lock");
-      
+
       // To be as safe as possible, for example to handle low space conditions,
       // we will save the secrets to a file using the following steps:
       //
@@ -436,7 +461,7 @@ public class FileUtils {
    * the old encryption cipher.  This function is called only for backward
    * compatibility purposes, when Secrets encounters an error trying to load
    * the secrets using the current encryption method.
-   * 
+   *
    * @param context Activity context in which the load is called.
    * @param cipher Decryption cipher for old encryption.
    * @return A list of loaded secrets.
@@ -453,7 +478,7 @@ public class FileUtils {
    * the old encryption cipher.  This function is called only for backward
    * compatibility purposes, when Secrets encounters an error trying to load
    * the secrets using the current encryption method.
-   * 
+   *
    * @param context Activity context in which the load is called.
    * @param cipher Decryption cipher for old encryption.
    * @param salt The salt to use when creating the encryption key.
@@ -520,7 +545,7 @@ public class FileUtils {
 
   /**
    * Opens the secrets file using the password retrieved from the user.
-   * 
+   *
    * @param context Activity context in which the load is called.
    * @return A list of loaded secrets.
    */
@@ -545,7 +570,7 @@ public class FileUtils {
       } finally {
         try {if (null != input) input.close();} catch (IOException ex) {}
       }
-  
+
       Log.d(LOG_TAG, "FileUtils.loadSecrets: done");
       return secrets;
     }
@@ -553,7 +578,7 @@ public class FileUtils {
 
   /**
    * Restore the secrets from the SD card using an old encryption cipher.
-   * 
+   *
    * @param context Activity context in which the load is called.
    * @param rp A restore point name.  This should be one of the strings
    *     returned by the getRestorePoints() method.
@@ -587,7 +612,7 @@ public class FileUtils {
 
   /**
    * Restore the secrets from the SD card using an old encryption cipher.
-   * 
+   *
    * @param context Activity context in which the load is called.
    * @param rp A restore point name.  This should be one of the strings
    *     returned by the getRestorePoints() method.
@@ -611,11 +636,11 @@ public class FileUtils {
   /**
    * Restore the secrets from the SD card using the password retrieved from
    * the user.
-   * 
+   *
    * @param context Activity context in which the load is called.
    * @param rp A restore point name.  This should be one of the strings
    *     returned by the getRestorePoints() method.
-   * @param info A CipherInfo structure describing the decryption cipher to use. 
+   * @param info A CipherInfo structure describing the decryption cipher to use.
    * @return the secrets collection
    */
   public static SecretsCollection restoreSecrets(Context context,
@@ -705,7 +730,7 @@ public class FileUtils {
       }
     }
   }
-  
+
   /**
    * Read the secrets from the given input stream, decrypting with the given
    * cipher. This uses the old object format and exists for compatibility.
@@ -714,7 +739,7 @@ public class FileUtils {
    * @param cipher The cipher to decrypt the secrets with.
    * @return The secrets read from the stream.
    * @throws IOException
-   * @throws ClassNotFoundException 
+   * @throws ClassNotFoundException
    */
   @SuppressWarnings("unchecked")
   private static SecretsCollection readSecretsV2(InputStream input,
@@ -734,7 +759,7 @@ public class FileUtils {
       try {if (null != oin) oin.close();} catch (IOException ex) {}
     }
   }
-  
+
   /** Deletes all secrets from the phone. 
    * @param context the current context
    * @return always true
@@ -747,7 +772,7 @@ public class FileUtils {
         context.deleteFile(filename);
       }
     }
-    
+
     return true;
   }
 
@@ -956,38 +981,67 @@ public class FileUtils {
   @SuppressWarnings("javadoc")
   static public class SecretsBackupAgent extends BackupAgentHelper {
     /** Tag for logging purposes. */
-    public static final String LOG_TAG = "Secrets";
-    
+    public static final String LOG_TAG_AGENT = "SecretsBackupAgent";
+
     /** Key in backup set for file data. */
     private static final String KEY ="file";
-    
+
     @Override
     public void onCreate() {
-      Log.d(LOG_TAG, "onCreate");
-      
+      Log.d(LOG_TAG_AGENT, "onCreate");
+
       FileBackupHelper helper = new FileBackupHelper(this,
           FileUtils.SECRETS_FILE_NAME);
       addHelper(KEY, helper);
     }
-    
+
     @Override
     public void onBackup(ParcelFileDescriptor oldState,
                          BackupDataOutput data,
                          ParcelFileDescriptor newState) throws IOException {
-      Log.d(LOG_TAG, "onBackup");
+      Log.d(LOG_TAG_AGENT, "onBackup");
       synchronized (lock) {
         super.onBackup(oldState, data, newState);
       }
+      SharedPreferences prefs = OS.getSharedPreferences(this, PREFS_FILE_NAME,
+                                                        0);
+      if (prefs != null) {
+        prefs.edit().putLong(PREF_LAST_BACKUP_DATE,
+                             System.currentTimeMillis()).apply();
+      }
     }
-    
+
     @Override
     public void onRestore(BackupDataInput data,
                           int appVersionCode,
-                          ParcelFileDescriptor newState)  throws IOException {    
-      Log.d(LOG_TAG, "onRestore");
+                          ParcelFileDescriptor newState)  throws IOException {
+      Log.d(LOG_TAG_AGENT, "onRestore");
       synchronized (lock) {
         super.onRestore(data, appVersionCode, newState);
       }
+    }
+
+    @Override
+    public void onDestroy() {
+      Log.d(LOG_TAG_AGENT, "onDestroy");
+      super.onDestroy();
+    }
+
+    @Override
+    public void onFullBackup(FullBackupDataOutput data) throws IOException {
+      Log.d(LOG_TAG_AGENT, "onFullBackup");
+      super.onFullBackup(data);
+    }
+
+    @Override
+    public void onRestoreFile(ParcelFileDescriptor data,
+        long size,
+        File destination,
+        int type,
+        long mode,
+        long mtime) throws IOException {
+      Log.d(LOG_TAG_AGENT, "onRestoreFile");
+      super.onRestoreFile(data, size, destination, type, mode, mtime);
     }
   }
 }
