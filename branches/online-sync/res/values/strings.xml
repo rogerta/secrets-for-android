@@ -28,7 +28,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 2.2.1 &#169; 2012 Google Inc.</string>
+<string name="copyright">Version 2.2.1-online-sync &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="no_password">&lt; No PIN &gt;</string>
@@ -126,7 +126,7 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_name_format">Access log for {0}</string>
 
 <!-- String assocated with online agent support -->
-<string name="permission_osa_label">Uses unencrypted Secrets</string>
+<string name="permission_osa_label">access unencrypted secrets</string>
 <string name="permission_osa_desc">Allows an application to read and write all your secrets.
     A malicious application could send your secrets to anyone or post them online for everyone to see.</string>
 <string name="osa_sent">Secrets sent to {0} application</string>
