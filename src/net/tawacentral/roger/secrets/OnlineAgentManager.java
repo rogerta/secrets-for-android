@@ -25,16 +25,18 @@ public class OnlineAgentManager extends BroadcastReceiver {
   private static final String LOG_TAG = "Secrets.OnlineAgentManager";
   
   private static final String SECRETS_PERMISSION = "net.tawacentral.roger.secrets.permission.SECRETS";
-  
+
+  // TODO: by convention, action names should be "<package-name>.ACTION_NAME". 
   private static final String ROLLCALL = "net.tawacentral.roger.secrets.OSARollCall";
   private static final String ROLLCALL_RESPONSE = "net.tawacentral.roger.secrets.OSARollCallResponse";
+  private static final String SYNC = "net.tawacentral.roger.secrets.SYNC";
   private static final String SYNC_RESPONSE = "net.tawacentral.roger.secrets.OSASyncResponse";
   
   private static final String CLASS_ID = "classId";
   private static final String DISPLAY_NAME = "displayName";
   private static final String RESPONSE_KEY = "responseKey";
   private static final String SECRETS_ID = "secrets";
-  
+
   private static Map<String,OnlineSyncAgent> INSTALLED_AGENTS
                                     = new HashMap<String,OnlineSyncAgent>();
 
@@ -60,7 +62,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
                 + displayName);
         if (!INSTALLED_AGENTS.containsKey(classId)) {
           INSTALLED_AGENTS.put(classId, new OnlineSyncAgent(displayName,
-                  classId));
+              classId));
         } else {
           // app already known - reclaim it
           INSTALLED_AGENTS.get(classId).setAvailable(true);
@@ -197,7 +199,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
    * that the secrets were received.
    * 
    * A one-time key is sent to the OSA and must be returned in the reply for
-   * it to be consided valid.
+   * it to be considered valid.
    * 
    * @param agent
    * @param secrets
@@ -211,7 +213,8 @@ public class OnlineAgentManager extends BroadcastReceiver {
             agent.getDisplayName()));
     agent.generateResponseKey();
     try {
-      Intent secretsIntent = new Intent(agent.getClassId());
+      Intent secretsIntent = new Intent(SYNC);
+      secretsIntent.setPackage(agent.getClassId());
       secretsIntent.putExtra(RESPONSE_KEY, agent.getResponseKey());
       String secretString = secrets.toJSON().toString();
       secretsIntent.putExtra(SECRETS_ID, secretString);
