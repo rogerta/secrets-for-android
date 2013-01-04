@@ -430,7 +430,7 @@ public class LoginActivity extends Activity implements TextWatcher {
   /** Overwrite the current secrets with the given list. 
    * @param secrets
    */
-  public static void restoreSecrets(SecretsCollection secrets) {
+  public static void replaceSecrets(SecretsCollection secrets) {
     // I don't want to change the actual instance of the global array that
     // holds the secrets, since this array is referred to from other places
     // in the code.  I will simply replace the existing array with the entries
