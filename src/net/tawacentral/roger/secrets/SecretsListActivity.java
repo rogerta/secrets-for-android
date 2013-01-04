@@ -576,7 +576,7 @@ public class SecretsListActivity extends ListActivity {
       return false;
     }
 
-    LoginActivity.restoreSecrets(secrets);
+    LoginActivity.replaceSecrets(secrets);
     secretsList.notifyDataSetChanged();
     setTitle();
     return true;
@@ -823,7 +823,7 @@ public class SecretsListActivity extends ListActivity {
             }
 
             if (secrets != null) {
-              LoginActivity.restoreSecrets(secrets);
+              LoginActivity.replaceSecrets(secrets);
               secretsList.notifyDataSetChanged();
               setTitle();
               message = getText(R.string.restore_succeeded).toString();
@@ -1019,6 +1019,12 @@ public class SecretsListActivity extends ListActivity {
     // the process hangs around, this thread should continue running until
     // completion even if the user switches to another task/application.
     SecretsCollection secrets = secretsList.getAllAndDeletedSecrets();
+    
+    // since the adapter is using a copy of the secrets, we must update the
+    // global collection at this point otherwise a config change (e.g.
+    // rotation) will lose any changes
+    LoginActivity.replaceSecrets(secrets);
+    
     Cipher cipher = SecurityUtils.getEncryptionCipher();
     byte[] salt = SecurityUtils.getSalt();
     int rounds = SecurityUtils.getRounds();
