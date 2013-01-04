@@ -92,9 +92,9 @@ limitations under the License.
        android:permission="net.tawacentral.roger.secrets.permission.SECRETS">
        <intent-filter>
          <action
-             android:name="net.tawacentral.roger.secrets.OSARollCallResponse"/>
+             android:name="net.tawacentral.roger.secrets.OSA_ROLLCALL_RESPONSE"/>
          <action
-             android:name="net.tawacentral.roger.secrets.OSASyncResponse"/>
+             android:name="net.tawacentral.roger.secrets.SYNC_RESPONSE"/>
        </intent-filter>
     </receiver>
 

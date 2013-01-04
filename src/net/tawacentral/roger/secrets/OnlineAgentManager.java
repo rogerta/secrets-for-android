@@ -26,11 +26,11 @@ public class OnlineAgentManager extends BroadcastReceiver {
   
   private static final String SECRETS_PERMISSION = "net.tawacentral.roger.secrets.permission.SECRETS";
 
-  // TODO: by convention, action names should be "<package-name>.ACTION_NAME". 
-  private static final String ROLLCALL = "net.tawacentral.roger.secrets.OSARollCall";
-  private static final String ROLLCALL_RESPONSE = "net.tawacentral.roger.secrets.OSARollCallResponse";
+  // broadcast ACTIONS
+  private static final String ROLLCALL = "net.tawacentral.roger.secrets.OSA_ROLLCALL";
+  private static final String ROLLCALL_RESPONSE = "net.tawacentral.roger.secrets.OSA_ROLLCALL_RESPONSE";
   private static final String SYNC = "net.tawacentral.roger.secrets.SYNC";
-  private static final String SYNC_RESPONSE = "net.tawacentral.roger.secrets.OSASyncResponse";
+  private static final String SYNC_RESPONSE = "net.tawacentral.roger.secrets.SYNC_RESPONSE";
   
   private static final String CLASS_ID = "classId";
   private static final String DISPLAY_NAME = "displayName";
@@ -40,14 +40,14 @@ public class OnlineAgentManager extends BroadcastReceiver {
   private static Map<String,OnlineSyncAgent> INSTALLED_AGENTS
                                     = new HashMap<String,OnlineSyncAgent>();
 
-  /* handler and listener for the current operation */
+  // handler and listener for the current operation
   private static Handler handler;
 
   @Override
   public void onReceive(Context context, Intent intent) {
     Log.d(LOG_TAG, "OSA received msg: " + intent.getAction());
     
-    // handle roll call responses
+    // handle roll call response
     if (intent.getAction().equals(ROLLCALL_RESPONSE)
             && intent.getExtras() != null) {
       String classId = (String) intent.getExtras().get(CLASS_ID);
@@ -64,7 +64,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
           INSTALLED_AGENTS.put(classId, new OnlineSyncAgent(displayName,
               classId));
         } else {
-          // app already known - reclaim it
+          // agent already known - reclaim it
           INSTALLED_AGENTS.get(classId).setAvailable(true);
         }
       }
@@ -95,9 +95,11 @@ public class OnlineAgentManager extends BroadcastReceiver {
   }
   
   /*
-   * Validate the response from the agent
+   * Validate the sync response from the agent.
+   * The key in the response must match the one sent in the original sync
+   * request.
    * @param intent
-   * @return true if OK, false otherwise
+   * @return true if response is OK, false otherwise
    */
   private boolean validateResponse(Intent intent) {
     boolean validity = false;
@@ -157,7 +159,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
    * @return collection of available agents
    */
   public static Collection<OnlineSyncAgent> getAvailableAgents() {
-    /* first count the available agents */
+    // first count the available agents
     int available = 0;
     for (OnlineSyncAgent agent : INSTALLED_AGENTS.values()) {
       if (agent.isAvailable()) {
@@ -179,7 +181,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
    * respond
    * 
    * We need to remember previously configured agents, otherwise
-   * they will need to be reconfigured every time the app is resumed.
+   * they may need to be reconfigured every time the app is resumed.
    * 
    * @param context
    */
