@@ -38,7 +38,7 @@ limitations under the License.
 <string name="backup_succeeded">Backup succeeded.</string>
 <string name="restore_succeeded">Restore succeeded.</string>
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
-<string name="enable_online_backup">Enable online backup to safe guard your secrets.</string>
+<string name="enable_online_backup">Enable online backup to safe guard your secrets.  See http://goo.gl/Zobmw for complete details.</string>
 
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
 <string name="export_failed">Uh oh.  Unable to export your secrets.</string>
@@ -69,8 +69,9 @@ When done, press the Back button, or MENU for more options.
 {1,date,short} {1,time,short}
 </string>
 
-<string name="list_title">{0,number} Secrets [{1,date,MMM-dd}]</string>
-<string name="list_title_filtered">{0,number} of {1,number} Secrets [{2,date,MMM-dd}]</string>
+<string name="last_saved_time_format">[{1,date,MMM-dd}]</string>
+<string name="list_title">{0,number} Secrets {1}</string>
+<string name="list_title_filtered">{0,number} of {1,number} Secrets {2}</string>
 
 <string name="list_name">Secrets</string>
 <string name="list_no_data">Press \"Add\" to begin.</string>

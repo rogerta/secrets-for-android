@@ -280,18 +280,19 @@ public class SecretsListActivity extends ListActivity {
   public void setTitle() {
     CharSequence title;
     int allCount = secretsList.getAllSecrets().size();
-    Date lastSaved =
-        new Date(FileUtils.getTimeOfLastOnlineBackup(
-            this,
-            System.currentTimeMillis()));
+    long lastSaved = FileUtils.getTimeOfLastOnlineBackup(this);
+    String template = getText(R.string.last_saved_time_format).toString();
+    String lastSavedString = lastSaved == 0 ?
+        "" : MessageFormat.format(template, new Date(lastSaved));
     int count = secretsList.getCount();
     if (allCount > 0) {
       if (allCount != count) {
-        String template = getText(R.string.list_title_filtered).toString();
-        title = MessageFormat.format(template, count, allCount, lastSaved);
+        template = getText(R.string.list_title_filtered).toString();
+        title = MessageFormat.format(template, count, allCount,
+                                     lastSavedString);
       } else {
-        String template = getText(R.string.list_title).toString();
-        title = MessageFormat.format(template, allCount, lastSaved);
+        template = getText(R.string.list_title).toString();
+        title = MessageFormat.format(template, allCount, lastSavedString);
       }
     } else {
       title = getText(R.string.list_no_data);

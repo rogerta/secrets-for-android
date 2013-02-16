@@ -147,20 +147,14 @@ public class FileUtils {
    * Gets the time of the last online backup.
    *
    * @param ctx A context to get the preferences from.
-   * @param now The current time in milliseconds.
    * @return The time of the last online backup, as millisecs since epoch.
    */
-  public static long getTimeOfLastOnlineBackup(Context ctx, long now) {
+  public static long getTimeOfLastOnlineBackup(Context ctx) {
     SharedPreferences prefs = OS.getSharedPreferences(ctx, PREFS_FILE_NAME, 0);
     if (prefs == null)
-      return now;
+      return 0;
 
-    long lastSaved = prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
-    if (lastSaved == 0) {
-      prefs.edit().putLong(PREF_LAST_BACKUP_DATE, now).commit();
-      lastSaved = now;
-    }
-    return lastSaved;
+    return prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
   }
 
   /**
@@ -174,7 +168,7 @@ public class FileUtils {
    */
   public static boolean isRestoreFileTooOld(Context ctx) {
     long now = System.currentTimeMillis();
-    long lastSaved = getTimeOfLastOnlineBackup(ctx, now);
+    long lastSaved = getTimeOfLastOnlineBackup(ctx);
     long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week.
 
     return (now - lastSaved) > oneWeeks;
