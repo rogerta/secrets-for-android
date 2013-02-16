@@ -280,7 +280,10 @@ public class SecretsListActivity extends ListActivity {
   public void setTitle() {
     CharSequence title;
     int allCount = secretsList.getAllSecrets().size();
-    Date lastSaved = new Date(FileUtils.getTimeOfLastOnlineBackup(this));
+    Date lastSaved =
+        new Date(FileUtils.getTimeOfLastOnlineBackup(
+            this,
+            System.currentTimeMillis()));
     int count = secretsList.getCount();
     if (allCount > 0) {
       if (allCount != count) {
