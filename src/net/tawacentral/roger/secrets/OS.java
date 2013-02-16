@@ -168,11 +168,11 @@ public class OS {
       m = widget.getClass().getMethod("setSearchableInfo", si.getClass());
       m.invoke(widget, si);
 
-      m = widget.getClass().getMethod("setIconifiedByDefault", boolean.class);
-      m.invoke(widget, false);
+      //m = widget.getClass().getMethod("setIconifiedByDefault", boolean.class);
+      //m.invoke(widget, false);
 
-      m = widget.getClass().getMethod("setSubmitButtonEnabled", boolean.class);
-      m.invoke(widget, true);
+      //m = widget.getClass().getMethod("setSubmitButtonEnabled", boolean.class);
+      //m.invoke(widget, true);
     } catch (Exception ex) {
       Log.e(LOG_TAG, "configureSearchView", ex);
     }
