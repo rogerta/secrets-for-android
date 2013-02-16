@@ -69,7 +69,7 @@ When done, press the Back button, or MENU for more options.
 {1,date,short} {1,time,short}
 </string>
 
-<string name="last_saved_time_format">[{1,date,MMM-dd}]</string>
+<string name="last_saved_time_format">[{0,date,MMM-dd}]</string>
 <string name="list_title">{0,number} Secrets {1}</string>
 <string name="list_title_filtered">{0,number} of {1,number} Secrets {2}</string>
 
