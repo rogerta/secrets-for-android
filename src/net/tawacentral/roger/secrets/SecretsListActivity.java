@@ -19,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -279,14 +280,15 @@ public class SecretsListActivity extends ListActivity {
   public void setTitle() {
     CharSequence title;
     int allCount = secretsList.getAllSecrets().size();
+    Date lastSaved = new Date(FileUtils.getTimeOfLastOnlineBackup(this));
     int count = secretsList.getCount();
     if (allCount > 0) {
       if (allCount != count) {
         String template = getText(R.string.list_title_filtered).toString();
-        title = MessageFormat.format(template, count, allCount);
+        title = MessageFormat.format(template, count, allCount, lastSaved);
       } else {
         String template = getText(R.string.list_title).toString();
-        title = MessageFormat.format(template, allCount);
+        title = MessageFormat.format(template, allCount, lastSaved);
       }
     } else {
       title = getText(R.string.list_no_data);
@@ -324,15 +326,14 @@ public class SecretsListActivity extends ListActivity {
           openOptionsMenu();
         }
       });
-    } /* take out until I figure out why backups are not being done
-      else if (FileUtils.isRestoreFileTooOld(this)) {
+    } else if (FileUtils.isRestoreFileTooOld(this)) {
       getListView().post(new Runnable() {
         @Override
         public void run() {
           showToast(getText(R.string.enable_online_backup));
         }
       });
-    }*/
+    }
   }
 
   @Override

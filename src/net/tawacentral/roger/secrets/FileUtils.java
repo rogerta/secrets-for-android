@@ -144,6 +144,26 @@ public class FileUtils {
   }
 
   /**
+   * Gets the time of the last online backup.
+   *
+   * @param ctx A context to get the preferences from.
+   * @param now The current time in milliseconds.
+   * @return The time of the last online backup, as millisecs since epoch.
+   */
+  public static long getTimeOfLastOnlineBackup(Context ctx, long now) {
+    SharedPreferences prefs = OS.getSharedPreferences(ctx, PREFS_FILE_NAME, 0);
+    if (prefs == null)
+      return now;
+
+    long lastSaved = prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
+    if (lastSaved == 0) {
+      prefs.edit().putLong(PREF_LAST_BACKUP_DATE, now).commit();
+      lastSaved = now;
+    }
+    return lastSaved;
+  }
+
+  /**
    * Is the restore file too old?  This function used to check the time stamp
    * of the backup file in the SD card, but that should go away in favour of
    * suggestion that users enable online backup.  Therefore this function now
@@ -154,19 +174,10 @@ public class FileUtils {
    */
   public static boolean isRestoreFileTooOld(Context ctx) {
     long now = System.currentTimeMillis();
-    SharedPreferences prefs = OS.getSharedPreferences(ctx, PREFS_FILE_NAME, 0);
-    if (prefs == null)
-      return false;
-
-    long lastModified = prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
-    if (lastModified == 0) {
-      prefs.edit().putLong(PREF_LAST_BACKUP_DATE, now).commit();
-      lastModified = now;
-    }
-
+    long lastSaved = getTimeOfLastOnlineBackup(ctx, now);
     long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week.
 
-    return (now - lastModified) > oneWeeks;
+    return (now - lastSaved) > oneWeeks;
   }
 
   /** Is the restore point too old? */
