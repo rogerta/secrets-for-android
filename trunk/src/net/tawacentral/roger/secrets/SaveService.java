@@ -20,6 +20,7 @@ import java.util.List;
 import javax.crypto.Cipher;
 
 import android.app.Service;
+import android.app.backup.BackupManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
@@ -40,8 +41,7 @@ public class SaveService extends Service {
   private static byte[] salt;
   private static int rounds;
 
-  /** Backup manager for Android 2.2. */
-  Object backupManager;
+  BackupManager backupManager;
 
   /**
    * Queue a background save of the secrets.
@@ -77,10 +77,7 @@ public class SaveService extends Service {
   @Override
   public void onCreate() {
     super.onCreate();
-
-    // Create a backup manager.  Will be null for versions of Android before
-    // 2.2.
-    backupManager = OS.createBackupManager(this);
+    backupManager = new BackupManager(this);
   }
 
   @Override
@@ -89,9 +86,7 @@ public class SaveService extends Service {
   }
 
   @Override
-  public void onStart(Intent intent, final int startId) {
-    super.onStart(intent, startId);
-
+  public int onStartCommand(Intent intent, int flags, final int startId) {
     synchronized (SaveService.class) {
       final List<Secret> secrets = SaveService.secrets;
       final Cipher cipher = SaveService.cipher;
@@ -113,7 +108,7 @@ public class SaveService extends Service {
 
             // If the save was successful, schedule a backup. 
             if (0 == r)
-              OS.backupManagerDataChanged(backupManager);
+              backupManager.dataChanged();
 
             // If no SD card backup exists, save it now.
             if (!FileUtils.restoreFileExist())
@@ -126,5 +121,6 @@ public class SaveService extends Service {
         stopSelf(startId);
       }
     }
+    return START_STICKY;
   }
 }

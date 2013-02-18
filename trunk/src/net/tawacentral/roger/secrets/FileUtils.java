@@ -150,7 +150,7 @@ public class FileUtils {
    * @return The time of the last online backup, as millisecs since epoch.
    */
   public static long getTimeOfLastOnlineBackup(Context ctx) {
-    SharedPreferences prefs = OS.getSharedPreferences(ctx, PREFS_FILE_NAME, 0);
+    SharedPreferences prefs = ctx.getSharedPreferences(PREFS_FILE_NAME, 0);
     if (prefs == null)
       return 0;
 
@@ -159,8 +159,8 @@ public class FileUtils {
 
   /**
    * Is the restore file too old?  This function used to check the time stamp
-   * of the backup file in the SD card, but that should go away in favour of
-   * suggestion that users enable online backup.  Therefore this function now
+   * of the backup file on the SD card, but that should go away in favour of
+   * suggesting that users enable online backup.  Therefore this function now
    * checks the time that the last online backup was performed.
    *
    * @param ctx A context to get the preferences from.
@@ -920,8 +920,7 @@ public class FileUtils {
       synchronized (lock) {
         super.onBackup(oldState, data, newState);
       }
-      SharedPreferences prefs = OS.getSharedPreferences(this, PREFS_FILE_NAME,
-                                                        0);
+      SharedPreferences prefs = getSharedPreferences(PREFS_FILE_NAME, 0);
       if (prefs != null) {
         prefs.edit().putLong(PREF_LAST_BACKUP_DATE,
                              System.currentTimeMillis()).apply();
