@@ -30,6 +30,7 @@ import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.ClipboardManager;
 import android.util.Log;
@@ -80,13 +81,16 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_CHANGE_PASSWORD = 4;
   private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
   private static final int RC_ACCESS_LOG = 1;
-  
+
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
   private static final String EMPTY_STRING = "";
 
   public static final String EXTRA_ACCESS_LOG =
       "net.tawacentreal.secrets.accesslog";
+
+  public static final String UPGRADE_URL =
+      "https://code.google.com/p/secrets-for-android/wiki/Upgrade";
 
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "SecretsListActivity";
@@ -313,9 +317,9 @@ public class SecretsListActivity extends ListActivity {
       finish();
       return;
     }
-    
+
     allowNextResume = false;
-    
+
     // Show instruction toast auto popup options menu if there are no secrets
     // in the list.  This check used to be done in the onCreate() method above,
     // that could occasionally cause a crash when changing layout from
@@ -334,10 +338,41 @@ public class SecretsListActivity extends ListActivity {
       getListView().post(new Runnable() {
         @Override
         public void run() {
-          showToast(getText(R.string.enable_online_backup));
+          showModalDialog(R.string.list_menu_backup,
+              R.string.enable_online_backup, R.string.dialog_learn_how, 0,
+              R.string.dialog_not_now,
+              new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                  if (which == DialogInterface.BUTTON_POSITIVE) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(UPGRADE_URL));
+                    startActivity(intent);
+                  }
+                }
+              });
         }
       });
     }
+  }
+
+  private void showModalDialog(int title,
+                               int message,
+                               int pos,
+                               int neut,
+                               int neg,
+                               DialogInterface.OnClickListener callback) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setMessage(message);
+    builder.setTitle(title);
+    if (pos != 0)
+      builder.setPositiveButton(pos, callback);
+    if (neut != 0)
+      builder.setNeutralButton(neut, callback);
+    if (neg != 0)
+      builder.setNegativeButton(neg, callback);
+    AlertDialog dialog = builder.create();
+    dialog.show();
   }
 
   @Override
@@ -548,11 +583,11 @@ public class SecretsListActivity extends ListActivity {
   /** Restore secrets from the given restore point.
    *
    * @param rp The name of the restore point to restore from.
-   * @param info A CipherInfo structure describing the decryption cipher to use. 
+   * @param info A CipherInfo structure describing the decryption cipher to use.
    * @param askForPassword If the restore fails, show a dialog asking the
    *     user for the password to restore from the backup.
    *
-   * @return True if the restore succeeded, false otherwise. 
+   * @return True if the restore succeeded, false otherwise.
    */
   private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info,
                                  boolean askForPassword) {
@@ -563,7 +598,7 @@ public class SecretsListActivity extends ListActivity {
         restorePoint = rp;
         showDialog(DIALOG_ENTER_RESTORE_PASSWORD);
       }
-      
+
       return false;
     }
 
@@ -723,7 +758,7 @@ public class SecretsListActivity extends ListActivity {
             .setPositiveButton(R.string.list_menu_change_password, listener)
             .create();
         final Dialog dialogFinal = dialog;
-        
+
         SeekBar bar = (SeekBar) view.findViewById(R.id.cipher_strength);
         bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
           @Override
@@ -752,9 +787,9 @@ public class SecretsListActivity extends ListActivity {
               String password = password1.getText().toString();
               FileUtils.SaltAndRounds saltAndRounds =
                   FileUtils.getSaltAndRounds(null, restorePoint);
-              
+
               String message = null;
-              
+
               SecurityUtils.CipherInfo info = SecurityUtils.createCiphers(
                   password, saltAndRounds.salt, saltAndRounds.rounds);
               if (restoreSecrets(restorePoint, info, false)) {
@@ -787,10 +822,10 @@ public class SecretsListActivity extends ListActivity {
                   message = getText(R.string.restore_succeeded).toString();
                 }
               }
-              
+
               if (message == null)
                 message = getText(R.string.restore_failed).toString();
-              
+
               showToast(message);
             }
           };
@@ -1200,7 +1235,7 @@ public class SecretsListActivity extends ListActivity {
         if (AdapterView.INVALID_POSITION != editingPosition) {
           ListView listView = getListView();
           listView.requestFocus();
-          
+
           int first = listView.getFirstVisiblePosition();
           int last = listView.getLastVisiblePosition();
           if (editingPosition < first || editingPosition > last) {
