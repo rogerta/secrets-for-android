@@ -14,14 +14,12 @@
 
 package net.tawacentral.roger.secrets;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,29 +44,16 @@ import android.view.inputmethod.InputMethodManager;
  */
 public class OS {
   /** Tag for logging purposes. */
-  public static final String LOG_TAG = "Secrets";
-
-  private static int sdkVersion;
-  static {
-    try {
-      sdkVersion = Integer.parseInt(android.os.Build.VERSION.SDK);
-    } catch (Exception ex) {
-    }
-  }
-
-  /** Does the device support the froyo (Android 2.2) APIs? */
-  public static boolean isAndroid22() {
-    return sdkVersion >= 8;
-  }
+  public static final String LOG_TAG = "OS";
 
   /** Does the device support the Gingerbread (Android 2.3) APIs? */
   public static boolean isAndroid23() {
-    return sdkVersion >= 9;
+    return android.os.Build.VERSION.SDK_INT >= 9;
   }
 
   /** Does the device support the Honeycomb (Android 3.0) APIs? */
   public static boolean isAndroid30() {
-    return sdkVersion >= 11;
+    return android.os.Build.VERSION.SDK_INT >= 11;
   }
 
   /** Hide the soft keyboard if visible. */
@@ -77,50 +62,6 @@ public class OS {
         ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
     if (null != manager)
       manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
-  }
-
-  /**
-   * Creates a backup manager for handling app backup in Android 2.2 and later.
-   * Returns an Object so that that this function can be called from any
-   * version of Android.
-   *
-   * @param context Application context for the backup manager.
-   * @return A backup manager on Android 2.2 and later, null otherwise.
-   */
-  public static Object createBackupManager(Context context) {
-    Object bm = null;
-
-    if (isAndroid22()) {
-      try {
-        Class<?> clazz = Class.forName("android.app.backup.BackupManager");
-        Constructor<?> c = clazz.getConstructor(Context.class);
-        bm = c.newInstance(context);
-        Log.d(LOG_TAG, "createBackupManager");
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "Should have found backup manager", ex);
-      }
-    }
-
-    return bm;
-  }
-
-  /**
-   * Calls dataChanged() on the backup manager on Android 2.2 and later, or
-   * does nothing on previous versions of Android.
-   *
-   * @param bm Backup manager.  Can be null.
-   */
-  public static void backupManagerDataChanged(Object bm) {
-    if (isAndroid22() && bm != null) {
-      try {
-        Class<?> clazz = Class.forName("android.app.backup.BackupManager");
-        Method m = clazz.getMethod("dataChanged");
-        m.invoke(bm);
-        Log.d(LOG_TAG, "backupManagerDataChanged");
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "backupManagerDataChanged", ex);
-      }
-    }
   }
 
   /**
@@ -208,23 +149,5 @@ public class OS {
     }
 
     return false;
-  }
-
-  public static SharedPreferences getSharedPreferences(Object ba,
-                                                       String name,
-                                                       int mode) {
-    if (!isAndroid22())
-      return null;
-
-    try {
-      Class<?> clazz = Class.forName("android.app.backup.BackupAgentHelper");
-      Method m = clazz.getMethod("getSharedPreferences", String.class,
-                                 int.class);
-      SharedPreferences prefs = (SharedPreferences) m.invoke(ba, name, mode);
-      return prefs;
-    } catch (Exception ex) {
-      Log.e(LOG_TAG, "getSharedPreferences", ex);
-      return null;
-    }
   }
 }
