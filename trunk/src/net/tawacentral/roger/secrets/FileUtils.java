@@ -77,10 +77,20 @@ public class FileUtils {
   public static final String PREFS_FILE_NAME = "backup";
 
   /**
-   * Name of last backup preference. Long value as number or millis as
+   * Name of last backup date preference. Long value as number or millis as
    * returned by System.currentTimeMillis().
    */
   public static final String PREF_LAST_BACKUP_DATE = "last_backup_date";
+
+  /**
+   * Name of last backup date detected preference. Long value as number or
+   * millis as returned by System.currentTimeMillis().  This is the time at
+   * which we detected that the back was too old.  We won't notify the user
+   * of an old back until more than 24 hours have passed since this date,
+   * assuming the back is still too old.
+   */
+  public static final String PREF_LAST_BACKUP_DETECT_DATE =
+      "last_backup_detected_date";
 
   /** Name of the secrets file. */
   public static final String SECRETS_FILE_NAME = "secrets";
@@ -166,14 +176,30 @@ public class FileUtils {
   public static boolean isOnlineBackupTooOld(Context ctx) {
     long now = System.currentTimeMillis();
     long lastSaved = getTimeOfLastOnlineBackup(ctx);
-    long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week.
+    final long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week in millis.
 
+    SharedPreferences prefs = ctx.getSharedPreferences(PREFS_FILE_NAME, 0);
     boolean isTooOld = (now - lastSaved) > oneWeeks;
     if (isTooOld) {
-      // In order not to nag users more than once a week about missing online
-      // backup support, set the last backup time to now.
-      ctx.getSharedPreferences(PREFS_FILE_NAME, 0).edit()
-          .putLong(PREF_LAST_BACKUP_DATE, now).apply();
+      // When we first detected that the backup was too old.  If at least
+      // 24 hours have passed since this time, tell the user the file is too
+      // old.
+      //
+      // The reason for this check is to prevent the user from seeing a warning
+      // should they not use secrets for at least one week.
+      if (prefs != null) {
+        long detected = prefs.getLong(PREF_LAST_BACKUP_DETECT_DATE, 0);
+        if (detected == 0) {
+          detected = now;
+          prefs.edit().putLong(PREF_LAST_BACKUP_DETECT_DATE, detected).apply();
+        }
+
+        final long oneDay = 24 * 60 * 60 * 1000;  // One day in millis.
+        isTooOld = (now - detected) > oneDay;
+      }
+    } else {
+      // Back is not too old.  Reset detected time.
+      prefs.edit().putLong(PREF_LAST_BACKUP_DETECT_DATE, 0).apply();
     }
 
     return isTooOld;
