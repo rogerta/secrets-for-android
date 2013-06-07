@@ -1,6 +1,8 @@
 #summary How to transfer your secrets to a new phone.
 #labels Featured
 
+The source of this page is available on [https://docs.google.com/a/tawacentral.net/document/d/1L0Bsmh5xmbEnpOfnU-Ps9jWShLnuAphRMn2gHWP0ViY/edit Google Drive]
+
 = Introduction =
 
 Changing mobile phone seems inevitable.  Maybe the phone is lost or stolen, maybe it breaks, or maybe you just want the latest and greatest.  Easily transferring secrets to a new phone is an important issue for all users of *_Secrets for Android_*.
