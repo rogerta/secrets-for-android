@@ -90,7 +90,8 @@ public class SecretsListActivity extends ListActivity {
       "net.tawacentreal.secrets.accesslog";
 
   public static final String UPGRADE_URL =
-      "https://code.google.com/p/secrets-for-android/wiki/Upgrade";
+      "https://docs.google.com/document/d/1L0Bsmh5xmbEnpOfnU-Ps9jWShLnuAphRMn2gHWP0ViY/edit";
+      //"https://docs.google.com/a/tawacentral.net/document/d/1L0Bsmh5xmbEnpOfnU-Ps9jWShLnuAphRMn2gHWP0ViY/pub";
 
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "SecretsListActivity";
