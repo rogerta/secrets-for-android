@@ -83,14 +83,11 @@ public class FileUtils {
   public static final String PREF_LAST_BACKUP_DATE = "last_backup_date";
 
   /**
-   * Name of last backup date detected preference. Long value as number or
+   * Name of last nag date preference. Long value as number or
    * millis as returned by System.currentTimeMillis().  This is the time at
-   * which we detected that the back was too old.  We won't notify the user
-   * of an old back until more than 24 hours have passed since this date,
-   * assuming the back is still too old.
+   * which we last nagged the user to enable online backup.
    */
-  public static final String PREF_LAST_BACKUP_DETECT_DATE =
-      "last_backup_detected_date";
+  public static final String PREF_LAST_NAG_DATE = "last_nag_date";
 
   /** Name of the secrets file. */
   public static final String SECRETS_FILE_NAME = "secrets";
@@ -160,11 +157,8 @@ public class FileUtils {
    * @return The time of the last online backup, as millisecs since epoch.
    */
   public static long getTimeOfLastOnlineBackup(Context ctx) {
-    SharedPreferences prefs = ctx.getSharedPreferences(PREFS_FILE_NAME, 0);
-    if (prefs == null)
-      return 0;
-
-    return prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
+    return ctx.getSharedPreferences(PREFS_FILE_NAME, 0)
+        .getLong(PREF_LAST_BACKUP_DATE, 0);
   }
 
   /**
@@ -176,33 +170,27 @@ public class FileUtils {
   public static boolean isOnlineBackupTooOld(Context ctx) {
     long now = System.currentTimeMillis();
     long lastSaved = getTimeOfLastOnlineBackup(ctx);
-    final long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week in millis.
 
-    SharedPreferences prefs = ctx.getSharedPreferences(PREFS_FILE_NAME, 0);
-    boolean isTooOld = (now - lastSaved) > oneWeeks;
-    if (isTooOld) {
-      // When we first detected that the backup was too old.  If at least
-      // 24 hours have passed since this time, tell the user the file is too
-      // old.
-      //
-      // The reason for this check is to prevent the user from seeing a warning
-      // should they not use secrets for at least one week.
-      if (prefs != null) {
-        long detected = prefs.getLong(PREF_LAST_BACKUP_DETECT_DATE, 0);
-        if (detected == 0) {
-          detected = now;
-          prefs.edit().putLong(PREF_LAST_BACKUP_DETECT_DATE, detected).apply();
-        }
+    // If lastSaved is zero, this means an online backup has never been done.
+    // Nag the user about it, but no more than once per week.
+    if (lastSaved == 0) {
+      SharedPreferences prefs = ctx.getSharedPreferences(PREFS_FILE_NAME, 0);
+      long lastNag = prefs.getLong(PREF_LAST_NAG_DATE, 0);
+      final long sixDays = 6 * 24 * 60 * 60 * 1000;  // 6 days in millis.
+      final long oneWeek = 7 * 24 * 60 * 60 * 1000;  // One week in millis.
 
-        final long oneDay = 24 * 60 * 60 * 1000;  // One day in millis.
-        isTooOld = (now - detected) > oneDay;
+      // Don't warn the very first day the user runs the program.
+      if (lastNag == 0) {
+        prefs.edit().putLong(PREF_LAST_NAG_DATE, now - sixDays).apply();
+      } else if ((now - lastNag) > oneWeek) {
+        // In order not to nag users more than once a week about missing online
+        // backup support, set the last nag time to now.
+        prefs.edit().putLong(PREF_LAST_NAG_DATE, now).apply();
+        return true;
       }
-    } else {
-      // Back is not too old.  Reset detected time.
-      prefs.edit().putLong(PREF_LAST_BACKUP_DETECT_DATE, 0).apply();
     }
 
-    return isTooOld;
+    return false;
   }
 
   /** Is the restore point too old? */
