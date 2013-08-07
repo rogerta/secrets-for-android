@@ -19,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,6 +31,7 @@ import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.ClipboardManager;
@@ -45,6 +47,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnTouchListener;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
@@ -61,16 +64,16 @@ import android.widget.Toast;
 
 /**
  * An activity that handles two main functions: displaying the list of all
- * secrets, and modifying an existing secret. The reason that these two
+ * secrets, and modifying an existing secret.  The reason that these two
  * activities are combined into one is to take advantage of the 3d page flip
  * effect, which basically happens inside one View.
- * 
+ *
  * If the 3d transition could be done while transferring from the view of one
  * activity to the view of another, I would do that instead, since its more
  * natural for an android app. Because of this hack, I need to override the
  * behaviour of the back button to restore the "natural feel" of the back button
  * to the user.
- * 
+ *
  * @author rogerta
  */
 @SuppressWarnings("deprecation")
@@ -88,7 +91,12 @@ public class SecretsListActivity extends ListActivity {
 
   private static final String EMPTY_STRING = "";
 
-  public static final String EXTRA_ACCESS_LOG = "net.tawacentreal.secrets.accesslog";
+  public static final String EXTRA_ACCESS_LOG =
+      "net.tawacentreal.secrets.accesslog";
+
+  public static final String UPGRADE_URL =
+      "https://docs.google.com/document/d/1L0Bsmh5xmbEnpOfnU-Ps9jWShLnuAphRMn2gHWP0ViY/edit";
+      //"https://docs.google.com/a/tawacentral.net/document/d/1L0Bsmh5xmbEnpOfnU-Ps9jWShLnuAphRMn2gHWP0ViY/pub";
 
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "SecretsListActivity";
@@ -100,18 +108,18 @@ public class SecretsListActivity extends ListActivity {
   public static final String STATE_EDITING_EMAIL = "editing_email";
   public static final String STATE_EDITING_NOTES = "editing_notes";
 
-  private SecretsListAdapter secretsList; // list of secrets
-  private Toast toast; // toast used to show password
-  private GestureDetector detector; // detects taps and double taps
-  private boolean isEditing; // true if changing a secret
-  private int editingPosition; // position of item being edited
-  private int cmenuPosition; // position of item for cmenu
-  private View root; // root of the layout for this activity
-  private View edit; // root view for the editing layout
-  private File importedFile; // File that was imported
-  private boolean isConfigChange; // being destroyed for config change?
-  private String restorePoint; // That file that should be restored from
-  private OnlineSyncAgent selectedOSA; // currently selected agent
+  private SecretsListAdapter secretsList;  // list of secrets
+  private Toast toast;  // toast used to show password
+  private GestureDetector detector;  // detects taps and double taps
+  private boolean isEditing;  // true if changing a secret
+  private int editingPosition;  // position of item being edited
+  private int cmenuPosition;  // position of item for cmenu
+  private View root;  // root of the layout for this activity
+  private View edit;  // root view for the editing layout
+  private File importedFile;  // File that was imported
+  private boolean isConfigChange;  // being destroyed for config change?
+  private String restorePoint;  // That file that should be restored from
+  private OnlineSyncAgent selectedOSA;  // currently selected agent
   // This activity will only allow it self to be resumed in specific
   // circumstances, so that leaving the application will force the user to
   // re-enter the master password.  Older versions used to check the state of
@@ -126,7 +134,7 @@ public class SecretsListActivity extends ListActivity {
     setContentView(R.layout.list);
 
     // If for any reason we get here and there is no secrets list, then we
-    // cannot continue. Finish the activity and return.
+    // cannot continue.  Finish the activity and return.
     if (null == LoginActivity.getSecrets()) {
       finish();
       return;
@@ -142,8 +150,10 @@ public class SecretsListActivity extends ListActivity {
     getListView().setTextFilterEnabled(true);
 
     // Setup the auto complete adapters for the username and email views.
-    AutoCompleteTextView username = (AutoCompleteTextView) findViewById(R.id.list_username);
-    AutoCompleteTextView email = (AutoCompleteTextView) findViewById(R.id.list_email);
+    AutoCompleteTextView username = (AutoCompleteTextView)
+        findViewById(R.id.list_username);
+    AutoCompleteTextView email = (AutoCompleteTextView)
+        findViewById(R.id.list_email);
 
     username.setAdapter(secretsList.getUsernameAutoCompleteAdapter());
     email.setAdapter(secretsList.getEmailAutoCompleteAdapter());
@@ -285,14 +295,19 @@ public class SecretsListActivity extends ListActivity {
   public void setTitle() {
     CharSequence title;
     int allCount = secretsList.getAllSecrets().size();
+    long lastSaved = FileUtils.getTimeOfLastOnlineBackup(this);
+    String template = getText(R.string.last_saved_time_format).toString();
+    String lastSavedString = lastSaved == 0 ?
+        "" : MessageFormat.format(template, new Date(lastSaved));
     int count = secretsList.getCount();
     if (allCount > 0) {
       if (allCount != count) {
-        String template = getText(R.string.list_title_filtered).toString();
-        title = MessageFormat.format(template, count, allCount);
+        template = getText(R.string.list_title_filtered).toString();
+        title = MessageFormat.format(template, count, allCount,
+                                     lastSavedString);
       } else {
-        String template = getText(R.string.list_title).toString();
-        title = MessageFormat.format(template, allCount);
+        template = getText(R.string.list_title).toString();
+        title = MessageFormat.format(template, allCount, lastSavedString);
       }
     } else {
       title = getText(R.string.list_no_data);
@@ -333,15 +348,45 @@ public class SecretsListActivity extends ListActivity {
           openOptionsMenu();
         }
       });
-    } /* take out until I figure out why backups are not being done
-      else if (FileUtils.isRestoreFileTooOld(this)) {
+    } else if (FileUtils.isOnlineBackupTooOld(this)) {
       getListView().post(new Runnable() {
         @Override
         public void run() {
-          showToast(getText(R.string.enable_online_backup));
+          showModalDialog(R.string.list_menu_backup,
+              R.string.enable_online_backup, R.string.dialog_learn_how, 0,
+              R.string.dialog_not_now,
+              new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                  if (which == DialogInterface.BUTTON_POSITIVE) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(UPGRADE_URL));
+                    startActivity(intent);
+                  }
+                }
+              });
         }
       });
-    }*/
+    }
+  }
+
+  private void showModalDialog(int title,
+                               int message,
+                               int pos,
+                               int neut,
+                               int neg,
+                               DialogInterface.OnClickListener callback) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setMessage(message);
+    builder.setTitle(title);
+    if (pos != 0)
+      builder.setPositiveButton(pos, callback);
+    if (neut != 0)
+      builder.setNeutralButton(neut, callback);
+    if (neg != 0)
+      builder.setNegativeButton(neg, callback);
+    AlertDialog dialog = builder.create();
+    dialog.show();
   }
 
   @Override
