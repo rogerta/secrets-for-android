@@ -14,15 +14,13 @@
 
 package net.tawacentral.roger.secrets;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Log;
+import android.view.InputDevice;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -46,29 +44,11 @@ import android.view.inputmethod.InputMethodManager;
  */
 public class OS {
   /** Tag for logging purposes. */
-  public static final String LOG_TAG = "Secrets";
-
-  private static int sdkVersion;
-  static {
-    try {
-      sdkVersion = Integer.parseInt(android.os.Build.VERSION.SDK);
-    } catch (Exception ex) {
-    }
-  }
-
-  /** Does the device support the froyo (Android 2.2) APIs? */
-  public static boolean isAndroid22() {
-    return sdkVersion >= 8;
-  }
-
-  /** Does the device support the Gingerbread (Android 2.3) APIs? */
-  public static boolean isAndroid23() {
-    return sdkVersion >= 9;
-  }
+  public static final String LOG_TAG = "OS";
 
   /** Does the device support the Honeycomb (Android 3.0) APIs? */
   public static boolean isAndroid30() {
-    return sdkVersion >= 11;
+    return android.os.Build.VERSION.SDK_INT >= 11;
   }
 
   /** Hide the soft keyboard if visible. */
@@ -77,50 +57,6 @@ public class OS {
         ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
     if (null != manager)
       manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
-  }
-
-  /**
-   * Creates a backup manager for handling app backup in Android 2.2 and later.
-   * Returns an Object so that that this function can be called from any
-   * version of Android.
-   *
-   * @param context Application context for the backup manager.
-   * @return A backup manager on Android 2.2 and later, null otherwise.
-   */
-  public static Object createBackupManager(Context context) {
-    Object bm = null;
-
-    if (isAndroid22()) {
-      try {
-        Class<?> clazz = Class.forName("android.app.backup.BackupManager");
-        Constructor<?> c = clazz.getConstructor(Context.class);
-        bm = c.newInstance(context);
-        Log.d(LOG_TAG, "createBackupManager");
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "Should have found backup manager", ex);
-      }
-    }
-
-    return bm;
-  }
-
-  /**
-   * Calls dataChanged() on the backup manager on Android 2.2 and later, or
-   * does nothing on previous versions of Android.
-   *
-   * @param bm Backup manager.  Can be null.
-   */
-  public static void backupManagerDataChanged(Object bm) {
-    if (isAndroid22() && bm != null) {
-      try {
-        Class<?> clazz = Class.forName("android.app.backup.BackupManager");
-        Method m = clazz.getMethod("dataChanged");
-        m.invoke(bm);
-        Log.d(LOG_TAG, "backupManagerDataChanged");
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "backupManagerDataChanged", ex);
-      }
-    }
   }
 
   /**
@@ -167,12 +103,6 @@ public class OS {
 
       m = widget.getClass().getMethod("setSearchableInfo", si.getClass());
       m.invoke(widget, si);
-
-      m = widget.getClass().getMethod("setIconifiedByDefault", boolean.class);
-      m.invoke(widget, false);
-
-      m = widget.getClass().getMethod("setSubmitButtonEnabled", boolean.class);
-      m.invoke(widget, true);
     } catch (Exception ex) {
       Log.e(LOG_TAG, "configureSearchView", ex);
     }
@@ -180,51 +110,16 @@ public class OS {
 
   /** Does the device support a scroll wheel or trackball? */
   public static boolean supportsScrollWheel() {
-    // This API is only support in Android 2.3 and later.  If this is an
-    // earlier version of Android, then assume we have a scroll wheel.
-    if (!isAndroid23())
-      return true;
-
-    try {
-      Class<?> clazz = Class.forName("android.view.InputDevice");
-      Method m = clazz.getMethod("getDeviceIds");
-      Field f = clazz.getField("SOURCE_TRACKBALL");
-      final int trackballId = f.getInt(null);
-      f = clazz.getField("SOURCE_DPAD");
-      final int dpadId = f.getInt(null);
-
-      Method mGetDevice = clazz.getMethod("getDevice", int.class);
-      Method mGetSources = clazz.getMethod("getSources");
-      int[] ids = (int[]) m.invoke(null);
-      for (int id : ids) {
-        Object device = mGetDevice.invoke(null, id);
-        Integer sources = (Integer) mGetSources.invoke(device);
-        if (0 != (sources.intValue() & (trackballId | dpadId)))
-          return true;
-      }
-    } catch (Exception ex) {
-      Log.e(LOG_TAG, "supportsScrollWheel", ex);
-      return true;
+    int[] ids = InputDevice.getDeviceIds();
+    for (int id : ids) {
+      InputDevice device = InputDevice.getDevice(id);
+      int sources = device.getSources();
+      final int sourceTbOrDpad =
+          InputDevice.SOURCE_TRACKBALL | InputDevice.SOURCE_DPAD;
+      if (0 != (sources & sourceTbOrDpad))
+        return true;
     }
 
     return false;
-  }
-
-  public static SharedPreferences getSharedPreferences(Object ba,
-                                                       String name,
-                                                       int mode) {
-    if (!isAndroid22())
-      return null;
-
-    try {
-      Class<?> clazz = Class.forName("android.app.backup.BackupAgentHelper");
-      Method m = clazz.getMethod("getSharedPreferences", String.class,
-                                 int.class);
-      SharedPreferences prefs = (SharedPreferences) m.invoke(ba, name, mode);
-      return prefs;
-    } catch (Exception ex) {
-      Log.e(LOG_TAG, "getSharedPreferences", ex);
-      return null;
-    }
   }
 }

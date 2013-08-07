@@ -78,10 +78,17 @@ public class FileUtils {
   public static final String PREFS_FILE_NAME = "backup";
 
   /**
-   * Name of last backup preference. Long value as number or millis as
+   * Name of last backup date preference. Long value as number or millis as
    * returned by System.currentTimeMillis().
    */
   public static final String PREF_LAST_BACKUP_DATE = "last_backup_date";
+
+  /**
+   * Name of last nag date preference. Long value as number or
+   * millis as returned by System.currentTimeMillis().  This is the time at
+   * which we last nagged the user to enable online backup.
+   */
+  public static final String PREF_LAST_NAG_DATE = "last_nag_date";
 
   /** Name of the secrets file. */
   public static final String SECRETS_FILE_NAME = "secrets";
@@ -145,29 +152,46 @@ public class FileUtils {
   }
 
   /**
-   * Is the restore file too old?  This function used to check the time stamp
-   * of the backup file in the SD card, but that should go away in favour of
-   * suggestion that users enable online backup.  Therefore this function now
-   * checks the time that the last online backup was performed.
+   * Gets the time of the last online backup.
    *
    * @param ctx A context to get the preferences from.
-   * @return True the last backup is too old.
+   * @return The time of the last online backup, as millisecs since epoch.
    */
-  public static boolean isRestoreFileTooOld(Context ctx) {
-    long now = System.currentTimeMillis();
-    SharedPreferences prefs = OS.getSharedPreferences(ctx, PREFS_FILE_NAME, 0);
-    if (prefs == null)
-      return false;
+  public static long getTimeOfLastOnlineBackup(Context ctx) {
+    return ctx.getSharedPreferences(PREFS_FILE_NAME, 0)
+        .getLong(PREF_LAST_BACKUP_DATE, 0);
+  }
 
-    long lastModified = prefs.getLong(PREF_LAST_BACKUP_DATE, 0);
-    if (lastModified == 0) {
-      prefs.edit().putLong(PREF_LAST_BACKUP_DATE, now).commit();
-      lastModified = now;
+  /**
+   * Is the online backup too old?
+   *
+   * @param ctx A context to get the preferences from.
+   * @return True if the last backup is too old.
+   */
+  public static boolean isOnlineBackupTooOld(Context ctx) {
+    long now = System.currentTimeMillis();
+    long lastSaved = getTimeOfLastOnlineBackup(ctx);
+
+    // If lastSaved is zero, this means an online backup has never been done.
+    // Nag the user about it, but no more than once per week.
+    if (lastSaved == 0) {
+      SharedPreferences prefs = ctx.getSharedPreferences(PREFS_FILE_NAME, 0);
+      long lastNag = prefs.getLong(PREF_LAST_NAG_DATE, 0);
+      final long sixDays = 6 * 24 * 60 * 60 * 1000;  // 6 days in millis.
+      final long oneWeek = 7 * 24 * 60 * 60 * 1000;  // One week in millis.
+
+      // Don't warn the very first day the user runs the program.
+      if (lastNag == 0) {
+        prefs.edit().putLong(PREF_LAST_NAG_DATE, now - sixDays).apply();
+      } else if ((now - lastNag) > oneWeek) {
+        // In order not to nag users more than once a week about missing online
+        // backup support, set the last nag time to now.
+        prefs.edit().putLong(PREF_LAST_NAG_DATE, now).apply();
+        return true;
+      }
     }
 
-    long oneWeeks = 7 * 24 * 60 * 60 * 1000;  // One week.
-
-    return (now - lastModified) > oneWeeks;
+    return false;
   }
 
   /** Is the restore point too old? */
@@ -1003,12 +1027,8 @@ public class FileUtils {
       synchronized (lock) {
         super.onBackup(oldState, data, newState);
       }
-      SharedPreferences prefs = OS.getSharedPreferences(this, PREFS_FILE_NAME,
-                                                        0);
-      if (prefs != null) {
-        prefs.edit().putLong(PREF_LAST_BACKUP_DATE,
-                             System.currentTimeMillis()).apply();
-      }
+      getSharedPreferences(PREFS_FILE_NAME, 0).edit()
+          .putLong(PREF_LAST_BACKUP_DATE, System.currentTimeMillis()).apply();
     }
 
     @Override

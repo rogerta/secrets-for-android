@@ -28,7 +28,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 2.2.1-online-sync &#169; 2012 Google Inc.</string>
+<string name="copyright">Version 2.3-online-sync &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="no_password">&lt; No PIN &gt;</string>
@@ -41,6 +41,8 @@ limitations under the License.
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
 <string name="enable_online_backup">Enable online backup to safe guard your secrets.</string>
 <string name="sync_failed">Uh oh. Sync with {0} failed.  Check with the Sync agent app for more details.</string>
+<string name="dialog_learn_how">Learn how</string>
+<string name="dialog_not_now">Not now</string>
 
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
 <string name="export_failed">Uh oh.  Unable to export your secrets.</string>
@@ -71,8 +73,9 @@ When done, press the Back button, or MENU for more options.
 {1,date,short} {1,time,short}
 </string>
 
-<string name="list_title">{0,number} Secrets</string>
-<string name="list_title_filtered">{0,number} of {1,number} Secrets</string>
+<string name="last_saved_time_format">[{0,date,MMM-dd}]</string>
+<string name="list_title">{0,number} Secrets {1}</string>
+<string name="list_title_filtered">{0,number} of {1,number} Secrets {2}</string>
 
 <string name="list_name">Secrets</string>
 <string name="list_no_data">Press \"Add\" to begin.</string>

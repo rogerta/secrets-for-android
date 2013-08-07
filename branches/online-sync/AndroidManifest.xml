@@ -19,13 +19,15 @@ limitations under the License.
      the strings.xml file -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.tawacentral.roger.secrets"
-    android:versionName="2.2.1-online-sync"
-    android:versionCode="43"
+    android:versionName="2.3-online-sync"
+    android:versionCode="44"
     android:installLocation="auto">
-  <!--Secrets supports Android 1.6 (SDK 4) or later only.  The main reason for
-      this restriction is to properly set the required permissions for the
-      app.-->
-  <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="10"></uses-sdk>
+  <!--Secrets supports Android 2.3 (SDK 9) or later only.  The main reasons for
+      these restriction are:
+      - to properly set the required permissions for the app
+      - to handle online backups
+      -->
+  <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="17"></uses-sdk>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE">
   </uses-permission>
   <permission-group
