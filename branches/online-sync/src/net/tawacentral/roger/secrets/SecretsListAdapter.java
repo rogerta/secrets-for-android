@@ -402,8 +402,10 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     return secret;
   }
   
-  /** Remove the secret at the given position and then delete the secret
-   *  from the secrets collection */
+  /**
+   * Remove the secret at the given position and then delete the secret
+   * from the secrets collection.
+   */
   public Secret delete(int position) {
     int i;
     Secret secret;
