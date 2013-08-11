@@ -958,22 +958,5 @@ public class FileUtils {
       Log.d(LOG_TAG_AGENT, "onDestroy");
       super.onDestroy();
     }
-
-    @Override
-    public void onFullBackup(FullBackupDataOutput data) throws IOException {
-      Log.d(LOG_TAG_AGENT, "onFullBackup");
-      super.onFullBackup(data);
-    }
-
-    @Override
-    public void onRestoreFile(ParcelFileDescriptor data,
-        long size,
-        File destination,
-        int type,
-        long mode,
-        long mtime) throws IOException {
-      Log.d(LOG_TAG_AGENT, "onRestoreFile");
-      super.onRestoreFile(data, size, destination, type, mode, mtime);
-    }
   }
 }
