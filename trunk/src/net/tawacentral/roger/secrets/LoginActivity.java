@@ -192,7 +192,7 @@ public class LoginActivity extends Activity implements TextWatcher {
             new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
-                if (DialogInterface.BUTTON1 == which) {
+                if (DialogInterface.BUTTON_POSITIVE == which) {
                   // If we delete the secrets from disk, make sure to also
                   // clear them from memory too.  This is to handle the case
                   // where the user knows his password and has logged in, but
