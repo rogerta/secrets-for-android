@@ -19,7 +19,7 @@ import android.util.Log;
 /**
  * Class that represents a secrets collection. Introduced to hold meta-info for
  * the collection e.g. sync timestamp.
- * 
+ *
  * @author Chris Wood
  */
 @SuppressWarnings("serial")
@@ -41,7 +41,7 @@ public class SecretsCollection extends ArrayList<Secret> {
 
   /**
    * Construct from another SecretsCollection
-   * 
+   *
    * @param collection
    */
   public SecretsCollection(SecretsCollection collection) {
@@ -51,7 +51,7 @@ public class SecretsCollection extends ArrayList<Secret> {
 
   /**
    * Construct from another collection
-   * 
+   *
    * @param collection
    */
   public SecretsCollection(Collection<? extends Secret> collection) {
@@ -75,48 +75,53 @@ public class SecretsCollection extends ArrayList<Secret> {
 
   /**
    * Add, update or delete the current secrets in the given collection.
-   * 
-   * Assumes that the collection sort sequences are the same. 
-   * 
+   *
+   * Assumes that the collection sort sequences are the same.
+   *
    * @param changedSecrets
    *          - added, changed or deleted secrets
    */
   public void syncSecrets(SecretsCollection changedSecrets) {
     for (Secret changedSecret : changedSecrets) {
       boolean done = false;
+
       for (int i = 0; i < size(); i++) {
         Secret existingSecret = get(i);
         int compare = changedSecret.compareTo(existingSecret);
         if (compare < 0 && !changedSecret.isDeleted()) {
           add(i, changedSecret);
           done = true;
-          Log.d(LOG_TAG, "syncSecrets: added '" + changedSecret.getDescription() + "'");
+          Log.d(LOG_TAG, "syncSecrets: added '" +
+              changedSecret.getDescription() + "'");
           break;
         } else if (compare == 0) {
           if (changedSecret.isDeleted()) {
             remove(existingSecret);
-            Log.d(LOG_TAG, "syncSecrets: removed '" + changedSecret.getDescription() + "'");
+            Log.d(LOG_TAG, "syncSecrets: removed '" +
+                changedSecret.getDescription() + "'");
           } else {
             existingSecret.update(changedSecret, LogEntry.SYNCED);
-            Log.d(LOG_TAG, "syncSecrets: updated '" + changedSecret.getDescription() + "'");
+            Log.d(LOG_TAG, "syncSecrets: updated '" +
+                changedSecret.getDescription() + "'");
           }
+
           done = true;
           break;
         }
       }
-      if (!done && !changedSecret.isDeleted()) {
+
+      if (!done && !changedSecret.isDeleted())
         add(changedSecret);
-      }
     }
   }
 
   /**
    * Returns an json object representing the contained secrets.
-   * 
+   *
    * @param secrets
    *          The list of secrets.
    * @return String of secrets
-   * @throws JSONException 
+   * @throws JSONException
    */
   public JSONObject toJSON() throws JSONException {
     JSONObject jsonValues = new JSONObject();
@@ -129,36 +134,40 @@ public class SecretsCollection extends ArrayList<Secret> {
 
     return jsonValues;
   }
-//  }
+
+  // }
 
   /**
    * Constructs a secrets collection from the supplied JSON object
+   *
    * @param jsonValues
    *          JSON object
    * @return list of secrets
-   * @throws JSONException if error with JSON data
+   * @throws JSONException
+   *           if error with JSON data
    */
   public static SecretsCollection fromJSON(JSONObject jsonValues)
-          throws JSONException {
+      throws JSONException {
     JSONArray jsonSecrets = jsonValues.getJSONArray(SECRETS_ID);
     SecretsCollection secretList = new SecretsCollection();
     for (int i = 0; i < jsonSecrets.length(); i++) {
       secretList.add(Secret.fromJSON((JSONObject) jsonSecrets.get(i)));
     }
+
     /* get the last sync date */
     if (jsonValues.has(SYNCDATE_ID)) {
-      secretList.setLastSyncTimestamp(jsonValues
-              .getLong(SYNCDATE_ID));
+      secretList.setLastSyncTimestamp(jsonValues.getLong(SYNCDATE_ID));
     } else {
       Log.w(LOG_TAG, "No sync date in JSON stream - set to default");
       secretList.setLastSyncTimestamp(0);
     }
+
     return secretList;
   }
 
   /**
    * Returns an encrypted json stream representing the user's secrets.
-   * 
+   *
    * @param cipher
    *          The encryption cipher to use with the file.
    * @param secrets
@@ -170,6 +179,7 @@ public class SecretsCollection extends ArrayList<Secret> {
   public byte[] toEncryptedJSONStream(Cipher cipher) throws IOException {
     CipherOutputStream output = null;
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
     try {
       output = new CipherOutputStream(baos, cipher);
       output.write(toJSON().toString().getBytes("UTF-8"));
@@ -177,18 +187,15 @@ public class SecretsCollection extends ArrayList<Secret> {
       Log.e(LOG_TAG, "toEncryptedJSONStream", e);
       throw new IOException("toEncryptedJSONStream failed: " + e.getMessage());
     } finally {
-      try {
-        if (null != output)
-          output.close();
-      } catch (IOException ex) {
-      }
+      try { if (null != output) output.close(); } catch (IOException ex) {}
     }
+
     return baos.toByteArray();
   }
 
   /**
    * Constructs secrets from the supplied encrypted byte stream
-   * 
+   *
    * @param cipher
    *          cipher to use
    * @param secrets
@@ -198,23 +205,24 @@ public class SecretsCollection extends ArrayList<Secret> {
    *           if any error occurs
    */
   public static SecretsCollection fromEncryptedJSONStream(Cipher cipher,
-                                                          byte[] secrets)
-          throws IOException {
+      byte[] secrets) throws IOException {
     try {
       byte[] secretStrBytes = cipher.doFinal(secrets);
-      JSONObject jsonValues = new JSONObject(
-              new String(secretStrBytes, "UTF-8"));
+      JSONObject jsonValues =
+          new JSONObject(new String(secretStrBytes, "UTF-8"));
       return fromJSON(jsonValues);
     } catch (Exception e) {
       Log.e(LOG_TAG, "fromEncryptedJSONStream", e);
-      throw new IOException("fromEncryptedJSONStream failed: " + e.getMessage());
+      throw
+          new IOException("fromEncryptedJSONStream failed: " + e.getMessage());
     }
   }
 
-  /* (non-Javadoc)
-   * ArrayList.clone() produces a shallow copy of the collection.
-   * Here we just add the lastSyncTimestamp field.
-   * Logically equivalent to the copy constructor
+  /*
+   * (non-Javadoc) ArrayList.clone() produces a shallow copy of the collection.
+   * Here we just add the lastSyncTimestamp field. Logically equivalent to the
+   * copy constructor
+   *
    * @see java.util.ArrayList#clone()
    */
   @Override
@@ -223,5 +231,4 @@ public class SecretsCollection extends ArrayList<Secret> {
     newCollection.lastSyncTimestamp = lastSyncTimestamp;
     return newCollection;
   }
-
 }

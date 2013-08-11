@@ -4,25 +4,23 @@ import java.security.SecureRandom;
 
 import net.tawacentral.roger.secrets.OnlineAgentManager.SecretsReceivedListener;
 
-
 /**
  * Represents an Online Sync Agent application.
- * 
+ *
  * @author Chris Wood
  */
 public class OnlineSyncAgent {
-	private String displayName;
-	private String classId;
-	
-	/*
-	 * The response key is a randomly generated string that is provided to the
-	 * OSA as part of the sync request and must be returned in the response in
-	 * order for it to be accepted. The key is changed when the response is
-	 * received to ensure that any subsequent or unsolicited responses are
-	 * rejected.
-	 */
-	private static final int RESPONSEKEY_LENGTH = 8;
-	private String responseKey;
+  private String displayName;
+  private String classId;
+
+  /*
+   * The response key is a randomly generated string that is provided to the OSA
+   * as part of the sync request and must be returned in the response in order
+   * for it to be accepted. The key is changed when the response is received to
+   * ensure that any subsequent or unsolicited responses are rejected.
+   */
+  private static final int RESPONSEKEY_LENGTH = 8;
+  private String responseKey;
 
   /*
    * "available" indicates if that agent is available. Agents are required to
@@ -31,53 +29,60 @@ public class OnlineSyncAgent {
    * configured.
    */
   private boolean available = true;
-  
+
   private SecretsReceivedListener listener;
 
   /**
-	 * Constructor
-	 * @param displayName
-	 * @param classId
-	 */
+   * Constructor
+   *
+   * @param displayName
+   * @param classId
+   */
   public OnlineSyncAgent(String displayName, String classId) {
     this.displayName = displayName;
     this.classId = classId;
   }
 
-	/**
-	 * Get displayName
-	 * @return the displayName
-	 */
-	public String getDisplayName() {
-		return displayName;
-	}
+  /**
+   * Get displayName
+   *
+   * @return the displayName
+   */
+  public String getDisplayName() {
+    return displayName;
+  }
 
-	/**
-	 * Get classId
-	 * @return the classId
-	 */
-	public String getClassId() {
-		return classId;
-	}
+  /**
+   * Get classId
+   *
+   * @return the classId
+   */
+  public String getClassId() {
+    return classId;
+  }
 
-	/**
-	 * Test the available indicator
-	 * @return available
-	 */
-	public boolean isAvailable() {
-		return available;
-	}
+  /**
+   * Test the available indicator
+   *
+   * @return available
+   */
+  public boolean isAvailable() {
+    return available;
+  }
 
-	/**
-	 * Set the available indicator
-	 * @param available the indicator to set
-	 */
-	public void setAvailable(boolean available) {
-		this.available = available;
-	}
+  /**
+   * Set the available indicator
+   *
+   * @param available
+   *          the indicator to set
+   */
+  public void setAvailable(boolean available) {
+    this.available = available;
+  }
 
   /**
    * Get the response key
+   *
    * @return the responseKey
    */
   public String getResponseKey() {
@@ -96,6 +101,7 @@ public class OnlineSyncAgent {
 
   /**
    * Get the secrets received listener
+   *
    * @return the listener
    */
   public SecretsReceivedListener getListener() {
@@ -104,14 +110,16 @@ public class OnlineSyncAgent {
 
   /**
    * Set the secrets received listener
-   * @param listener the listener to set
+   *
+   * @param listener
+   *          the listener to set
    */
   public void setSecretsReceivedlistener(SecretsReceivedListener listener) {
     this.listener = listener;
   }
 
-	@Override
-	public String toString() {
-		return displayName;
-	}
+  @Override
+  public String toString() {
+    return displayName;
+  }
 }

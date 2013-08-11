@@ -192,7 +192,7 @@ public class LoginActivity extends Activity implements TextWatcher {
             new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int which) {
-                if (DialogInterface.BUTTON1 == which) {
+                if (DialogInterface.BUTTON_POSITIVE == which) {
                   // If we delete the secrets from disk, make sure to also
                   // clear them from memory too.  This is to handle the case
                   // where the user knows his password and has logged in, but
@@ -336,8 +336,8 @@ public class LoginActivity extends Activity implements TextWatcher {
       File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
       byte[] salt = SecurityUtils.getSalt();
       int rounds = SecurityUtils.getRounds();
-      int err = FileUtils
-              .saveSecrets(this, file, cipher, salt, rounds, secrets);
+      int err = FileUtils.saveSecrets(this, file, cipher, salt, rounds,
+                                      secrets);
       if (0 != err) {
         showToast(err, Toast.LENGTH_LONG);
         return;
@@ -351,17 +351,17 @@ public class LoginActivity extends Activity implements TextWatcher {
           // Loading the secrets failed again. Try loading with the old
           // encryption algorithm in case were are reading an older file.
           Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
-                  passwordString, pair.salt, pair.rounds);
+              passwordString, pair.salt, pair.rounds);
           if (null != cipher2) {
             secrets = FileUtils.loadSecretsV2(this, cipher2, pair.salt,
-                    pair.rounds);
+                                              pair.rounds);
           }
         }
         if (null == secrets) {
           // Loading the secrets failed again. Try an even older encryption
           // algorithm.
-          Cipher cipher1 = SecurityUtils
-                  .createDecryptionCipherV1(passwordString);
+          Cipher cipher1 =
+              SecurityUtils.createDecryptionCipherV1(passwordString);
           if (null != cipher1)
             secrets = FileUtils.loadSecretsV1(this, cipher1);
         }

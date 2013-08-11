@@ -38,7 +38,7 @@ public class Secret implements Comparable<Secret>, Serializable {
   private static final long serialVersionUID = -116450416616138469L;
   private static final int THRESHOLD_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
-  
+
   // Secret field names
   private static final String SECRET_DESCRIPTION = "description";
   private static final String SECRET_USERNAME = "username";
@@ -56,10 +56,10 @@ public class Secret implements Comparable<Secret>, Serializable {
   private String email;
   private String note;
   private ArrayList<LogEntry> access_log;
-  
+
   /* creation or modification timestamp */
   private long timestamp = System.currentTimeMillis();
-  
+
   /* soft deletion indicator */
   private boolean deleted;
 
@@ -74,8 +74,7 @@ public class Secret implements Comparable<Secret>, Serializable {
    *
    * @author rogerta
    */
-  
-    public static final class LogEntry implements Serializable {
+  public static final class LogEntry implements Serializable {
     private static final long serialVersionUID = -9024951856209882415L;
 
     // Log entry types.
@@ -84,7 +83,7 @@ public class Secret implements Comparable<Secret>, Serializable {
     public static final int CHANGED = 3;
     public static final int EXPORTED = 4;
     public static final int SYNCED = 5;
-    
+
     // Log field names
     private static final String LOG_TYPE = "type";
     private static final String LOG_TIME = "time";
@@ -122,14 +121,14 @@ public class Secret implements Comparable<Secret>, Serializable {
     public long getTime() {
       return time_;
     }
-    
+
     private JSONObject toJSON() throws JSONException {
       JSONObject jsonValues = new JSONObject();
       jsonValues.put(LOG_TYPE, getType());
       jsonValues.put(LOG_TIME, getTime());
       return jsonValues;
     }
-    
+
     /**
      * Generate LogEntry from json object
      * @param json object
@@ -138,7 +137,7 @@ public class Secret implements Comparable<Secret>, Serializable {
      */
     public static LogEntry fromJSON(JSONObject jsonValues)
             throws JSONException {
-      return new LogEntry(jsonValues.getInt(LOG_TYPE), 
+      return new LogEntry(jsonValues.getInt(LOG_TYPE),
                            jsonValues.getLong(LOG_TIME));
     }
   }
@@ -157,11 +156,11 @@ public class Secret implements Comparable<Secret>, Serializable {
    * secret is successfully read, it is added to a global array.  If the save
    * file cannot read the entire array because the end is corrupted, the global
    * array will contain those that were read successfully.
-   * 
+   *
    *  Its the responsibility of the load code to clear the global array before
    *  and after reading from the file.  This code assumes that only one thread
    *  tries to load Secrets from an input stream at a time.
-   * 
+   *
    * @param stream
    * @throws IOException
    * @throws ClassNotFoundException
@@ -170,7 +169,7 @@ public class Secret implements Comparable<Secret>, Serializable {
       throws IOException, ClassNotFoundException {
     stream.defaultReadObject();
   }
-  
+
   public void setDescription(String description) {
     this.description = description;
   }
@@ -189,7 +188,7 @@ public class Secret implements Comparable<Secret>, Serializable {
   /**
    * Sets the password for the secret, updating the access log with a
    * CHANGED entry if requested.
-   * 
+   *
    * @param password The new password
    * @param createDefaultLogEntry If true, create a CHANGED entry, otherwise
    *                              do nothing
@@ -201,7 +200,7 @@ public class Secret implements Comparable<Secret>, Serializable {
 
     this.password = password;
   }
-  
+
   /**
    * Create a new log entry for the specified type, under the following
    * conditions.
@@ -211,19 +210,21 @@ public class Secret implements Comparable<Secret>, Serializable {
    *             entry to CHANGED
    *   EXPORTED - always create a new entry
    *   SYNCED (input) - always create a new entry
-   *   
+   *
    * Any other type is ignored.
-   *   
+   *
    * The first two conditons are to prevent too many log entries.
-   *   
+   *
    * @param type VIEWED, CHANGED, EXPORTED, SYNCED
    */
   private void createLogEntry(int type) {
     if (!(type == LogEntry.VIEWED ||
         type == LogEntry.CHANGED ||
         type == LogEntry.EXPORTED ||
-        type == LogEntry.SYNCED)) return;
-    
+        type == LogEntry.SYNCED)) {
+      return;
+    }
+
     long now = System.currentTimeMillis();
     if (type == LogEntry.VIEWED || type == LogEntry.CHANGED) {
       LogEntry lastEntry = access_log.get(0);
@@ -236,6 +237,7 @@ public class Secret implements Comparable<Secret>, Serializable {
         }
       }
     }
+
     access_log.add(0, new LogEntry(type, now));
     pruneAccessLog();
   }
@@ -271,7 +273,7 @@ public class Secret implements Comparable<Secret>, Serializable {
   public String getNote() {
     return note;
   }
-	
+
 	/**
 	 * Get the last update timestamp
 	 * @return the timestamp
@@ -287,7 +289,7 @@ public class Secret implements Comparable<Secret>, Serializable {
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
 	}
-	
+
 	/**
    * @return the deleted
    */
@@ -308,9 +310,9 @@ public class Secret implements Comparable<Secret>, Serializable {
 	 * @param reason Log entry value
 	 */
 	public void update(Secret from, int reason) {
-	  if (!(reason == LogEntry.CHANGED || reason == LogEntry.SYNCED)) {
+	  if (!(reason == LogEntry.CHANGED || reason == LogEntry.SYNCED))
 	    return;
-	  }
+
 		setPassword(from.password, false);
 		username = from.getUsername();
 		email = from.getEmail();
@@ -357,9 +359,10 @@ public class Secret implements Comparable<Secret>, Serializable {
     secret.email = jsonSecret.getString(SECRET_EMAIL);
     secret.note = jsonSecret.getString(SECRET_NOTE);
     secret.timestamp = jsonSecret.getLong(SECRET_TIMESTAMP);
-    if (jsonSecret.has(SECRET_DELETED)) {
+
+    if (jsonSecret.has(SECRET_DELETED))
       secret.deleted = jsonSecret.getBoolean(SECRET_DELETED);
-    }
+
     if (jsonSecret.has(SECRET_ACCESS_LOG)) {
       JSONArray jsonLog = jsonSecret.getJSONArray(SECRET_ACCESS_LOG);
       ArrayList<LogEntry> log = new ArrayList<LogEntry>(jsonLog.length());
@@ -368,16 +371,16 @@ public class Secret implements Comparable<Secret>, Serializable {
       }
       secret.access_log = log;
     }
+
     return secret;
   }
-  
+
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("d=").append(description);
     sb.append(",u=").append(username);
     sb.append(",p=").append(password);
     sb.append(",e=").append(email);
-//    sb.append(",n=").append(note);
     return sb.toString();
   }
 

@@ -36,8 +36,6 @@ import javax.crypto.CipherInputStream;
 
 import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
 
-
-import android.annotation.SuppressLint;
 import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
@@ -535,13 +533,14 @@ public class FileUtils {
    * function is called only for backward compatibility purposes, when Secrets
    * encounters an error trying to load the secrets using the current encryption
    * method.
-   * 
+   *
    * @param context
    *          Activity context in which the load is called.
    * @return A list of loaded secrets.
    */
   public static SecretsCollection loadSecretsV21(Context context) {
     Log.d(LOG_TAG, "FileUtils.loadSecretsV21");
+
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.loadSecretsV21: got lock");
 
@@ -555,13 +554,17 @@ public class FileUtils {
       try {
         input = context.openFileInput(SECRETS_FILE_NAME);
         secrets = readSecretsV2(input, cipher, SecurityUtils.getSalt(),
-                              SecurityUtils.getRounds());
+                                SecurityUtils.getRounds());
       } catch (Exception ex) {
         Log.e(LOG_TAG, "loadSecretsV21", ex);
       } finally {
-        try {if (null != input) input.close();} catch (IOException ex) {}
+        try {
+          if (null != input)
+            input.close();
+        } catch (IOException ex) {
+        }
       }
-  
+
       Log.d(LOG_TAG, "FileUtils.loadSecretsV21: done");
       return secrets;
     }
@@ -692,7 +695,7 @@ public class FileUtils {
   /**
    * Writes the secrets to the given output stream encrypted with the given
    * cipher.
-   * 
+   *
    * The output stream is closed by the caller.
    *
    * @param output The output stream to write the secrets to.
@@ -713,11 +716,11 @@ public class FileUtils {
     output.write(secrets.toEncryptedJSONStream(cipher));
   	output.flush();
   }
-  
+
   /**
    * Read the secrets from the given input stream, decrypting with the given
    * cipher.
-   * 
+   *
    * @param input
    *          The input stream to read the secrets from.
    * @param cipher
@@ -729,7 +732,7 @@ public class FileUtils {
   private static SecretsCollection readSecrets(InputStream input,
                                                Cipher cipher, byte[] salt,
                                                int rounds) throws IOException,
-          ClassNotFoundException {
+      ClassNotFoundException {
     SaltAndRounds pair = getSaltAndRounds(input);
     if (!Arrays.equals(pair.salt, salt) || pair.rounds != rounds) {
       return null;
@@ -784,7 +787,7 @@ public class FileUtils {
     }
   }
 
-  /** Deletes all secrets from the phone. 
+  /** Deletes all secrets from the phone.
    * @param context the current context
    * @return always true
    */
