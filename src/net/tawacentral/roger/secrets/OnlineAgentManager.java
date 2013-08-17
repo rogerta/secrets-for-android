@@ -1,10 +1,9 @@
 package net.tawacentral.roger.secrets;
 
-import java.util.ArrayList;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.json.JSONException;
@@ -17,12 +16,23 @@ import android.os.Handler;
 import android.util.Log;
 
 /**
- * Receives broadcasts from Online Sync Agents.
- *
+ * Provides support for Online Sync Agents.
+ * 
+ * Sync process overview
+ * 
+ * On each resume a roll call is broadcast. Agents that respond are recorded in
+ * a list of available agents.
+ * 
+ * Sync operations are always initiated from secrets. A sync request is
+ * broadcast at the selected (or only) available agent, together with the
+ * unencrypted secrets and a one-time validation key. The sync response is
+ * validated against the key,and the returned secrets (updated or deleted) are
+ * merged with the existing ones.
+ * 
  * @author Chris Wood
  */
 public class OnlineAgentManager extends BroadcastReceiver {
-  private static final String LOG_TAG = "Secrets.OnlineAgentManager";
+  private static final String LOG_TAG = "OnlineAgentManager";
 
   private static final String SECRETS_PERMISSION =
       "net.tawacentral.roger.secrets.permission.SECRETS";
@@ -32,8 +42,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
       "net.tawacentral.roger.secrets.OSA_ROLLCALL";
   private static final String ROLLCALL_RESPONSE =
       "net.tawacentral.roger.secrets.OSA_ROLLCALL_RESPONSE";
-  private static final String SYNC =
-      "net.tawacentral.roger.secrets.SYNC";
+  private static final String SYNC = "net.tawacentral.roger.secrets.SYNC";
   private static final String SYNC_RESPONSE =
       "net.tawacentral.roger.secrets.SYNC_RESPONSE";
 
@@ -42,7 +51,9 @@ public class OnlineAgentManager extends BroadcastReceiver {
   private static final String RESPONSE_KEY = "responseKey";
   private static final String SECRETS_ID = "secrets";
 
-  private static Map<String, OnlineSyncAgent> INSTALLED_AGENTS =
+  private static final int RESPONSEKEY_LENGTH = 8;
+
+  private static Map<String, OnlineSyncAgent> AVAILABLE_AGENTS =
       new HashMap<String, OnlineSyncAgent>();
 
   // handler and listener for the current operation
@@ -63,15 +74,10 @@ public class OnlineAgentManager extends BroadcastReceiver {
         Log.e(LOG_TAG, "Received invalid OSA rollcall resp: classId=" + classId
             + ",displayName=" + displayName);
       } else {
+        AVAILABLE_AGENTS
+            .put(classId, new OnlineSyncAgent(displayName, classId));
         Log.d(LOG_TAG, "Received OSA rollcall resp: " + classId + " "
             + displayName);
-        if (!INSTALLED_AGENTS.containsKey(classId)) {
-          INSTALLED_AGENTS.put(classId, new OnlineSyncAgent(displayName,
-              classId));
-        } else {
-          // agent already known - reclaim it
-          INSTALLED_AGENTS.get(classId).setAvailable(true);
-        }
       }
 
       // handle sync response
@@ -87,23 +93,23 @@ public class OnlineAgentManager extends BroadcastReceiver {
           Log.e(LOG_TAG, "Received invalid JSON secrets data", e);
         }
       }
-      OnlineSyncAgent agent = INSTALLED_AGENTS.get(classId);
+      OnlineSyncAgent agent = AVAILABLE_AGENTS.get(classId);
       agent.getListener().setSecrets(secrets);
 
       // run the listener code to process the received secrets
       handler.post(agent.getListener());
 
       // change the response key to prevent a second response being accepted
-      agent.generateResponseKey();
+      agent.setResponseKey(generateResponseKey());
     }
   }
 
   /*
    * Validate the sync response from the agent. The key in the response must
    * match the one sent in the original sync request.
-   *
+   * 
    * @param intent
-   *
+   * 
    * @return true if response is OK, false otherwise
    */
   private boolean validateResponse(Intent intent) {
@@ -111,7 +117,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
     if (intent.getExtras() != null) {
       String classId = (String) intent.getExtras().get(CLASS_ID);
       String responseKey = (String) intent.getExtras().get(RESPONSE_KEY);
-      OnlineSyncAgent agent = INSTALLED_AGENTS.get(classId);
+      OnlineSyncAgent agent = AVAILABLE_AGENTS.get(classId);
       if (agent != null) {
         if (responseKey != null && responseKey.length() > 0
             && agent.getResponseKey().equals(responseKey)) {
@@ -139,8 +145,20 @@ public class OnlineAgentManager extends BroadcastReceiver {
   }
 
   /**
+   * Generate a new response key
+   * 
+   * @return String response key
+   */
+  public static String generateResponseKey() {
+    SecureRandom random = new SecureRandom();
+    byte[] keyBytes = new byte[RESPONSEKEY_LENGTH];
+    random.nextBytes(keyBytes);
+    return new String(keyBytes);
+  }
+
+  /**
    * Set the thread handler
-   *
+   * 
    * @param handler
    */
   public static void setHandler(Handler handler) {
@@ -148,50 +166,24 @@ public class OnlineAgentManager extends BroadcastReceiver {
   }
 
   /**
-   * Get installed agents
-   *
+   * Get available agents
+   * 
    * @return collection of installed agents
    */
-  public static Collection<OnlineSyncAgent> getInstalledAgents() {
-    return Collections.unmodifiableCollection(INSTALLED_AGENTS.values());
-  }
-
-  /**
-   * Get available agents
-   *
-   * @return collection of available agents
-   */
   public static Collection<OnlineSyncAgent> getAvailableAgents() {
-    // first count the available agents
-    int available = 0;
-    for (OnlineSyncAgent agent : INSTALLED_AGENTS.values()) {
-      if (agent.isAvailable()) {
-        available++;
-      }
-    }
-    List<OnlineSyncAgent> availableAgents = new ArrayList<OnlineSyncAgent>(
-        available);
-    for (OnlineSyncAgent agent : INSTALLED_AGENTS.values()) {
-      if (agent.isAvailable()) {
-        availableAgents.add(agent);
-      }
-    }
-    return availableAgents;
+    return Collections.unmodifiableCollection(AVAILABLE_AGENTS.values());
   }
 
   /**
    * Sends out the rollcall broadcast and will keep track of all OSAs that
-   * respond
-   *
-   * We need to remember previously configured agents, otherwise they may need
-   * to be reconfigured every time the app is resumed.
-   *
+   * respond.
+   * 
+   * Forget previous agents - only ones that respond are considered available.
+   * 
    * @param context
    */
   public static void sendRollCallBroadcast(Context context) {
-    for (OnlineSyncAgent agent : INSTALLED_AGENTS.values()) {
-      agent.setAvailable(false);
-    }
+    AVAILABLE_AGENTS.clear();
     Intent broadcastIntent = new Intent(ROLLCALL);
     context.sendBroadcast(broadcastIntent, SECRETS_PERMISSION);
     Log.d(LOG_TAG, "sent broadcast");
@@ -199,23 +191,24 @@ public class OnlineAgentManager extends BroadcastReceiver {
 
   /**
    * Sends secrets to the specified OSA.
-   *
+   * 
    * Returns true if secrets are successfully sent, but makes no guarantees that
    * the secrets were received.
-   *
+   * 
    * A one-time key is sent to the OSA and must be returned in the reply for it
    * to be considered valid.
-   *
+   * 
    * @param agent
    * @param secrets
    * @param activity
    * @return true if secrets were sent
    */
   public static boolean sendSecrets(OnlineSyncAgent agent,
-      SecretsCollection secrets, SecretsListActivity activity) {
+                                    SecretsCollection secrets,
+                                    SecretsListActivity activity) {
     agent.setSecretsReceivedlistener(new SecretsReceivedListener(activity,
         agent.getDisplayName()));
-    agent.generateResponseKey();
+    agent.setResponseKey(generateResponseKey());
     try {
       Intent secretsIntent = new Intent(SYNC);
       secretsIntent.setPackage(agent.getClassId());
@@ -238,7 +231,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
    * member variable will contain the secrets sent by the OSA
    */
   public static class SecretsReceivedListener implements Runnable {
-    protected SecretsCollection secrets;
+    private SecretsCollection secrets;
     private SecretsListActivity activity;
     private String agentName;
 
@@ -250,7 +243,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
 
     /**
      * Accessor for secrets
-     *
+     * 
      * @return secrets
      */
     public SecretsCollection getSecrets() {
@@ -259,7 +252,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
 
     /**
      * Accessor for secrets
-     *
+     * 
      * @param secrets
      */
     public void setSecrets(SecretsCollection secrets) {
