@@ -25,7 +25,7 @@ import android.util.Log;
 @SuppressWarnings("serial")
 public class SecretsCollection extends ArrayList<Secret> {
   /** Tag for logging purposes. */
-  public static final String LOG_TAG = "Secrets.SecretsCollection";
+  public static final String LOG_TAG = "SecretsCollection";
 
   private static final String SECRETS_ID = "secrets";
   private static final String SYNCDATE_ID = "syncdate";
@@ -54,7 +54,7 @@ public class SecretsCollection extends ArrayList<Secret> {
    *
    * @param collection
    */
-  public SecretsCollection(Collection<? extends Secret> collection) {
+  public SecretsCollection(Collection<Secret> collection) {
     super(collection);
   }
 
