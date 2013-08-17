@@ -25,6 +25,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.util.Log;
+
 /**
  * Represents one secret.  The assumption is that each secret is describable,
  * uses a combination of username/password, and may require a separate email
@@ -38,6 +40,9 @@ public class Secret implements Comparable<Secret>, Serializable {
   private static final long serialVersionUID = -116450416616138469L;
   private static final int THRESHOLD_MS = 60 * 1000;
   private static final int MAX_LOG_SIZE = 100;
+
+  // Tag for logging purposes
+  public static final String LOG_TAG = "Secret";
 
   // Secret field names
   private static final String SECRET_DESCRIPTION = "description";
@@ -249,11 +254,7 @@ public class Secret implements Comparable<Secret>, Serializable {
    * @return password
    */
   public String getPassword(boolean forExport) {
-    if (forExport) {
-      createLogEntry(LogEntry.EXPORTED);
-    } else {
-      createLogEntry(LogEntry.VIEWED);
-    }
+     createLogEntry(forExport ? LogEntry.EXPORTED : LogEntry.VIEWED);
 
     return password;
   }
@@ -309,7 +310,7 @@ public class Secret implements Comparable<Secret>, Serializable {
 	 * @param from source secret
 	 * @param reason Log entry value
 	 */
-	public void update(Secret from, int reason) {
+   public void update(Secret from, int reason) {
 	  if (!(reason == LogEntry.CHANGED || reason == LogEntry.SYNCED))
 	    return;
 
@@ -323,7 +324,7 @@ public class Secret implements Comparable<Secret>, Serializable {
 
   /**
    * Convert secret to a JSON OBJECT
-   * @return JSON repreentation of a secret
+   * @return JSON representation of a secret
    * @throws JSONException
    */
   public JSONObject toJSON() throws JSONException {
@@ -370,6 +371,10 @@ public class Secret implements Comparable<Secret>, Serializable {
         log.add(LogEntry.fromJSON((JSONObject)jsonLog.get(i)));
       }
       secret.access_log = log;
+      if (!(log.size() > 0)) {
+         Log.w(LOG_TAG, "Empty access log for secret '" + secret.description
+                     + "'");
+      }
     }
 
     return secret;
@@ -389,11 +394,9 @@ public class Secret implements Comparable<Secret>, Serializable {
    */
   @Override
   public boolean equals(Object o) {
-    if (o instanceof Secret) {
+    if (o instanceof Secret)
       return ((Secret)o).description.equalsIgnoreCase(description);
-    } else {
-      return false;
-    }
+    return false;
   }
 
   /* (non-Javadoc)

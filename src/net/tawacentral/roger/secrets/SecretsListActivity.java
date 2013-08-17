@@ -19,8 +19,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -75,7 +75,7 @@ import android.widget.Toast;
  *
  * @author rogerta
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation","javadoc"})
 public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_DELETE_SECRET = 1;
   private static final int DIALOG_CONFIRM_RESTORE = 2;
@@ -118,6 +118,7 @@ public class SecretsListActivity extends ListActivity {
   private boolean isConfigChange; // being destroyed for config change?
   private String restorePoint; // That file that should be restored from
   private OnlineSyncAgent selectedOSA; // currently selected agent
+  
   // This activity will only allow it self to be resumed in specific
   // circumstances, so that leaving the application will force the user to
   // re-enter the master password. Older versions used to check the state of
@@ -215,7 +216,7 @@ public class SecretsListActivity extends ListActivity {
       @Override
       public boolean onSingleTapConfirmed(MotionEvent e) {
         int position = getListView().pointToPosition((int) e.getX(),
-            (int) e.getY());
+                (int) e.getY());
         onItemClicked(position);
         return true;
       }
@@ -676,17 +677,15 @@ public class SecretsListActivity extends ListActivity {
   public void syncSecrets(SecretsCollection changedSecrets, String agentName) {
     Log.d(LOG_TAG, "SecretsListActivity.syncSecrets, secrets: "
         + (changedSecrets == null ? changedSecrets : changedSecrets.size()));
+    String template;
     if (changedSecrets != null) {
       secretsList.syncSecrets(changedSecrets);
       setTitle();
-      String template = getText(R.string.sync_succeeded).toString();
-      String msg = MessageFormat.format(template, agentName);
-      showToast(msg);
+      template = getText(R.string.sync_succeeded).toString();
     } else {
-      String template = getText(R.string.sync_failed).toString();
-      String msg = MessageFormat.format(template, agentName);
-      showToast(msg);
+      template = getText(R.string.sync_failed).toString();
     }
+    showToast(MessageFormat.format(template, agentName));
   }
 
   @Override
@@ -916,8 +915,6 @@ public class SecretsListActivity extends ListActivity {
       OnlineAgentAdapter adapter = new OnlineAgentAdapter(
           SecretsListActivity.this,
           android.R.layout.select_dialog_singlechoice, android.R.id.text1);
-      adapter.updateAppList();
-      adapter.notifyDataSetChanged();
       String title = getString(R.string.dialog_sync_title);
       dialog = new AlertDialog.Builder(this).setTitle(title)
           .setIcon(android.R.drawable.ic_dialog_alert)
@@ -982,7 +979,6 @@ public class SecretsListActivity extends ListActivity {
       AlertDialog alert = (AlertDialog) dialog;
       OnlineAgentAdapter adapter = (OnlineAgentAdapter) alert.getListView()
           .getAdapter();
-      adapter.updateAppList();
       break;
     }
     }

@@ -33,6 +33,7 @@ import android.widget.TextView;
  *
  * @author rogerta
  */
+@SuppressWarnings("javadoc")
 public class SecretsListAdapter extends BaseAdapter implements Filterable {
   public static final char DOT = '.';
 
@@ -340,45 +341,41 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   
   /**
    * Return a collection of all secrets including deleted ones.
-   * The collection is a shallow copy of all secrets - the caller should not
-   * modify them.
+   * This is a merge of the two collections (all secrets and deleted secrets)
+   * unless either is empty, then just the non-empty collection is returned.
+   * The caller should not modify the returned collection.
    * @return secrets collection
    */
-  public SecretsCollection getAllAndDeletedSecrets() {
-    int i,j;
-    Secret deletedSecret;
-    
-    if (deletedSecrets.size() == 0) {
-      return allSecrets;
-    }
-    if (allSecrets.size() == 0) {
-      return deletedSecrets;
-    }
-    // merge the two collections backwards so indicies yet to be processed are
-    // not disturbed.
-    SecretsCollection allAndDeletedSecrets = new SecretsCollection(allSecrets);
-    synchronized (allSecrets) {
-      j = deletedSecrets.size() - 1;
-      deletedSecret = deletedSecrets.get(j);
-      alldone:
-      for (i = allAndDeletedSecrets.size() - 1; i >= 0; --i) {
-        Secret s = allAndDeletedSecrets.get(i);
-        while(deletedSecret.compareTo(s) > 0 || i == 0) {
-          if (i == 0) {
-            allAndDeletedSecrets.add(i, deletedSecret);
-          } else {
-            allAndDeletedSecrets.add(i+1, deletedSecret);
-          }
-          if (--j > -1) {
-            deletedSecret = deletedSecrets.get(j);
-          } else break alldone;
-        }
+   public SecretsCollection getAllAndDeletedSecrets() {
+      if (deletedSecrets.size() == 0) {
+         return allSecrets;
       }
-    }
-    return allAndDeletedSecrets;
-  }
+      if (allSecrets.size() == 0) {
+         return deletedSecrets;
+      }
+      SecretsCollection allAndDeletedSecrets = new SecretsCollection();
+      synchronized (allSecrets) {
+         // merge the two collections. Both collections are assumed sorted and
+         // secrets exist uniquely in only one collection.
+         int aIndex = 0, dIndex = 0;
+         while (aIndex < allSecrets.size() || dIndex < deletedSecrets.size()) {
+            if (aIndex == allSecrets.size()) {
+               allAndDeletedSecrets.add(deletedSecrets.get(dIndex++));
+            } else if (dIndex == deletedSecrets.size()) {
+               allAndDeletedSecrets.add(allSecrets.get(aIndex++));
+            } else {
+               if (allSecrets.get(aIndex).compareTo(deletedSecrets.get(dIndex)) < 0) {
+                  allAndDeletedSecrets.add(allSecrets.get(aIndex++));
+               } else {
+                  allAndDeletedSecrets.add(deletedSecrets.get(dIndex++));
+               }
+            }
+         }
+      }
+      return allAndDeletedSecrets;
+   }
 
-  /** Remove the secret at the given position. */
+  /** Remove the secret at the given position. It is not deleted. */
   public Secret remove(int position) {
     // NOTE: i will not remove usernames and emails from the auto complete
     // adapters.  For one, it would be expensive, and two, I actually think
@@ -402,22 +399,23 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     return secret;
   }
   
-  /**
-   * Remove the secret at the given position and then delete the secret
-   * from the secrets collection.
-   */
+  /** Remove the secret at the given position and then delete the secret
+   *  from the secrets collection */
   public Secret delete(int position) {
     int i;
     Secret secret;
     synchronized (allSecrets) {
       secret = remove(position);
       // add the deleted secret to the deleted secrets list, removing it
-      // first in case it was deleted previously.
-      deletedSecrets.remove(secret);
+      // first if it has been deleted previously.
       for (i = 0; i < deletedSecrets.size(); ++i) {
         Secret s = deletedSecrets.get(i);
-        if (secret.compareTo(s) < 0)
-          break;
+        int compare = secret.compareTo(s);
+        if (compare < 0) break;
+        else if (compare == 0) {
+           deletedSecrets.remove(i);
+           break;
+        }
       }
       deletedSecrets.add(i, secret);
       secret.setDeleted(true);
