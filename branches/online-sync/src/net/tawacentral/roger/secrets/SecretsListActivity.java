@@ -33,7 +33,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -138,9 +137,6 @@ public class SecretsListActivity extends ListActivity {
       finish();
       return;
     }
-
-    /* Create a handler for the thread to receive messages */
-    OnlineAgentManager.setHandler(new Handler());
 
     secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
     setTitle();
@@ -400,6 +396,7 @@ public class SecretsListActivity extends ListActivity {
     menu.findItem(R.id.list_backup).setVisible(!isEditing && !secretsListEmpty);
     menu.findItem(R.id.list_search).setVisible(!isEditing);
     menu.findItem(R.id.list_restore).setVisible(!isEditing);
+    menu.findItem(R.id.list_sync).setVisible(!isEditing);
     menu.findItem(R.id.list_import).setVisible(!isEditing);
     menu.findItem(R.id.list_export).setVisible(!isEditing && !secretsListEmpty);
     menu.findItem(R.id.list_menu_change_password).setVisible(!isEditing);
@@ -650,26 +647,55 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
+  /* Handle sync request
+   * If sync operation active, give use option to cancel it. Otherwise show
+   * sync dialog only if more than one agent available.
+   */
   private void syncRequested() {
-    Collection<OnlineSyncAgent> agents = OnlineAgentManager
-        .getAvailableAgents();
-    if (agents.size() > 1) {
-      // show selection dialog if more than one agent available
-      showDialog(DIALOG_SYNC);
-    } else if (agents.size() == 1) {
-      // send secrets to the one available OSA
-      if (!OnlineAgentManager.sendSecrets(agents.iterator().next(),
-          secretsList.getAllAndDeletedSecrets(), SecretsListActivity.this)) {
-        showToast(R.string.error_osa_secrets);
-      }
+    if (OnlineAgentManager.isActive()) {
+      DialogInterface.OnClickListener dialogClickListener =
+          new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              switch (which) {
+              case DialogInterface.BUTTON_POSITIVE:
+                // Yes button clicked
+                OnlineAgentManager.cancel();
+                break;
+
+              case DialogInterface.BUTTON_NEGATIVE:
+                // No button clicked
+                break;
+              }
+            }
+          };
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder
+          .setMessage(R.string.sync_active)
+          .setPositiveButton(R.string.yes_option, dialogClickListener)
+          .setNegativeButton(R.string.no_option, dialogClickListener).show();
     } else {
-      // no agents available
-      showToast(R.string.no_osa_installed);
+      Collection<OnlineSyncAgent> agents = OnlineAgentManager
+          .getAvailableAgents();
+      if (agents.size() > 1) {
+        // show selection dialog if more than one agent available
+        showDialog(DIALOG_SYNC);
+      } else if (agents.size() == 1) {
+        // send secrets to the one available OSA
+        if (!OnlineAgentManager.sendSecrets(agents.iterator().next(),
+            secretsList.getAllAndDeletedSecrets(), SecretsListActivity.this)) {
+          showToast(R.string.error_osa_secrets);
+        }
+      } else {
+        // no agents available
+        showToast(R.string.no_osa_available);
+      }
     }
+    
   }
 
   /**
-   * Callback from OSA listener with new/updated secrets.
+   * Callback from OSA manager with new/updated secrets.
    *
    * @param changedSecrets
    * @param agentName
@@ -973,12 +999,6 @@ public class SecretsListActivity extends ListActivity {
     case DIALOG_ENTER_RESTORE_PASSWORD: {
       TextView password1 = (TextView) dialog.findViewById(R.id.password);
       password1.setText("");
-      break;
-    }
-    case DIALOG_SYNC: {
-      AlertDialog alert = (AlertDialog) dialog;
-      OnlineAgentAdapter adapter = (OnlineAgentAdapter) alert.getListView()
-          .getAdapter();
       break;
     }
     }

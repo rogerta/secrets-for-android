@@ -134,9 +134,12 @@ Are you sure you want to delete \'\'{0}\'\'?
     A malicious application could send your secrets to anyone or post them online for everyone to see.</string>
 <string name="osa_sent">Secrets sent to {0} application</string>
 <string name="dialog_sync_title">Sync with:</string>
-<string name="no_osa_installed">Sorry, there are no sync agents installed.</string>
+<string name="no_osa_available">Sorry, there are no sync agents available.</string>
 <string name="error_osa_secrets">Unable to sync your secrets.</string>
-
+<string name="sync_active">A sync operation is already active. Do you want to
+    cancel it so that you can re-issue the sync request?</string>
+<string name="yes_option">Yes</string>
+<string name="no_option">No</string>    
 <!-- the following string are used to format a string that indicate when a
      given secret was created or last viewed, modified, or exported.  The
      {0} will be replaced with a "verb" which describes the action, and {1}

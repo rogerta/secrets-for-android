@@ -1,7 +1,18 @@
+// Copyright (c) 2009, Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package net.tawacentral.roger.secrets;
-
-import net.tawacentral.roger.secrets.OnlineAgentManager.SecretsReceivedListener;
-
 
 /**
  * Represents an Online Sync Agent application.
@@ -11,17 +22,6 @@ import net.tawacentral.roger.secrets.OnlineAgentManager.SecretsReceivedListener;
 public class OnlineSyncAgent {
 	private String displayName;
 	private String classId;
-	
-	/*
-	 * The response key is a randomly generated string that is provided to the
-	 * OSA as part of the sync request and must be returned in the response in
-	 * order for it to be accepted. The key is changed when the response is
-	 * received to ensure that any subsequent or unsolicited responses are
-	 * rejected.
-	 */
-	private String responseKey;
-
-  private SecretsReceivedListener listener;
 
   /**
    * Constructor
@@ -50,42 +50,6 @@ public class OnlineSyncAgent {
    */
   public String getClassId() {
     return classId;
-  }
-
-  /**
-   * Get the response key
-   *
-   * @return the responseKey
-   */
-  public String getResponseKey() {
-    return responseKey;
-  }
-
-  /**
-   * set the response key
-   * @param key the response key to set
-   */
-  public void setResponseKey(String key) {
-    responseKey = key;
-  }
-
-  /**
-   * Get the secrets received listener
-   *
-   * @return the listener
-   */
-  public SecretsReceivedListener getListener() {
-    return listener;
-  }
-
-  /**
-   * Set the secrets received listener
-   *
-   * @param listener
-   *          the listener to set
-   */
-  public void setSecretsReceivedlistener(SecretsReceivedListener listener) {
-    this.listener = listener;
   }
 
   @Override

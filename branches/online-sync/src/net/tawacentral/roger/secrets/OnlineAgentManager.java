@@ -1,3 +1,17 @@
+// Copyright (c) 2009, Google Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package net.tawacentral.roger.secrets;
 
 import java.security.SecureRandom;
@@ -12,7 +26,6 @@ import org.json.JSONObject;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Handler;
 import android.util.Log;
 
 /**
@@ -28,6 +41,10 @@ import android.util.Log;
  * unencrypted secrets and a one-time validation key. The sync response is
  * validated against the key,and the returned secrets (updated or deleted) are
  * merged with the existing ones.
+ * 
+ * Multiple concurrent sync requests are not supported. It is the caller's
+ * responsibility to ensure there is no active request when calling
+ * sendSecrets().
  * 
  * @author Chris Wood
  */
@@ -45,23 +62,38 @@ public class OnlineAgentManager extends BroadcastReceiver {
   private static final String SYNC = "net.tawacentral.roger.secrets.SYNC";
   private static final String SYNC_RESPONSE =
       "net.tawacentral.roger.secrets.SYNC_RESPONSE";
+  private static final String SYNC_CANCEL =
+      "net.tawacentral.roger.secrets.SYNC_CANCEL";
 
   private static final String CLASS_ID = "classId";
   private static final String DISPLAY_NAME = "displayName";
   private static final String RESPONSE_KEY = "responseKey";
   private static final String SECRETS_ID = "secrets";
 
+  // for the current request
+  private static OnlineSyncAgent requestAgent;
+  private static SecretsListActivity responseActivity;
+  private static boolean active;
+  
+  /*
+   * The response key is a randomly generated string that is provided to the
+   * OSA as part of the sync request and must be returned in the response in
+   * order for it to be accepted. The key is changed when the response is
+   * received to ensure that any subsequent or unsolicited responses are
+   * rejected.
+   */
+  private static String responseKey;
   private static final int RESPONSEKEY_LENGTH = 8;
 
   private static Map<String, OnlineSyncAgent> AVAILABLE_AGENTS =
       new HashMap<String, OnlineSyncAgent>();
 
-  // handler and listener for the current operation
-  private static Handler handler;
-
+  /*
+   * Handle the received broadcast
+   */
   @Override
   public void onReceive(Context context, Intent intent) {
-    Log.d(LOG_TAG, "OSA received msg: " + intent.getAction());
+    Log.d(LOG_TAG, "Agent Manager received msg: " + intent.getAction());
 
     // handle roll call response
     if (intent.getAction().equals(ROLLCALL_RESPONSE)
@@ -83,7 +115,6 @@ public class OnlineAgentManager extends BroadcastReceiver {
       // handle sync response
     } else if (intent.getAction().equals(SYNC_RESPONSE)
         && validateResponse(intent)) {
-      String classId = (String) intent.getExtras().get(CLASS_ID);
       String secretsString = intent.getStringExtra(SECRETS_ID);
       SecretsCollection secrets = null;
       if (secretsString != null) {
@@ -93,14 +124,10 @@ public class OnlineAgentManager extends BroadcastReceiver {
           Log.e(LOG_TAG, "Received invalid JSON secrets data", e);
         }
       }
-      OnlineSyncAgent agent = AVAILABLE_AGENTS.get(classId);
-      agent.getListener().setSecrets(secrets);
-
-      // run the listener code to process the received secrets
-      handler.post(agent.getListener());
-
-      // change the response key to prevent a second response being accepted
-      agent.setResponseKey(generateResponseKey());
+      active = false;
+      responseActivity.syncSecrets(secrets, requestAgent.getDisplayName());
+      requestAgent = null;
+      responseKey = generateResponseKey(); // change response key
     }
   }
 
@@ -113,35 +140,34 @@ public class OnlineAgentManager extends BroadcastReceiver {
    * @return true if response is OK, false otherwise
    */
   private boolean validateResponse(Intent intent) {
-    boolean validity = false;
     if (intent.getExtras() != null) {
       String classId = (String) intent.getExtras().get(CLASS_ID);
       String responseKey = (String) intent.getExtras().get(RESPONSE_KEY);
       OnlineSyncAgent agent = AVAILABLE_AGENTS.get(classId);
       if (agent != null) {
         if (responseKey != null && responseKey.length() > 0
-            && agent.getResponseKey().equals(responseKey)) {
-          if (handler != null && agent.getListener() != null) {
-            return true;
-          } else {
-            Log.e(LOG_TAG, "OSADataResponse received OK from agent " + classId
-                + " but handler or listener not set - program error");
+            && OnlineAgentManager.responseKey.equals(responseKey)) {
+          if (requestAgent == null) {
+            Log.w(LOG_TAG, "Unexpected SYNC response received OK from agent "
+                + classId + " - no request outstanding");
+          } else if (agent == requestAgent){
+            if (active) return true;
+            Log.w(LOG_TAG, "SYNC response received OK from agent " + classId
+                + " after request was cancelled - discarded");
           }
         } else {
-          Log.w(
-              LOG_TAG,
-              "OSADataResponse received from agent " + classId
-                  + " with invalid response key: current key '"
-                  + agent.getResponseKey() + "', received '" + responseKey
-                  + "'");
+          Log.w(LOG_TAG, "SYNC response received from agent " + classId
+              + " with invalid response key: current key x'"
+              + convertStringToHex(OnlineAgentManager.responseKey) + "', received x'"
+              + convertStringToHex(responseKey) + "'");
         }
       } else {
-        Log.w(LOG_TAG, "OSADataResponse received from unknown app: " + classId);
+        Log.w(LOG_TAG, "SYNC response received from unknown app: " + classId);
       }
     } else {
-      Log.w(LOG_TAG, "OSADataResponse received with no extras");
+      Log.w(LOG_TAG, "SYNC response received with no extras");
     }
-    return validity;
+    return false;
   }
 
   /**
@@ -154,15 +180,6 @@ public class OnlineAgentManager extends BroadcastReceiver {
     byte[] keyBytes = new byte[RESPONSEKEY_LENGTH];
     random.nextBytes(keyBytes);
     return new String(keyBytes);
-  }
-
-  /**
-   * Set the thread handler
-   * 
-   * @param handler
-   */
-  public static void setHandler(Handler handler) {
-    OnlineAgentManager.handler = handler;
   }
 
   /**
@@ -206,13 +223,14 @@ public class OnlineAgentManager extends BroadcastReceiver {
   public static boolean sendSecrets(OnlineSyncAgent agent,
                                     SecretsCollection secrets,
                                     SecretsListActivity activity) {
-    agent.setSecretsReceivedlistener(new SecretsReceivedListener(activity,
-        agent.getDisplayName()));
-    agent.setResponseKey(generateResponseKey());
+    requestAgent = agent;
+    responseActivity = activity;
+    active = true;
+    responseKey = generateResponseKey();
     try {
       Intent secretsIntent = new Intent(SYNC);
       secretsIntent.setPackage(agent.getClassId());
-      secretsIntent.putExtra(RESPONSE_KEY, agent.getResponseKey());
+      secretsIntent.putExtra(RESPONSE_KEY, OnlineAgentManager.responseKey);
       String secretString = secrets.toJSON().toString();
       secretsIntent.putExtra(SECRETS_ID, secretString);
 
@@ -227,43 +245,34 @@ public class OnlineAgentManager extends BroadcastReceiver {
   }
 
   /**
-   * Listener that is called when an OSA replies to a request. The secrets
-   * member variable will contain the secrets sent by the OSA
+   * Test for active request
+   * @return true if active
    */
-  public static class SecretsReceivedListener implements Runnable {
-    private SecretsCollection secrets;
-    private SecretsListActivity activity;
-    private String agentName;
-
-    protected SecretsReceivedListener(SecretsListActivity activity,
-        String agentName) {
-      this.activity = activity;
-      this.agentName = agentName;
-    }
-
-    /**
-     * Accessor for secrets
-     * 
-     * @return secrets
-     */
-    public SecretsCollection getSecrets() {
-      return secrets;
-    }
-
-    /**
-     * Accessor for secrets
-     * 
-     * @param secrets
-     */
-    public void setSecrets(SecretsCollection secrets) {
-      this.secrets = secrets;
-    }
-
-    /**
-     * Call back so the secrets are processed in the context of the activity.
-     */
-    public void run() {
-      activity.syncSecrets(secrets, agentName);
-    }
+  public static boolean isActive() {
+    return active;
   }
+
+  /**
+   * Cancel the active request
+   */
+  public static void cancel() {
+    OnlineAgentManager.active = false;
+    Intent secretsIntent = new Intent(SYNC_CANCEL);
+    secretsIntent.setPackage(requestAgent.getClassId());
+    responseActivity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
+  }
+  
+  /*
+   * Produce a hex string representation of a string
+   */
+  private String convertStringToHex(String str) {
+    char[] chars = str.toCharArray();
+ 
+    StringBuffer hex = new StringBuffer();
+    for(int i = 0; i < chars.length; i++) {
+      hex.append(Integer.toHexString((int)chars[i]).toUpperCase());
+    }
+    return hex.toString();
+  }  
+  
 }
