@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<resources>
+<string name="app_name">Secretos</string>
+
+<string name="search_hint">Buscar secretos</string>
+
+<string name="login_first_line">Bienvenido a tus Secretos</string>
+<string name="login_enter_password">Ingresar Contraseña</string>
+<string name="login_validate_password">Validar Contraseña</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">Versión 2.3.1 &#169; 2012 Google Inc.</string>
+
+<string name="invalid_password">Oops! La contraseña es inválida, por favor intente de nuevo.</string>
+<string name="no_password">&lt; No PIN &gt;</string>
+<string name="error_reset_password">No se pudo reiniciar su contraseña.</string>
+<string name="error_save_secrets">no se pudieron guardar tus secretos.</string>
+
+<string name="backup_succeeded">Copia de Seguridad exitosa.</string>
+<string name="restore_succeeded">Restauración exitosa.</string>
+<string name="restore_failed">No se pudieron restablecer los secretos.  Asegúrese que su contraseña es la misma que le utilizada para crear la copia de seguridad.</string>
+<string name="enable_online_backup">Habilitar copia de seguridad en línea para salvaguardar sus secretos.</string>
+
+<string name="export_succeeded">Archivo exportado a tarjeta SD de manera exitosa.\n\ATENCIÓN: El archivo exportado no esta protegido por contraseña!</string>
+<string name="export_failed">No fue posible exportar tus secretos.</string>
+
+<string name="import_not_found">No se encontró un archivo CSV en la tarjeta SD.\n\nLos secretos pueden ser importados de los siguientes archivos:\n\n{0}</string>
+<string name="import_partial">Hmmm, solo algunos secretos fueron importados de manera exitosa. Revisa tus secretos y que el archivo \'\'{0}\'\' sea correcto.</string>
+<string name="import_failed">No fue posible importar tus secretos desde \'\'{0}\'\'.</string>
+
+<string name="login_instruction_1">
+Crea una contraseña para proteger tus secretos. Usa letras, números y
+puntuación para hacer tu contraseña difícil de adivinar.\nDespués de escribir la contraseña
+presiona \u21b5 o Fin.
+</string>
+<string name="login_instruction_2">
+Valida tu nueva contraseña escribiéndola de nuevo. Si hay algún
+problema, volverás a iniciar.
+</string>
+<string name="edit_instructions">
+Toda la información es opcional, escriba tanto o tan poco como lo requiera.
+
+Al terminar presiona el botón de Atrás o MENU para más opciones.
+</string>
+
+<string name="friendly_id_format">
+{0}, {1,date,short} {1,time,short}
+</string>
+<string name="friendly_id_format_2">
+{1,date,short} {1,time,short}
+</string>
+
+<string name="list_title">{0,number} Secretos</string>
+<string name="list_title_filtered">{0,number} de {1,number} Secretos</string>
+
+<string name="list_name">Secretos</string>
+<string name="list_no_data">Presiona \"Agregar\" para comenzar.</string>
+<string name="list_descption_label">Sito Web/Descripción</string>
+<string name="list_username_label">Usuario/Id</string>
+<string name="list_password_label">Contraseña/PIN</string>
+<string name="list_email_label">Email</string>
+<string name="list_notes_label">Notas</string>
+<string name="list_add_secret">Agregar secreto</string>
+<string name="list_instructions">Toque un secreto para mostrar el PIN. Mantenga sostenido
+para cambiarlo.</string>
+
+<string name="login_menu_reset_password">Reiniciar Contraseña</string>
+<string name="login_menu_reset_password_message">
+Reiniciar tu contraseña borrara todos los secretos!
+Estás seguro?
+</string>
+<string name="login_reset_password_pos">Si</string>
+<string name="login_reset_password_neg">No</string>
+
+<string name="edit_menu_delete_secret_message">
+¿Estas seguro que deseas eliminar \'\'{0}\'\'?
+</string>
+
+<string name="dialog_restore_title">Restaurar desde:</string>
+
+<string name="edit_menu_import_secrets_message">Importación exitosa.  Eliminar \'\'{0}\'\' ahora?</string>
+
+<string name="username_copied_to_clipboard">Id</string>
+<string name="password_copied_to_clipboard">PIN</string>
+<string name="copied_to_clipboard">El {1} de \'\'{0}\'\' ha sido copiado al portapapeles.</string>
+
+<string name="list_menu_add">Agregar</string>
+<string name="list_menu_edit">Editar</string>
+<string name="list_menu_search">Buscar</string>
+<string name="list_menu_save">Guardar</string>
+<string name="list_menu_discard">Descartar</string>
+<string name="list_menu_delete">Eliminar</string>
+<string name="list_menu_access">Historia</string>
+<string name="list_menu_backup">Copia de Seguridad</string>
+<string name="list_menu_restore">Restaurar</string>
+<string name="list_menu_import">Importar</string>
+<string name="list_menu_export">Exportar</string>
+<string name="list_menu_copy_username_to_clipoboard">Copiar Id</string>
+<string name="list_menu_copy_password_to_clipoboard">Copiar PIN</string>
+<string name="list_menu_generate_password">Generar</string>
+<string name="list_menu_change_password">Cambiar la contraseña</string>
+
+<string name="log_name">Registro de acceso</string>
+<string name="log_name_format">Registro de acceso para {0}</string>
+
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">{0} hace un momento</string>
+<string name="log_min">{0} hace {1} minutos</string>
+<string name="log_today">{0} hoy a las {1,time,short}</string>
+<string name="log_yesterday">{0} ayer a las {1,time,short}</string>
+<string name="log_date">{0} {1,date,medium}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
+<string name="log_created">Creado</string>
+<string name="log_changed">Modificado</string>
+<string name="log_viewed">Accedido</string>
+<string name="log_exported">Exportado</string>
+
+<string name="error_missing_ciphers">No se pudo guardar, la contraseña es invalida.</string>
+<string name="error_cannot_move_existing">No se pudo mover el archivo existente.</string>
+<string name="error_cannot_move_new">No se puede renombrar el nuevo archivo.</string>
+<string name="password_strength_caption">Fortaleza de la contraseña: {0}</string>
+<string name="password_strength_weak">Débil :(</string>
+<string name="password_strength_medium">Medio :|</string>
+<string name="password_strength_strong">Fuerte :)</string>
+<string name="password_strength_very_strong">Muy Fuerte :D</string>
+<string name="password_strength_crazy_strong">Loco! B)</string>
+
+</resources>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<resources>
+<string name="app_name">Secrets</string>
+
+<string name="search_hint">Rechercher des secrets</string>
+
+<string name="login_first_line">Bienvenue à vos Secrets</string>
+<string name="login_enter_password">Mot de passe</string>
+<string name="login_validate_password">Validez mot de passe</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">Version 2.3.1 &#169; 2012 Google Inc.</string>
+
+<string name="invalid_password">Le mot de passe n\'est pas valid, veuillez ressayer.</string>
+<string name="no_password">&lt; Pas de NIP &gt;</string>
+<string name="error_reset_password">Impossible de réinitialiser votre mot de passe.</string>
+<string name="error_save_secrets">Impossible d\'enregistrer vos secrets.</string>
+
+<string name="backup_succeeded">Backup réussi.</string>
+<string name="restore_succeeded">Restauration réussie.</string>
+<string name="restore_failed">Impossible de restaurer vos secrets. Assurez-vous que votre mot de passe est le même que celui utilisé pour créer le backup.</string>
+<string name="enable_online_backup">Activer la sauvegarde en ligne pour garder vos secrets en sûreté.</string>
+
+<string name="export_succeeded">L\'export a réussi.\n\nATTENTION: Le fichier exporté n\'est pas protégé par votre mot de passe!</string>
+<string name="export_failed">Impossible d\'exporter vos secrets.</string>
+
+<string name="import_not_found">Aucun fichier CSV trouvé sur la carte SD.\n\nLes secrets peuvent être importés depuis les fichiers suivants:\n\n{0}</string>
+<string name="import_partial">Seuls certains secrets ont été importés correctement.  Vérifiez que vos secrets et le fichier \'\'{0}\'\' sont exactes.</string>
+<string name="import_failed">Impossible d\'importer vos secrets du fichier \'\'{0}\'\'.</string>
+
+<string name="login_instruction_1">
+Créez un mot de passe pour protéger vos secrets. Utilisez des lettres, des chiffres et
+des symboles de ponctuation pour rendre le mot de passe difficile à deviner.\nAprès avoir tapé le mot de passe,
+appuyez sur \u21b5 ou OK.
+</string>
+<string name="login_instruction_2">
+Validez votre nouveau mot de passe en le tapant à nouveau. S\'il y a un
+problème, vous devrez recommencer. 
+</string>
+<string name="edit_instructions">
+Tous les champs sont facultatifs, ne remplissez que ceux qui sont nécessaires.
+
+Lorsque vous aurez terminé, appuyez sur le bouton "Retour" ou MENU pour plus d\'options.</string>
+
+<string name="friendly_id_format">
+{0}, {1,date,short} {1,time,short}
+</string>
+<string name="friendly_id_format_2">
+{1,date,short} {1,time,short}
+</string>
+
+<string name="list_title">{0,number} Secrets</string>
+<string name="list_title_filtered">{0,number} de {1,number} Secrets</string>
+
+<string name="list_name">Secrets</string>
+<string name="list_no_data">Appuyez sur \"Ajouter\" pour commencer.</string>
+<string name="list_descption_label">Site web/Description</string>
+<string name="list_username_label">Nom d\'utilisateur / Id</string>
+<string name="list_password_label">Mot de passe/NIP</string>
+<string name="list_email_label">Courriel</string>
+<string name="list_notes_label">Notes</string>
+<string name="list_add_secret">Ajouter secret</string>
+<string name="list_instructions">Appuyez sur le secret pour révéler son code NIP. Tapez et maintenez appuyé pour le changer.</string>
+
+<string name="login_menu_reset_password">Réinitialiser mot de passe</string>
+<string name="login_menu_reset_password_message">
+La réinitialisation de votre mot de passe supprimera tous vos secrets! Êtes-vous vraiment sûr?</string>
+<string name="login_reset_password_pos">Oui</string>
+<string name="login_reset_password_neg">Non</string>
+
+<string name="edit_menu_delete_secret_message">
+Êtes-vous sûr de vouloir supprimer \'\'{0}\'\'?
+</string>
+
+<string name="dialog_restore_title">Restaurer à partir de:</string>
+
+<string name="edit_menu_import_secrets_message">Import réussi. Supprimer \'\'{0}\'\' maintenant?</string>
+
+<string name="username_copied_to_clipboard">Id</string>
+<string name="password_copied_to_clipboard">NIP</string>
+<string name="copied_to_clipboard">Le {1} de \'\'{0}\'\' a été copié.</string>
+
+<string name="list_menu_add">Ajouter</string>
+<string name="list_menu_edit">Modifier</string>
+<string name="list_menu_search">Rechercher</string>
+<string name="list_menu_save">Sauver</string>
+<string name="list_menu_discard">Abandonner</string>
+<string name="list_menu_delete">Supprimer</string>
+<string name="list_menu_access">Journal</string>
+<string name="list_menu_backup">Backup</string>
+<string name="list_menu_restore">Restorer</string>
+<string name="list_menu_import">Importer</string>
+<string name="list_menu_export">Exporter</string>
+<string name="list_menu_copy_username_to_clipoboard">Copier Id</string>
+<string name="list_menu_copy_password_to_clipoboard">Copier NIP</string>
+<string name="list_menu_generate_password">Générer</string>
+<string name="list_menu_change_password">Changer le mot de passe</string>
+
+<string name="log_name">Journal d\'accès</string>
+<string name="log_name_format">Journal d\'accès pour {0}</string>
+
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">{0} il y a quelques instants</string>
+<string name="log_min">{0} il y a {1} minutes</string>
+<string name="log_today">{0} aujourd\'hui à {1,time,short}</string>
+<string name="log_yesterday">{0} hier à {1,time,short}</string>
+<string name="log_date">{0} {1,date,medium}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
+<string name="log_created">Créé</string>
+<string name="log_changed">Modifié</string>
+<string name="log_viewed">Consulté</string>
+<string name="log_exported">Exporté</string>
+
+<string name="error_missing_ciphers">Impossible d\'enregistrer, mot de passe invalide.</string>
+<string name="error_cannot_move_existing">Impossible de renommer l\'ancien fichier.</string>
+<string name="error_cannot_move_new">Impossible de renommer le nouveau fichier.</string>
+<string name="password_strength_caption">Niveau de sécurité: {0}</string>
+<string name="password_strength_weak">Faible :(</string>
+<string name="password_strength_medium">Medium :|</string>
+<string name="password_strength_strong">Fort :)</string>
+<string name="password_strength_very_strong">Très Fort :D</string>
+<string name="password_strength_crazy_strong">Fou! B)</string>
+
+</resources>
