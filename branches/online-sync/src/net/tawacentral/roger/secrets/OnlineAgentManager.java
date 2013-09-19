@@ -145,21 +145,21 @@ public class OnlineAgentManager extends BroadcastReceiver {
       String responseKey = (String) intent.getExtras().get(RESPONSE_KEY);
       OnlineSyncAgent agent = AVAILABLE_AGENTS.get(classId);
       if (agent != null) {
-        if (responseKey != null && responseKey.length() > 0
-            && OnlineAgentManager.responseKey.equals(responseKey)) {
-          if (requestAgent == null) {
-            Log.w(LOG_TAG, "Unexpected SYNC response received OK from agent "
-                + classId + " - no request outstanding");
-          } else if (agent == requestAgent){
-            if (active) return true;
-            Log.w(LOG_TAG, "SYNC response received OK from agent " + classId
+        if (agent == requestAgent) { // is a response expected?
+          if (OnlineAgentManager.responseKey != null // does the key match?
+              && OnlineAgentManager.responseKey.equals(responseKey)) {
+            if (active) return true; // if request not cancelled
+            Log.w(LOG_TAG, "SYNC response received from agent " + classId
                 + " after request was cancelled - discarded");
+          } else {
+            Log.w(LOG_TAG, "SYNC response received from agent " + classId
+                + " with invalid response key: current key x'"
+                + convertStringToHex(OnlineAgentManager.responseKey) + "', received x'"
+                + convertStringToHex(responseKey) + "'");
           }
         } else {
-          Log.w(LOG_TAG, "SYNC response received from agent " + classId
-              + " with invalid response key: current key x'"
-              + convertStringToHex(OnlineAgentManager.responseKey) + "', received x'"
-              + convertStringToHex(responseKey) + "'");
+          Log.w(LOG_TAG, "Unexpected SYNC response received from agent "
+              + classId + " - no request outstanding");
         }
       } else {
         Log.w(LOG_TAG, "SYNC response received from unknown app: " + classId);
@@ -225,7 +225,6 @@ public class OnlineAgentManager extends BroadcastReceiver {
                                     SecretsListActivity activity) {
     requestAgent = agent;
     responseActivity = activity;
-    active = true;
     responseKey = generateResponseKey();
     try {
       Intent secretsIntent = new Intent(SYNC);
@@ -236,6 +235,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
 
       activity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
       Log.d(LOG_TAG, "Secrets sent to OSA " + agent.getClassId());
+      active = true;
       return true;
     } catch (Exception e) {
       Log.e(LOG_TAG, "Error sending secrets to OSA", e);
