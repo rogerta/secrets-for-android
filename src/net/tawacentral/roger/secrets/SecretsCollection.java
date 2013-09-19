@@ -31,8 +31,8 @@ import org.json.JSONObject;
 import android.util.Log;
 
 /**
- * Class that represents a secrets collection. Introduced to hold meta-info for
- * the collection e.g. sync timestamp.
+ * Class that represents a secrets collection. Originally introduced to hold
+ * meta-info for the collection.
  *
  * @author Chris Wood
  */
@@ -42,9 +42,6 @@ public class SecretsCollection extends ArrayList<Secret> {
   public static final String LOG_TAG = "SecretsCollection";
 
   private static final String SECRETS_ID = "secrets";
-  private static final String SYNCDATE_ID = "syncdate";
-
-  private long lastSyncTimestamp;
 
   /**
    * Default constructor
@@ -60,7 +57,6 @@ public class SecretsCollection extends ArrayList<Secret> {
    */
   public SecretsCollection(SecretsCollection collection) {
     super(collection);
-    lastSyncTimestamp = collection.lastSyncTimestamp;
   }
 
   /**
@@ -70,21 +66,6 @@ public class SecretsCollection extends ArrayList<Secret> {
    */
   public SecretsCollection(Collection<Secret> collection) {
     super(collection);
-  }
-
-  /**
-   * @return the lastSyncTimestamp
-   */
-  public long getLastSyncTimestamp() {
-    return lastSyncTimestamp;
-  }
-
-  /**
-   * @param lastSyncTimestamp
-   *          the lastSyncTimestamp to set
-   */
-  public void setLastSyncTimestamp(long lastSyncTimestamp) {
-    this.lastSyncTimestamp = lastSyncTimestamp;
   }
 
   /**
@@ -144,7 +125,6 @@ public class SecretsCollection extends ArrayList<Secret> {
       jsonSecrets.put(secret.toJSON());
     }
     jsonValues.put(SECRETS_ID, jsonSecrets);
-    jsonValues.put(SYNCDATE_ID, getLastSyncTimestamp());
 
     return jsonValues;
   }
@@ -166,14 +146,6 @@ public class SecretsCollection extends ArrayList<Secret> {
     SecretsCollection secretList = new SecretsCollection();
     for (int i = 0; i < jsonSecrets.length(); i++) {
       secretList.add(Secret.fromJSON((JSONObject) jsonSecrets.get(i)));
-    }
-
-    /* get the last sync date */
-    if (jsonValues.has(SYNCDATE_ID)) {
-      secretList.setLastSyncTimestamp(jsonValues.getLong(SYNCDATE_ID));
-    } else {
-      Log.w(LOG_TAG, "No sync date in JSON stream - set to default");
-      secretList.setLastSyncTimestamp(0);
     }
 
     return secretList;
@@ -230,19 +202,5 @@ public class SecretsCollection extends ArrayList<Secret> {
       throw
           new IOException("fromEncryptedJSONStream failed: " + e.getMessage());
     }
-  }
-
-  /*
-   * (non-Javadoc) ArrayList.clone() produces a shallow copy of the collection.
-   * Here we just add the lastSyncTimestamp field. Logically equivalent to the
-   * copy constructor
-   *
-   * @see java.util.ArrayList#clone()
-   */
-  @Override
-  public SecretsCollection clone() {
-    SecretsCollection newCollection = (SecretsCollection) super.clone();
-    newCollection.lastSyncTimestamp = lastSyncTimestamp;
-    return newCollection;
   }
 }
