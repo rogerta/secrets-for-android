@@ -211,8 +211,8 @@ public class Secret implements Comparable<Secret>, Serializable {
    * conditions.
    * If the specified type is:
    *   VIEWED -  if the previous entry is recent, do nothing
-   *   CHANGED - if the previous entry is VIEWED and is recent, change this
-   *             entry to CHANGED
+   *   CHANGED - if the previous entry is VIEWED and is recent, remove it
+   *             before creating the new entry
    *   EXPORTED - always create a new entry
    *   SYNCED (input) - always create a new entry
    *
@@ -237,8 +237,6 @@ public class Secret implements Comparable<Secret>, Serializable {
         if (type == LogEntry.VIEWED) return;
         if (lastEntry.getType() == LogEntry.VIEWED) {
           access_log.remove(0);
-          access_log.add(0, new LogEntry(LogEntry.CHANGED, now));
-          return;
         }
       }
     }
@@ -375,6 +373,15 @@ public class Secret implements Comparable<Secret>, Serializable {
          Log.w(LOG_TAG, "Empty access log for secret '" + secret.description
                      + "'");
       }
+    }
+    
+    // at this point we still may have no log, or an empty log.
+    // we must have a log with at least a CREATED entry
+    if (secret.access_log == null) {
+      secret.access_log = new ArrayList<LogEntry>();
+    }
+    if (secret.access_log.size() == 0) {
+      secret.access_log.add(0, new LogEntry());
     }
 
     return secret;
