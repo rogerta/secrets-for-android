@@ -485,7 +485,6 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     if (changedSecrets != null) {
       synchronized (allSecrets) {
         allSecrets.syncSecrets(changedSecrets);
-        allSecrets.setLastSyncTimestamp(System.currentTimeMillis());
         if (secrets != allSecrets) {
           secrets.syncSecrets(changedSecrets);
         }
