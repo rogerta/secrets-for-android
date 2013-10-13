@@ -62,9 +62,6 @@ public class Secret implements Comparable<Secret>, Serializable {
   private String note;
   private ArrayList<LogEntry> access_log;
 
-  /* creation or modification timestamp */
-  private long timestamp = System.currentTimeMillis();
-
   /* soft deletion indicator */
   private boolean deleted;
 
@@ -88,6 +85,7 @@ public class Secret implements Comparable<Secret>, Serializable {
     public static final int CHANGED = 3;
     public static final int EXPORTED = 4;
     public static final int SYNCED = 5;
+    public static final int DELETED = 6;
 
     // Log field names
     private static final String LOG_TYPE = "type";
@@ -96,7 +94,7 @@ public class Secret implements Comparable<Secret>, Serializable {
     private int type_;
     private long time_;
 
-    /** Used internally to create the CREATED long entry. */
+    /** Used internally to create the CREATED log entry. */
     LogEntry() {
       type_ = CREATED;
       time_ = System.currentTimeMillis();
@@ -215,6 +213,7 @@ public class Secret implements Comparable<Secret>, Serializable {
    *             before creating the new entry
    *   EXPORTED - always create a new entry
    *   SYNCED (input) - always create a new entry
+   *   DELETED  - always create a new entry
    *
    * Any other type is ignored.
    *
@@ -226,7 +225,8 @@ public class Secret implements Comparable<Secret>, Serializable {
     if (!(type == LogEntry.VIEWED ||
         type == LogEntry.CHANGED ||
         type == LogEntry.EXPORTED ||
-        type == LogEntry.SYNCED)) {
+        type == LogEntry.SYNCED ||
+        type == LogEntry.DELETED)) {
       return;
     }
 
@@ -274,22 +274,6 @@ public class Secret implements Comparable<Secret>, Serializable {
   }
 
 	/**
-	 * Get the last update timestamp
-	 * @return the timestamp
-	 */
-	public long getTimestamp() {
-		return timestamp;
-	}
-
-	/**
-	 * Set the last update timestamp
-	 * @param timestamp the timestamp to set
-	 */
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
-
-	/**
    * @return the deleted
    */
   public boolean isDeleted() {
@@ -297,10 +281,11 @@ public class Secret implements Comparable<Secret>, Serializable {
   }
 
   /**
-   * @param deleted the deleted to set
+   * Set the secret as deleted
    */
-  public void setDeleted(boolean deleted) {
-    this.deleted = deleted;
+  public void setDeleted() {
+    deleted = true;
+    createLogEntry(LogEntry.DELETED);
   }
 
   /**
@@ -309,14 +294,13 @@ public class Secret implements Comparable<Secret>, Serializable {
 	 * @param reason Log entry value
 	 */
    public void update(Secret from, int reason) {
-	  if (!(reason == LogEntry.CHANGED || reason == LogEntry.SYNCED))
+	  if (!(reason == LogEntry.CHANGED || reason == LogEntry.SYNCED || equals(from)))
 	    return;
 
 		setPassword(from.password, false);
 		username = from.getUsername();
 		email = from.getEmail();
 		note = from.getNote();
-		timestamp = System.currentTimeMillis();
 		createLogEntry(reason);
 	}
 
@@ -332,7 +316,7 @@ public class Secret implements Comparable<Secret>, Serializable {
     jsonSecret.put(SECRET_PASSWORD, password);
     jsonSecret.put(SECRET_EMAIL, email);
     jsonSecret.put(SECRET_NOTE, note);
-    jsonSecret.put(SECRET_TIMESTAMP, timestamp);
+    jsonSecret.put(SECRET_TIMESTAMP, getLastChangedTime());
     jsonSecret.put(SECRET_DELETED, deleted);
 
     JSONArray jsonLog = new JSONArray();
@@ -357,7 +341,6 @@ public class Secret implements Comparable<Secret>, Serializable {
     secret.password = jsonSecret.getString(SECRET_PASSWORD);
     secret.email = jsonSecret.getString(SECRET_EMAIL);
     secret.note = jsonSecret.getString(SECRET_NOTE);
-    secret.timestamp = jsonSecret.getLong(SECRET_TIMESTAMP);
 
     if (jsonSecret.has(SECRET_DELETED))
       secret.deleted = jsonSecret.getBoolean(SECRET_DELETED);
@@ -429,6 +412,23 @@ public class Secret implements Comparable<Secret>, Serializable {
   public LogEntry getMostRecentAccess() {
     return access_log.get(0);
   }
+ 
+  /**
+   * Get last changed time
+   * @return long time
+   */
+  public long getLastChangedTime() {
+    for (int i = 0; i < access_log.size(); i++) {
+      LogEntry entry = access_log.get(i);
+      if (entry.getType() == LogEntry.CHANGED ||
+          entry.getType() == LogEntry.SYNCED ||
+          entry.getType() == LogEntry.CREATED ||
+          entry.getType() == LogEntry.DELETED) {
+        return entry.getTime();
+      }
+    }
+    return 0;
+  }
 
   /**
    * Prune the size of the access log to the maximum size by getting rid of
@@ -440,12 +440,12 @@ public class Secret implements Comparable<Secret>, Serializable {
     // first to see if we can reach the limit.  If not, then do a paas to delete
     // either VIEWED or CHANGED entries.
     //
-    // Need to be careful about an etry that is modified often, in which case
+    // Need to be careful about an entry that is modified often, in which case
     // a naive implementation of the above could end up never storing any and
     // VIEWED entries.
 
     while(access_log.size() > MAX_LOG_SIZE) {
-      // The "created" entry is always the first one in the list, and there
+      // The "created" entry is always the last one in the list, and there
       // is only ever one.  So try to delete the second last item.
       int index = access_log.size() - 2;
       access_log.remove(index);

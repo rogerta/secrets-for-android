@@ -48,9 +48,9 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   //
   // allSecrets is marked as final because its used as a lock for certain
   // member functions, and we don't ever want the instance to change.
-  private SecretsCollection secrets;
-  private final SecretsCollection allSecrets;
-  private SecretsCollection deletedSecrets = new SecretsCollection();
+  private ArrayList<Secret> secrets;
+  private final ArrayList<Secret> allSecrets;
+  private final ArrayList<Secret> deletedSecrets;
 
   // These members are used to maintain the auto complete lists for the
   // username and email fields.  I need to use the tree set because I don't
@@ -67,17 +67,19 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   private SecretsFilter filter;
 
   /**
-   * Create a new secret list adapter for the UI from the given list. Deleted
-   * secrets are removed and held in a separate collection.
+   * Create a new secret list adapter for the UI from the given list.
    *
    * @param context Context of the application, used for getting resources.
    * @param secrets The list of user secrets.  This list cannot be null.
+   * @param deletedSecrets The list of deleted user secrets, cannot be null.
    */
-  SecretsListAdapter(SecretsListActivity activity, SecretsCollection secrets) {
+  SecretsListAdapter(SecretsListActivity activity, ArrayList<Secret> secrets,
+      ArrayList<Secret> deletedSecrets) {
     this.activity = activity;
     inflater = LayoutInflater.from(this.activity);
-    allSecrets = removeDeleted(secrets);
+    allSecrets = secrets;
     this.secrets = allSecrets;
+    this.deletedSecrets = deletedSecrets;
 
     // Fill in the auto complete adapters with the initial data from the
     // secrets.
@@ -109,21 +111,6 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
 
     usernameAdapter.setNotifyOnChange(true);
     emailAdapter.setNotifyOnChange(true);
-  }
-  
-  /* Separate the deleted secrets in the input collection and place in
-   * deletedSecrets. Return a list with no deletions.
-   */
-  private SecretsCollection removeDeleted(SecretsCollection includesDeleted) {
-    SecretsCollection allUndeleted = new SecretsCollection();
-    for (Secret secret : includesDeleted) {
-      if (secret.isDeleted()) {
-        deletedSecrets.add(secret);
-      } else {
-        allUndeleted.add(secret);
-      }
-    }
-    return allUndeleted;
   }
 
   @Override
@@ -228,7 +215,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
       FilterResults results = new FilterResults();
       String prefixString = null == prefix ? null
                                            : prefix.toString().toLowerCase();
-      SecretsCollection secrets;
+      ArrayList<Secret> secrets;
 
       // if the prefix starts with a dot, then this is interpreted as a full
       // text search.  This means that a given secret matches the "prefix",
@@ -255,7 +242,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         // members that we will access here are immutable.  If this ever changes
         // then the locking strategy will need to get smarter.
         synchronized (allSecrets) {
-          secrets = new SecretsCollection();
+          secrets = new ArrayList<Secret>();
         }
 
         // We loop backwards because we may be removing elements from the array
@@ -295,7 +282,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     protected void publishResults(CharSequence prefix,
                                   FilterResults results) {
       // NOTE: this function is *always* called from the UI thread.
-      secrets = new SecretsCollection((ArrayList<Secret>) results.values);
+      secrets = new ArrayList<Secret>((ArrayList<Secret>) results.values);
       notifyDataSetChanged();
       activity.setTitle();
     }
@@ -335,7 +322,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
    * This method is meant to get all the user's secrets, and is used mainly
    * for saving the list of secrets.
    */
-  public SecretsCollection getAllSecrets() {
+  public ArrayList<Secret> getAllSecrets() {
     return allSecrets;
   }
   
@@ -346,14 +333,14 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
    * The caller should not modify the returned collection.
    * @return secrets collection
    */
-   public SecretsCollection getAllAndDeletedSecrets() {
+   public ArrayList<Secret> getAllAndDeletedSecrets() {
       if (deletedSecrets.size() == 0) {
          return allSecrets;
       }
       if (allSecrets.size() == 0) {
          return deletedSecrets;
       }
-      SecretsCollection allAndDeletedSecrets = new SecretsCollection();
+      ArrayList<Secret> allAndDeletedSecrets = new ArrayList<Secret>();
       synchronized (allSecrets) {
          // merge the two collections. Both collections are assumed sorted and
          // secrets exist uniquely in only one collection.
@@ -418,8 +405,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         }
       }
       deletedSecrets.add(i, secret);
-      secret.setDeleted(true);
-      secret.setTimestamp(System.currentTimeMillis());
+      secret.setDeleted();
     }
 
     return secret;
@@ -481,16 +467,16 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
    * 
    * @param changedSecrets secrets that are new or updated
    */
-  public void syncSecrets(SecretsCollection changedSecrets) {
+  public void syncSecrets(ArrayList<Secret> changedSecrets) {
     if (changedSecrets != null) {
       synchronized (allSecrets) {
-        allSecrets.syncSecrets(changedSecrets);
+        OnlineAgentManager.syncSecrets(allSecrets, changedSecrets);
         if (secrets != allSecrets) {
-          secrets.syncSecrets(changedSecrets);
+          OnlineAgentManager.syncSecrets(secrets, changedSecrets);
         }
         deletedSecrets.clear();
       }
-      notifyDataSetInvalidated();
+      notifyDataSetChanged();
     }
   }
 

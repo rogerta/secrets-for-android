@@ -16,6 +16,7 @@ package net.tawacentral.roger.secrets;
 
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 
 import javax.crypto.Cipher;
@@ -51,12 +52,19 @@ public class LoginActivity extends Activity implements TextWatcher {
   /** Dialog Id for resetting password. */
   private static final int DIALOG_RESET_PASSWORD = 1;
   /** Tag for logging purposes. */
-  public static final String LOG_TAG = "Secrets";
+  public static final String LOG_TAG = "LoginActivity";
 
   /**
    * This is the global list of the user's secrets.  This list is accessed
    * from other parts of the program. */
-  private static SecretsCollection secrets = null;
+  private static ArrayList<Secret> secrets = null;
+  
+  /**
+   * Secrets that are deleted are held in the deletedSecrets list. This
+   * is primarily to support synchronizing deletions across devices.
+   * Saved secrets include deletions (with a delete indicator), and are
+   * separated from the normal secrets list on loading.  */
+  private static final ArrayList<Secret> deletedSecrets = new ArrayList<Secret>();
 
   private boolean isFirstRun;
   private boolean isValidatingPassword;
@@ -329,7 +337,7 @@ public class LoginActivity extends Activity implements TextWatcher {
                                                           pair.rounds));
 
     if (isFirstRun) {
-      secrets = new SecretsCollection();
+      secrets = new ArrayList<Secret>();
 
       // Immediately save an empty file to hold the secrets.
       Cipher cipher = SecurityUtils.getEncryptionCipher();
@@ -346,7 +354,7 @@ public class LoginActivity extends Activity implements TextWatcher {
       secrets = FileUtils.loadSecrets(this);
       if (null == secrets) {
         // Loading failed. Try the old object format using same cipher
-        secrets = FileUtils.loadSecretsV21(this);
+        secrets = FileUtils.loadSecretsV3(this);
         if (null == secrets) {
           // Loading the secrets failed again. Try loading with the old
           // encryption algorithm in case were are reading an older file.
@@ -365,17 +373,21 @@ public class LoginActivity extends Activity implements TextWatcher {
           if (null != cipher1)
             secrets = FileUtils.loadSecretsV1(this, cipher1);
         }
-
         if (null == secrets) {
           // TODO(rogerta): need better error message here. There are probably
           // many reasons that we might not be able to open the file.
           showToast(R.string.invalid_password, Toast.LENGTH_LONG);
           return;
         }
+        
+        // previous versions were case-sensitive and may need to be sorted
+        Collections.sort(secrets);
       }
     }
-
-    Collections.sort(secrets);
+    
+    // extract the deleted secrets from the global secrets list
+    replaceSecrets(secrets);
+    
     passwordString = null;
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
@@ -420,23 +432,44 @@ public class LoginActivity extends Activity implements TextWatcher {
     strengthView.setTextColor(str.getColor());
   }
 
-  /** Gets the global list if the user's secrets. 
+  /** Gets the global list of the user's deleted secrets. 
    * @return secrets collection
    */
-  public static SecretsCollection getSecrets() {
+  public static ArrayList<Secret> getDeletedSecrets() {
+    return deletedSecrets;
+  }
+
+  /** Gets the global list of the user's secrets. 
+   * @return secrets collection
+   */
+  public static ArrayList<Secret> getSecrets() {
     return secrets;
   }
 
   /** Overwrite the current secrets with the given list. 
-   * @param secrets
+   * @param newSecrets list of new secrets
+
    */
-  public static void replaceSecrets(SecretsCollection secrets) {
+  public static void replaceSecrets(ArrayList<Secret> newSecrets) {
     // I don't want to change the actual instance of the global array that
     // holds the secrets, since this array is referred to from other places
-    // in the code.  I will simply replace the existing array with the entries
-    // from the new one.
+    // in the code.  I will simply replace the contents of the existing array
+    // with the entries from the new one.
+    
+    // Here we separate out deletionsinto their own array.
+    
+    // Copy the input array in case it is the global list
+    ArrayList<Secret> tempSecrets = new ArrayList<Secret>(newSecrets);
+    
     LoginActivity.secrets.clear();
-    LoginActivity.secrets.addAll(secrets);
+    LoginActivity.deletedSecrets.clear();
+    for (Secret secret : tempSecrets) {
+      if (secret.isDeleted()) {
+        deletedSecrets.add(secret);
+      } else {
+        secrets.add(secret);
+      }
+    }
   }
   
   /**

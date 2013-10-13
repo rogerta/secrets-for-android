@@ -97,6 +97,7 @@ public class SecretsListActivity extends ListActivity {
 
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "SecretsListActivity";
+  
   public static final String STATE_IS_EDITING = "is_editing";
   public static final String STATE_EDITING_POSITION = "editing_position";
   public static final String STATE_EDITING_DESCRIPTION = "editing_description";
@@ -138,7 +139,9 @@ public class SecretsListActivity extends ListActivity {
       return;
     }
 
-    secretsList = new SecretsListAdapter(this, LoginActivity.getSecrets());
+    secretsList =
+        new SecretsListAdapter(this, LoginActivity.getSecrets(),
+            LoginActivity.getDeletedSecrets());
     setTitle();
 
     setListAdapter(secretsList);
@@ -578,6 +581,7 @@ public class SecretsListActivity extends ListActivity {
 
   private void exportSecrets() {
     // Export everything to the SD card.
+    // Export does not include deleted secrets
     if (FileUtils.exportSecrets(this, secretsList.getAllSecrets())) {
       showToast(R.string.export_succeeded);
     } else {
@@ -601,7 +605,7 @@ public class SecretsListActivity extends ListActivity {
   private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info,
       boolean askForPassword) {
     // Restore everything to the SD card.
-    SecretsCollection secrets = FileUtils.restoreSecrets(this, rp, info);
+    ArrayList<Secret> secrets = FileUtils.loadSecrets(this, rp, info);
     if (null == secrets) {
       if (askForPassword) {
         restorePoint = rp;
@@ -623,7 +627,7 @@ public class SecretsListActivity extends ListActivity {
     byte[] salt = SecurityUtils.getSalt();
     int rounds = SecurityUtils.getRounds();
     if (FileUtils.backupSecrets(this, cipher, salt, rounds,
-        secretsList.getAllSecrets())) {
+        secretsList.getAllAndDeletedSecrets())) {
       showToast(R.string.backup_succeeded);
     } else {
       showToast(R.string.error_save_secrets);
@@ -700,7 +704,7 @@ public class SecretsListActivity extends ListActivity {
    * @param changedSecrets
    * @param agentName
    */
-  public void syncSecrets(SecretsCollection changedSecrets, String agentName) {
+  public void syncSecrets(ArrayList<Secret> changedSecrets, String agentName) {
     Log.d(LOG_TAG, "SecretsListActivity.syncSecrets, secrets: "
         + (changedSecrets == null ? changedSecrets : changedSecrets.size()));
     String template;
@@ -870,19 +874,28 @@ public class SecretsListActivity extends ListActivity {
             message += '\n';
             message += getText(R.string.restore_succeeded).toString();
           } else {
-            // Try an old encryption cipher. This may be a restore point
-            // created by an older version of Secrets.
-            Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(password,
-                saltAndRounds.salt, saltAndRounds.rounds);
-            SecretsCollection secrets = FileUtils.restoreSecretsV2(
-                SecretsListActivity.this, restorePoint, cipher2,
-                saltAndRounds.salt, saltAndRounds.rounds);
+            // Try old encryption mechanisms - this may be a restore point
+            // created by an older version of Secrets. See FileUtils load
+            // methods for details.
+            
+            // Try V3.
+            ArrayList<Secret> secrets = FileUtils.loadSecretsV3(SecretsListActivity.this,
+                SecurityUtils.getCipherInfo(), restorePoint);
+            
+            if (secrets == null) {
+              // Try V2.
+              Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(password,
+                  saltAndRounds.salt, saltAndRounds.rounds);
+              secrets = FileUtils.loadSecretsV2(
+                  SecretsListActivity.this, restorePoint, cipher2,
+                  saltAndRounds.salt, saltAndRounds.rounds);
+            }
 
             if (secrets == null) {
-              // Try an even old encryption cipher.
+              // Try V1.
               Cipher cipher1 = SecurityUtils.createDecryptionCipherV1(password);
-              secrets = FileUtils.restoreSecretsV1(SecretsListActivity.this,
-                  restorePoint, cipher1);
+              secrets = FileUtils.loadSecretsV1(SecretsListActivity.this,
+                  cipher1, restorePoint);
             }
 
             if (secrets != null) {
@@ -1071,7 +1084,7 @@ public class SecretsListActivity extends ListActivity {
     // unless I use a notification (need to look into that). Also, because
     // the process hangs around, this thread should continue running until
     // completion even if the user switches to another task/application.
-    SecretsCollection secrets = secretsList.getAllAndDeletedSecrets();
+    ArrayList<Secret> secrets = secretsList.getAllAndDeletedSecrets();
 
     // since the adapter is using a copy of the secrets, we must update the
     // global collection at this point otherwise a config change (e.g.
@@ -1197,20 +1210,20 @@ public class SecretsListActivity extends ListActivity {
           && username_text.equals(secret.getUsername())
           && password_text.equals(secret.getPassword(false))
           && email_text.equals(secret.getEmail())
-          && note_text.equals(secret.getNote()))
+          && note_text.equals(secret.getNote())) {
+        secretsList.notifyDataSetChanged();
         return;
+      }
 
       secretsList.remove(editingPosition);
     }
 
     secret.setDescription(description.getText().toString());
     secret.setUsername(username.getText().toString());
-    secret.setPassword(password.getText().toString(), true);
+    secret.setPassword(password.getText().toString(),
+        (AdapterView.INVALID_POSITION == editingPosition ? false : true));
     secret.setEmail(email.getText().toString());
     secret.setNote(notes.getText().toString());
-
-    // CTW set last changed timestamp
-    secret.setTimestamp(System.currentTimeMillis());
 
     editingPosition = secretsList.insert(secret);
     secretsList.notifyDataSetChanged();
