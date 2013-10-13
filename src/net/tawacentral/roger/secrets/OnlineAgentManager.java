@@ -15,10 +15,13 @@
 package net.tawacentral.roger.secrets;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import net.tawacentral.roger.secrets.Secret.LogEntry;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -116,10 +119,10 @@ public class OnlineAgentManager extends BroadcastReceiver {
     } else if (intent.getAction().equals(SYNC_RESPONSE)
         && validateResponse(intent)) {
       String secretsString = intent.getStringExtra(SECRETS_ID);
-      SecretsCollection secrets = null;
+      ArrayList<Secret> secrets = null;
       if (secretsString != null) {
         try {
-          secrets = SecretsCollection.fromJSON(new JSONObject(secretsString));
+          secrets = FileUtils.fromJSONSecrets(new JSONObject(secretsString));
         } catch (JSONException e) {
           Log.e(LOG_TAG, "Received invalid JSON secrets data", e);
         }
@@ -153,9 +156,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
                 + " after request was cancelled - discarded");
           } else {
             Log.w(LOG_TAG, "SYNC response received from agent " + classId
-                + " with invalid response key: current key x'"
-                + convertStringToHex(OnlineAgentManager.responseKey) + "', received x'"
-                + convertStringToHex(responseKey) + "'");
+                + " with invalid response key");
           }
         } else {
           Log.w(LOG_TAG, "Unexpected SYNC response received from agent "
@@ -221,7 +222,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
    * @return true if secrets were sent
    */
   public static boolean sendSecrets(OnlineSyncAgent agent,
-                                    SecretsCollection secrets,
+                                    ArrayList<Secret> secrets,
                                     SecretsListActivity activity) {
     requestAgent = agent;
     responseActivity = activity;
@@ -230,7 +231,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
       Intent secretsIntent = new Intent(SYNC);
       secretsIntent.setPackage(agent.getClassId());
       secretsIntent.putExtra(RESPONSE_KEY, OnlineAgentManager.responseKey);
-      String secretString = secrets.toJSON().toString();
+      String secretString = FileUtils.toJSONSecrets(secrets).toString();
       secretsIntent.putExtra(SECRETS_ID, secretString);
 
       activity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
@@ -262,17 +263,53 @@ public class OnlineAgentManager extends BroadcastReceiver {
     responseActivity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
   }
   
-  /*
-   * Produce a hex string representation of a string
+  /* Helper functions */
+  
+
+
+  /**
+   * Add, update or delete the current secrets in the given collection.
+   *
+   * Assumes that the collection sort sequences are the same.
+   * 
+   * @param secrets 
+   *          - target secrets collection
+   * @param changedSecrets
+   *          - added, changed or deleted secrets
    */
-  private String convertStringToHex(String str) {
-    char[] chars = str.toCharArray();
- 
-    StringBuffer hex = new StringBuffer();
-    for(int i = 0; i < chars.length; i++) {
-      hex.append(Integer.toHexString((int)chars[i]).toUpperCase());
+  public static void syncSecrets(ArrayList<Secret> secrets,
+                                   ArrayList<Secret> changedSecrets) {
+    for (Secret changedSecret : changedSecrets) {
+      boolean done = false;
+
+      for (int i = 0; i < secrets.size(); i++) {
+        Secret existingSecret = secrets.get(i);
+        int compare = changedSecret.compareTo(existingSecret);
+        if (compare < 0 && !changedSecret.isDeleted()) {
+          secrets.add(i, changedSecret);
+          done = true;
+          Log.d(LOG_TAG, "syncSecrets: added '" +
+              changedSecret.getDescription() + "'");
+          break;
+        } else if (compare == 0) {
+          if (changedSecret.isDeleted()) {
+            secrets.remove(existingSecret);
+            Log.d(LOG_TAG, "syncSecrets: removed '" +
+                changedSecret.getDescription() + "'");
+          } else {
+            existingSecret.update(changedSecret, LogEntry.SYNCED);
+            Log.d(LOG_TAG, "syncSecrets: updated '" +
+                changedSecret.getDescription() + "'");
+          }
+
+          done = true;
+          break;
+        }
+      }
+
+      if (!done && !changedSecret.isDeleted())
+        secrets.add(changedSecret);
     }
-    return hex.toString();
-  }  
+  }
   
 }

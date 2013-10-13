@@ -33,14 +33,18 @@ import java.util.List;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
 
 import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
-import android.app.backup.FullBackupDataOutput;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.ParcelFileDescriptor;
@@ -60,9 +64,9 @@ import au.com.bytecode.opencsv.CSVWriter;
  *
  * @author rogerta
  */
+@SuppressWarnings("javadoc")
 public class FileUtils {
   /** Return value for the getSaltAndRounds() function. */
-  @SuppressWarnings("javadoc")
   public static class SaltAndRounds {
     public SaltAndRounds(byte[] salt, int rounds) {
       this.salt = salt;
@@ -103,7 +107,7 @@ public class FileUtils {
   private static final File SECRETS_FILE_CSV = new File(SECRETS_FILE_NAME_CSV);
   private static final File OI_SAFE_FILE_CSV = new File(OI_SAFE_FILE_NAME_CSV);
 
-  // Secrets CSV column names
+  /** Secrets CSV column names */
   public static final String COL_DESCRIPTION = "Description";
   public static final String COL_USERNAME = "Id";
   public static final String COL_PASSWORD = "PIN";
@@ -113,9 +117,12 @@ public class FileUtils {
   private static final String EMPTY_STRING = "";
   private static final String INDENT = "   ";
   private static final String RP_PREFIX = "@";
+  
+  // secrets ID for JSON
+  private static final String JSON_SECRETS_ID = "secrets";
 
   /** Tag for logging purposes. */
-  public static final String LOG_TAG = "Secrets.FileUtils";
+  public static final String LOG_TAG = "FileUtils";
 
   /** Lock for accessing main secrets file. */
   private static final Object lock = new Object();
@@ -381,7 +388,7 @@ public class FileUtils {
                                 Cipher cipher,
                                 byte[] salt,
                                 int rounds,
-                                SecretsCollection secrets) {
+                                ArrayList<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.saveSecrets");
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.saveSecrets: got lock");
@@ -457,7 +464,7 @@ public class FileUtils {
                                       Cipher cipher,
                                       byte[] salt,
                                       int rounds,
-                                      SecretsCollection secrets) {
+                                      ArrayList<Secret> secrets) {
     Log.d(LOG_TAG, "FileUtils.backupSecrets");
 
     if (null == cipher)
@@ -477,220 +484,253 @@ public class FileUtils {
 
     return success;
   }
-
-  /**
-   * Opens the secrets file using the password retrieved from the user and
-   * the old encryption cipher.  This function is called only for backward
-   * compatibility purposes, when Secrets encounters an error trying to load
-   * the secrets using the current encryption method.
-   *
-   * @param context Activity context in which the load is called.
-   * @param cipher Decryption cipher for old encryption.
-   * @return A list of loaded secrets.
+  
+  /* start new load/restore methods */
+  
+  /*
+   * Load methods.
+   * These handle historic file and cipher formats for backward compatability
+   * with old secrets and backup files. They differ in both the cipher used and
+   * underlying data format.
+   * 
+   * V1 used a cipher with fixed salt and rounds values (C1), and Java serialized
+   * object format (F1).
+   * V2 used a cipher with variable salt and round values (C2), stored in the secrets
+   * file header, and Java serialized object format. Because of the new
+   * stored values, the file format (F2) differs from V1.
+   * V3 used a modified version of the V2 cipher (password fix) (C3), and the same
+   * file format as V2.
+   * Current (V4): uses same V3 cipher mechanism, and JSON file format (F3)
+   * 
+   * Pictorially:
+   *                 Cipher format
+   *                        
+   *             |  C1  |  C2  |  C3  
+   *          ---|------|------|------
+   *          F1 |  V1  |      |
+   * File     ---|------|------|------
+   * format   F2 |      |  V2  |  V3
+   *          ---|------|------|------
+   *          F3 |      |      |  V4
    */
-  public static SecretsCollection loadSecretsV1(Context context,
-                                                Cipher cipher) {
-    synchronized (lock) {
-      return restoreSecretsV1(context, SECRETS_FILE_NAME, cipher);
-    }
-  }
-
-  /**
-   * Opens the secrets file using the password retrieved from the user and
-   * the old encryption cipher.  This function is called only for backward
-   * compatibility purposes, when Secrets encounters an error trying to load
-   * the secrets using the current encryption method.
-   *
-   * @param context Activity context in which the load is called.
-   * @param cipher Decryption cipher for old encryption.
-   * @param salt The salt to use when creating the encryption key.
-   * @param rounds The number of rounds for bcrypt.
-   * @return A list of loaded secrets.
-   */
-  public static SecretsCollection loadSecretsV2(Context context,
-                                                Cipher cipher,
-                                                byte[] salt,
-                                                int rounds) {
-    synchronized (lock) {
-      SecretsCollection secrets = null;
-      InputStream input = null;
-
-      try {
-        input = context.openFileInput(SECRETS_FILE_NAME);
-        secrets = readSecretsV2(input, cipher, salt, rounds);
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "loadSecretsV2", ex);
-      } finally {
-        try {if (null != input) input.close();} catch (IOException ex) {}
-      }
-
-      return secrets;
-    }
-  }
-
-  /**
-   * Opens the secrets file using the password retrieved from the user. This
-   * function is called only for backward compatibility purposes, when Secrets
-   * encounters an error trying to load the secrets using the current encryption
-   * method.
-   *
-   * @param context
-   *          Activity context in which the load is called.
-   * @return A list of loaded secrets.
-   */
-  public static SecretsCollection loadSecretsV21(Context context) {
-    Log.d(LOG_TAG, "FileUtils.loadSecretsV21");
-
-    synchronized (lock) {
-      Log.d(LOG_TAG, "FileUtils.loadSecretsV21: got lock");
-
-      Cipher cipher = SecurityUtils.getDecryptionCipher();
-      if (null == cipher)
-        return null;
-
-      SecretsCollection secrets = null;
-      InputStream input = null;
-
-      try {
-        input = context.openFileInput(SECRETS_FILE_NAME);
-        secrets = readSecretsV2(input, cipher, SecurityUtils.getSalt(),
-                                SecurityUtils.getRounds());
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "loadSecretsV21", ex);
-      } finally {
-        try {
-          if (null != input)
-            input.close();
-        } catch (IOException ex) {
-        }
-      }
-
-      Log.d(LOG_TAG, "FileUtils.loadSecretsV21: done");
-      return secrets;
-    }
-  }
-
+  
   /**
    * Opens the secrets file using the password retrieved from the user.
    *
    * @param context Activity context in which the load is called.
    * @return A list of loaded secrets.
    */
-  public static SecretsCollection loadSecrets(Context context) {
-    Log.d(LOG_TAG, "FileUtils.loadSecrets");
+  public static ArrayList<Secret> loadSecrets(Context context) {
     synchronized (lock) {
       Log.d(LOG_TAG, "FileUtils.loadSecrets: got lock");
-
-      Cipher cipher = SecurityUtils.getDecryptionCipher();
-      if (null == cipher)
-        return null;
-
-      SecretsCollection secrets = null;
-      InputStream input = null;
-
-      try {
-        input = context.openFileInput(SECRETS_FILE_NAME);
-        secrets = readSecrets(input, cipher, SecurityUtils.getSalt(),
-                              SecurityUtils.getRounds());
-      } catch (Exception ex) {
-        Log.e(LOG_TAG, "loadSecrets", ex);
-      } finally {
-        try {if (null != input) input.close();} catch (IOException ex) {}
-      }
-
-      Log.d(LOG_TAG, "FileUtils.loadSecrets: done");
-      return secrets;
+      return loadSecrets(context, SECRETS_FILE_NAME,
+          SecurityUtils.getCipherInfo());
     }
   }
-
+  
   /**
-   * Restore the secrets from the SD card using an old encryption cipher.
+   * Opens the secrets file using the password retrieved from the user.
    *
    * @param context Activity context in which the load is called.
-   * @param rp A restore point name.  This should be one of the strings
-   *     returned by the getRestorePoints() method.
-   * @param cipher Decryption cipher for old encryption.
-   * @return secrets collection
+   * @param fileName Name of file to be loaded
+   * @param info CipherInfo
+   * @return A list of loaded secrets.
    */
-  @SuppressWarnings("unchecked")
-  public static SecretsCollection restoreSecretsV1(Context context,
-                                                   String rp,
-                                                   Cipher cipher) {
-    if (null == cipher)
+  public static ArrayList<Secret> loadSecrets(Context context,
+      String fileName, CipherInfo info) {
+    Log.d(LOG_TAG, "FileUtils.loadSecrets");
+
+    if (null == info)
       return null;
 
-    SecretsCollection secrets = null;
-    ObjectInputStream input = null;
-
-    try {
-      InputStream fis = SECRETS_FILE_NAME_SDCARD.equals(rp)
-          ? new FileInputStream(rp)
-          : context.openFileInput(rp);
-      input = new ObjectInputStream(new CipherInputStream(fis, cipher));
-      secrets = new SecretsCollection((ArrayList<Secret>)input.readObject());
-    } catch (Exception ex) {
-      Log.e(LOG_TAG, "restoreSecretsV1", ex);
-    } finally {
-      try {if (null != input) input.close();} catch (IOException ex) {}
-    }
-
-    return secrets;
-  }
-
-  /**
-   * Restore the secrets from the SD card using an old encryption cipher.
-   *
-   * @param context Activity context in which the load is called.
-   * @param rp A restore point name.  This should be one of the strings
-   *     returned by the getRestorePoints() method.
-   * @param cipher Decryption cipher for old encryption.
-   * @param salt The salt to use when creating the encryption key.
-   * @param rounds The number of rounds for bcrypt.
-   * @return the secrets collection
-   */
-  public static SecretsCollection restoreSecretsV2(Context context,
-                                                   String rp,
-                                                   Cipher cipher,
-                                                   byte[] salt,
-                                                   int rounds) {
-    CipherInfo info = new CipherInfo();
-    info.decryptCipher = cipher;
-    info.salt = salt;
-    info.rounds = rounds;
-    return restoreSecrets(context, rp, info);
-  }
-
-  /**
-   * Restore the secrets from the SD card using the password retrieved from
-   * the user.
-   *
-   * @param context Activity context in which the load is called.
-   * @param rp A restore point name.  This should be one of the strings
-   *     returned by the getRestorePoints() method.
-   * @param info A CipherInfo structure describing the decryption cipher to use.
-   * @return the secrets collection
-   */
-  public static SecretsCollection restoreSecrets(Context context,
-                                                 String rp,
-                                                 CipherInfo info) {
-    Log.d(LOG_TAG, "FileUtils.restoreSecrets");
-
-    SecretsCollection secrets = null;
+    ArrayList<Secret> secrets = null;
     InputStream input = null;
 
     try {
-      input = SECRETS_FILE_NAME_SDCARD.equals(rp)
-          ? new FileInputStream(rp)
-          : context.openFileInput(rp);
+      input = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+          ? new FileInputStream(fileName)
+          : context.openFileInput(fileName);
       secrets = readSecrets(input, info.decryptCipher, info.salt, info.rounds);
     } catch (Exception ex) {
-      Log.e(LOG_TAG, "restoreSecrets", ex);
+      Log.e(LOG_TAG, "loadSecrets", ex);
+    } finally {
+      try {
+        if (null != input)
+          input.close();
+      } catch (IOException ex) {
+      }
+    }
+    Log.d(LOG_TAG, "FileUtils.loadSecrets: done");
+    return secrets;
+  }
+  
+  /**
+   * Opens the secrets file using the password retrieved from the user and
+   * the old encryption cipher.  This function is called only for backward
+   * compatibility purposes, when Secrets encounters an error trying to load
+   * the secrets using the current encryption method.
+   * 
+   * V1 used fixed rounds and salt, not stored in the file.
+   *
+   * @param context Activity context in which the load is called.
+   * @param cipher Decryption cipher for old encryption.
+   * @return A list of loaded secrets.
+   */
+  public static ArrayList<Secret> loadSecretsV1(Context context, Cipher cipher) {
+    synchronized (lock) {
+      Log.d(LOG_TAG, "FileUtils.loadSecretsV1: got lock");
+      return loadSecretsV1(context, cipher, SECRETS_FILE_NAME);
+    }
+  }
+
+  /**
+   * See previous method for description.
+   * 
+   * @param context Activity context in which the load is called.
+   * @param cipher Decryption cipher for old encryption.
+   * @param fileName Name of file to be loaded
+   * @return A list of loaded secrets.
+   */
+  @SuppressWarnings("unchecked")
+  public static ArrayList<Secret> loadSecretsV1(Context context, Cipher cipher,
+      String fileName) {
+    Log.d(LOG_TAG, "FileUtils.loadSecretsV1");
+    if (null == cipher)
+      return null;
+
+    ArrayList<Secret> secrets = null;
+    ObjectInputStream input = null;
+
+    try {
+      InputStream fis = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+          ? new FileInputStream(fileName)
+      : context.openFileInput(fileName);
+          input = new ObjectInputStream(new CipherInputStream(fis, cipher));
+          secrets = (ArrayList<Secret>)input.readObject();
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "loadSecretsV1", ex);
     } finally {
       try {if (null != input) input.close();} catch (IOException ex) {}
+    }
+    Log.d(LOG_TAG, "FileUtils.loadSecretsV1: done");
+    return secrets;
+  }
+  
+  /**
+   * Opens the secrets file using the password retrieved from the user and
+   * the old encryption cipher.  This function is called only for backward
+   * compatibility purposes, when Secrets encounters an error trying to load
+   * the secrets using the current encryption method.
+   * 
+   * V2 used variable rounds and salt, stored in the file header.
+   *
+   * @param context Activity context in which the load is called.
+   * @param cipher Decryption cipher for old encryption.
+   * @param salt The salt to use when creating the encryption key.
+   * @param rounds The number of rounds for bcrypt.
+   * @return A list of loaded secrets.
+   */
+  public static ArrayList<Secret> loadSecretsV2(Context context, Cipher cipher,
+      byte[] salt, int rounds) {
+    synchronized (lock) {
+      return loadSecretsV2(context, SECRETS_FILE_NAME, cipher, salt, rounds);
+    }
+  }
+  
+  /**
+   * See previous method for description.
+   *
+   * @param context Activity context in which the load is called.
+   * @param fileName Name of file to be loaded
+   * @param cipher Decryption cipher for old encryption.
+   * @param salt The salt to use when creating the encryption key.
+   * @param rounds The number of rounds for bcrypt.
+   * @return A list of loaded secrets.
+   */
+  public static ArrayList<Secret> loadSecretsV2(Context context,
+      String fileName, Cipher cipher, byte[] salt, int rounds) {
+    Log.d(LOG_TAG, "FileUtils.loadSecretsV2");
+    if (null == cipher)
+      return null;
+    ArrayList<Secret> secrets = null;
+    InputStream input = null;
+
+    try {
+      input = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+          ? new FileInputStream(fileName)
+          : context.openFileInput(fileName);
+      secrets = readSecretsV2(input, cipher, salt, rounds);
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "loadSecretsV2", ex);
+    } finally {
+      try {
+        if (null != input)
+          input.close();
+      } catch (IOException ex) {
+      }
     }
 
     return secrets;
   }
+  
+  /**
+   * Opens the secrets file using the password retrieved from the user. This
+   * function is called only for backward compatibility purposes, when Secrets
+   * encounters an error trying to load the secrets using the current encryption
+   * method.
+   *
+   * V3 used the current cipher mechanism and the old object file format.
+   *
+   * @param context
+   *          Activity context in which the load is called.
+   * @return A list of loaded secrets.
+   */
+  public static ArrayList<Secret> loadSecretsV3(Context context) {
+    synchronized (lock) {
+      Log.d(LOG_TAG, "FileUtils.loadSecretsV21: got lock");
+      return loadSecretsV3(context, SecurityUtils.getCipherInfo(),
+          SECRETS_FILE_NAME);
+    }
+  }
+  
+  /**
+   * See previous method for description.
+   *
+   * @param context
+   *          Activity context in which the load is called.
+   * @param fileName Name of file to be loaded
+   * @param info CipherInfo
+   * @return A list of loaded secrets.
+   */
+  public static ArrayList<Secret> loadSecretsV3(Context context,
+      CipherInfo info, String fileName) {
+    Log.d(LOG_TAG, "FileUtils.loadSecretsV3");
+
+    if (null == info)
+      return null;
+
+    ArrayList<Secret> secrets = null;
+    InputStream input = null;
+
+    try {
+      input = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+          ? new FileInputStream(fileName)
+          : context.openFileInput(fileName);
+      secrets = readSecretsV2(input, info.decryptCipher, info.salt, info.rounds);
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "loadSecretsV3", ex);
+    } finally {
+      try {
+        if (null != input)
+          input.close();
+      } catch (IOException ex) {
+      }
+    }
+    Log.d(LOG_TAG, "FileUtils.loadSecretsv3: done");
+    return secrets;
+  }
+  
+  /* end new load/restore methods */
 
   /**
    * Writes the secrets to the given output stream encrypted with the given
@@ -708,12 +748,12 @@ public class FileUtils {
                                    Cipher cipher,
                                    byte[] salt,
                                    int rounds,
-                                   SecretsCollection secrets) throws IOException {
+                                   ArrayList<Secret> secrets) throws IOException {
     output.write(SIGNATURE);
     output.write(salt.length);
     output.write(salt);
     output.write(rounds);
-    output.write(secrets.toEncryptedJSONStream(cipher));
+    output.write(FileUtils.toEncryptedJSONSecretsStream(cipher, secrets));
   	output.flush();
   }
 
@@ -729,7 +769,7 @@ public class FileUtils {
    * @throws IOException
    * @throws ClassNotFoundException
    */
-  private static SecretsCollection readSecrets(InputStream input,
+  private static ArrayList<Secret> readSecrets(InputStream input,
                                                Cipher cipher, byte[] salt,
                                                int rounds) throws IOException,
       ClassNotFoundException {
@@ -747,7 +787,7 @@ public class FileUtils {
         buffer.write(data, 0, nRead);
       }
       buffer.flush();
-      return SecretsCollection.fromEncryptedJSONStream(cipher,
+      return FileUtils.fromEncryptedJSONSecretsStream(cipher,
               buffer.toByteArray());
     } finally {
       try {
@@ -769,7 +809,7 @@ public class FileUtils {
    * @throws ClassNotFoundException
    */
   @SuppressWarnings("unchecked")
-  private static SecretsCollection readSecretsV2(InputStream input,
+  private static ArrayList<Secret> readSecretsV2(InputStream input,
                                                Cipher cipher,
                                                byte[] salt,
                                                int rounds)
@@ -781,9 +821,102 @@ public class FileUtils {
     ObjectInputStream oin = new ObjectInputStream(
         new CipherInputStream(input, cipher));
     try {
-      return (new SecretsCollection((ArrayList<Secret>)oin.readObject()));
+      return (ArrayList<Secret>)oin.readObject();
     } finally {
       try {if (null != oin) oin.close();} catch (IOException ex) {}
+    }
+  }
+
+  /**
+   * Returns an json object representing the contained secrets.
+   *
+   * @param secrets
+   *          The list of secrets.
+   * @return String of secrets
+   * @throws JSONException
+   */
+  public static JSONObject toJSONSecrets(ArrayList<Secret> secrets) throws JSONException {
+    JSONObject jsonValues = new JSONObject();
+    JSONArray jsonSecrets = new JSONArray();
+    for (Secret secret : secrets) {
+      jsonSecrets.put(secret.toJSON());
+    }
+    jsonValues.put(JSON_SECRETS_ID, jsonSecrets);
+
+    return jsonValues;
+  }
+
+  /**
+   * Constructs a secrets collection from the supplied JSON object
+   *
+   * @param jsonValues
+   *          JSON object
+   * @return list of secrets
+   * @throws JSONException
+   *           if error with JSON data
+   */
+  public static ArrayList<Secret> fromJSONSecrets(JSONObject jsonValues)
+      throws JSONException {
+    JSONArray jsonSecrets = jsonValues.getJSONArray(JSON_SECRETS_ID);
+    ArrayList<Secret> secretList = new ArrayList<Secret>();
+    for (int i = 0; i < jsonSecrets.length(); i++) {
+      secretList.add(Secret.fromJSON((JSONObject) jsonSecrets.get(i)));
+    }
+
+    return secretList;
+  }
+
+  /**
+   * Returns an encrypted json stream representing the user's secrets.
+   *
+   * @param cipher
+   *          The encryption cipher to use with the file.
+   * @param secrets
+   *          The list of secrets.
+   * @return byte array of secrets
+   * @throws IOException
+   *           if any error occurs
+   */
+  public static byte[] toEncryptedJSONSecretsStream(Cipher cipher,
+      ArrayList<Secret> secrets) throws IOException {
+    CipherOutputStream output = null;
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+    try {
+      output = new CipherOutputStream(baos, cipher);
+      output.write(FileUtils.toJSONSecrets(secrets).toString().getBytes("UTF-8"));
+    } catch (Exception e) {
+      Log.e(LOG_TAG, "toEncryptedJSONSecretsStream", e);
+      throw new IOException("toEncryptedJSONSecretsStream failed: " + e.getMessage());
+    } finally {
+      try { if (null != output) output.close(); } catch (IOException ex) {}
+    }
+
+    return baos.toByteArray();
+  }
+
+  /**
+   * Constructs secrets from the supplied encrypted byte stream
+   *
+   * @param cipher
+   *          cipher to use
+   * @param secrets
+   *          encrypted byte array
+   * @return list of secrets
+   * @throws IOException
+   *           if any error occurs
+   */
+  public static ArrayList<Secret> fromEncryptedJSONSecretsStream(Cipher cipher,
+      byte[] secrets) throws IOException {
+    try {
+      byte[] secretStrBytes = cipher.doFinal(secrets);
+      JSONObject jsonValues =
+          new JSONObject(new String(secretStrBytes, "UTF-8"));
+      return FileUtils.fromJSONSecrets(jsonValues);
+    } catch (Exception e) {
+      Log.e(LOG_TAG, "fromEncryptedJSONSecretsStream", e);
+      throw
+          new IOException("fromEncryptedJSONSecretsStream failed: " + e.getMessage());
     }
   }
 
@@ -996,7 +1129,6 @@ public class FileUtils {
   }
 
   /** Returns a list of the supported CSV file names, newline separated. */
-  @SuppressWarnings("javadoc")
   public static String getCsvFileNames() {
     StringBuilder builder = new StringBuilder();
     builder.append(INDENT).append(SECRETS_FILE_CSV.getName()).append('\n');
@@ -1005,7 +1137,6 @@ public class FileUtils {
     return builder.toString();
   }
 
-  @SuppressWarnings("javadoc")
   static public class SecretsBackupAgent extends BackupAgentHelper {
     /** Tag for logging purposes. */
     public static final String LOG_TAG_AGENT = "SecretsBackupAgent";

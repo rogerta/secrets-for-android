@@ -15,6 +15,7 @@
 package net.tawacentral.roger.secrets;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.crypto.Cipher;
 
@@ -35,7 +36,7 @@ import android.os.IBinder;
  * @author rogerta
  */
 public class SaveService extends Service {
-  private static SecretsCollection secrets;
+  private static ArrayList<Secret> secrets;
   private static Cipher cipher;
   private static byte[] salt;
   private static int rounds;
@@ -52,7 +53,7 @@ public class SaveService extends Service {
    * @param rounds The number of rounds for bcrypt.
    */
   public static synchronized void execute(Context context,
-                                          SecretsCollection secrets,
+                                          ArrayList<Secret> secrets,
                                           Cipher cipher,
                                           byte[] salt,
                                           int rounds) {
@@ -89,7 +90,7 @@ public class SaveService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, final int startId) {
     synchronized (SaveService.class) {
-      final SecretsCollection secrets = SaveService.secrets;
+      final ArrayList<Secret> secrets = SaveService.secrets;
       final Cipher cipher = SaveService.cipher;
       final File file = getFileStreamPath(FileUtils.SECRETS_FILE_NAME);
       final byte[] salt = SaveService.salt;
