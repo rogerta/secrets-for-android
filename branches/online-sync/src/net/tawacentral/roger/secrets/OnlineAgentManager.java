@@ -68,10 +68,10 @@ public class OnlineAgentManager extends BroadcastReceiver {
   private static final String SYNC_CANCEL =
       "net.tawacentral.roger.secrets.SYNC_CANCEL";
 
-  private static final String CLASS_ID = "classId";
-  private static final String DISPLAY_NAME = "displayName";
-  private static final String RESPONSE_KEY = "responseKey";
-  private static final String SECRETS_ID = "secrets";
+  private static final String INTENT_CLASSID = "net.tawacentral.roger.secrets.ClassId";
+  private static final String INTENT_DISPLAYNAME = "net.tawacentral.roger.secrets.DisplayName";
+  private static final String INTENT_RESPONSEKEY = "net.tawacentral.roger.secrets.ResponseKey";
+  private static final String INTENT_SECRETS = "net.tawacentral.roger.secrets.Secrets";
 
   // for the current request
   private static OnlineSyncAgent requestAgent;
@@ -101,8 +101,8 @@ public class OnlineAgentManager extends BroadcastReceiver {
     // handle roll call response
     if (intent.getAction().equals(ROLLCALL_RESPONSE)
         && intent.getExtras() != null) {
-      String classId = (String) intent.getExtras().get(CLASS_ID);
-      String displayName = (String) intent.getExtras().get(DISPLAY_NAME);
+      String classId = (String) intent.getExtras().get(INTENT_CLASSID);
+      String displayName = (String) intent.getExtras().get(INTENT_DISPLAYNAME);
       if (classId == null || classId.length() == 0 || displayName == null
           || displayName.length() == 0) {
         // invalid info, so do not add it
@@ -118,7 +118,7 @@ public class OnlineAgentManager extends BroadcastReceiver {
       // handle sync response
     } else if (intent.getAction().equals(SYNC_RESPONSE)
         && validateResponse(intent)) {
-      String secretsString = intent.getStringExtra(SECRETS_ID);
+      String secretsString = intent.getStringExtra(INTENT_SECRETS);
       ArrayList<Secret> secrets = null;
       if (secretsString != null) {
         try {
@@ -144,8 +144,8 @@ public class OnlineAgentManager extends BroadcastReceiver {
    */
   private boolean validateResponse(Intent intent) {
     if (intent.getExtras() != null) {
-      String classId = (String) intent.getExtras().get(CLASS_ID);
-      String responseKey = (String) intent.getExtras().get(RESPONSE_KEY);
+      String classId = (String) intent.getExtras().get(INTENT_CLASSID);
+      String responseKey = (String) intent.getExtras().get(INTENT_RESPONSEKEY);
       OnlineSyncAgent agent = AVAILABLE_AGENTS.get(classId);
       if (agent != null) {
         if (agent == requestAgent) { // is a response expected?
@@ -230,9 +230,9 @@ public class OnlineAgentManager extends BroadcastReceiver {
     try {
       Intent secretsIntent = new Intent(SYNC);
       secretsIntent.setPackage(agent.getClassId());
-      secretsIntent.putExtra(RESPONSE_KEY, OnlineAgentManager.responseKey);
+      secretsIntent.putExtra(INTENT_RESPONSEKEY, OnlineAgentManager.responseKey);
       String secretString = FileUtils.toJSONSecrets(secrets).toString();
-      secretsIntent.putExtra(SECRETS_ID, secretString);
+      secretsIntent.putExtra(INTENT_SECRETS, secretString);
 
       activity.sendBroadcast(secretsIntent, SECRETS_PERMISSION);
       Log.d(LOG_TAG, "Secrets sent to OSA " + agent.getClassId());
