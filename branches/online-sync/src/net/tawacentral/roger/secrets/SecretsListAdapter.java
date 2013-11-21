@@ -242,7 +242,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
         // members that we will access here are immutable.  If this ever changes
         // then the locking strategy will need to get smarter.
         synchronized (allSecrets) {
-          secrets = new ArrayList<Secret>();
+          secrets = new ArrayList<Secret>(allSecrets);
         }
 
         // We loop backwards because we may be removing elements from the array
@@ -282,7 +282,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     protected void publishResults(CharSequence prefix,
                                   FilterResults results) {
       // NOTE: this function is *always* called from the UI thread.
-      secrets = new ArrayList<Secret>((ArrayList<Secret>) results.values);
+      secrets = (ArrayList<Secret>) results.values;
       notifyDataSetChanged();
       activity.setTitle();
     }

@@ -64,7 +64,7 @@ public class LoginActivity extends Activity implements TextWatcher {
    * is primarily to support synchronizing deletions across devices.
    * Saved secrets include deletions (with a delete indicator), and are
    * separated from the normal secrets list on loading.  */
-  private static final ArrayList<Secret> deletedSecrets = new ArrayList<Secret>();
+  private static ArrayList<Secret> deletedSecrets;
 
   private boolean isFirstRun;
   private boolean isValidatingPassword;
@@ -385,6 +385,11 @@ public class LoginActivity extends Activity implements TextWatcher {
       }
     }
     
+    // ensure the deleted secrets array is allocated
+    if (deletedSecrets == null) {
+      deletedSecrets = new ArrayList<Secret>();
+    }
+    
     // extract the deleted secrets from the global secrets list
     replaceSecrets(secrets);
     
@@ -479,6 +484,7 @@ public class LoginActivity extends Activity implements TextWatcher {
    */
   public static void clearSecrets() {
     secrets = null;
+    deletedSecrets = null;
     SecurityUtils.clearCiphers();
   }
 }
