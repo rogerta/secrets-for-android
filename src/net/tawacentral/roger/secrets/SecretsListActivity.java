@@ -710,6 +710,7 @@ public class SecretsListActivity extends ListActivity {
     String template;
     if (changedSecrets != null) {
       secretsList.syncSecrets(changedSecrets);
+      getListView().clearTextFilter();
       setTitle();
       template = getText(R.string.sync_succeeded).toString();
     } else {
