@@ -19,8 +19,8 @@ limitations under the License.
      the strings.xml file -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.tawacentral.roger.secrets"
-    android:versionName="2.3-online-sync"
-    android:versionCode="45"
+    android:versionName="2.4"
+    android:versionCode="46"
     android:installLocation="auto">
   <!--Secrets supports Android 2.3 (SDK 9) or later only.  The main reasons for
       these restriction are:
@@ -45,7 +45,6 @@ limitations under the License.
   <application android:icon="@drawable/icon"
       android:label="@string/app_name"
       android:allowBackup="true"
-      android:restoreAnyVersion="true"
       android:backupAgent=".FileUtils$SecretsBackupAgent">
     <meta-data android:name="com.google.android.backup.api_key"
         android:value="AEdPqrEAAAAIiaTKLQX8KGBYlJtm_orjiPGWqNbppxZwGByuGA" />

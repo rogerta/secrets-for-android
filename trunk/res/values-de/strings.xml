@@ -25,7 +25,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 2.3.1 &#169; 2012 Google Inc.</string>
+<string name="copyright">Version 2.4 &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Oops! Das Passwort ist falsch, bitte noch einmal versuchen.</string>
 <string name="no_password">&lt; keine PIN &gt;</string>
