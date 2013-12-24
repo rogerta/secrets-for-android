@@ -157,6 +157,9 @@ public class AccessLogActivity extends ListActivity {
       case LogEntry.EXPORTED:
         verb = context.getText(R.string.log_exported).toString();
         break;
+      case LogEntry.SYNCED:
+        verb = context.getText(R.string.log_synced).toString();
+        break;
       default:
         // Should never really get here.
         verb = "?";

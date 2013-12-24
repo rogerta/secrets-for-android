@@ -35,6 +35,9 @@ limitations under the License.
     <item android:id="@+id/list_export"
         android:title="@string/list_menu_export"
         android:icon="@android:drawable/ic_menu_upload" />
+    <item android:id="@+id/list_sync"
+        android:title="@string/list_menu_sync"
+        android:icon="@drawable/sync" />
     <item android:id="@+id/list_import"
         android:title="@string/list_menu_import"
         android:icon="@android:drawable/stat_sys_download" />

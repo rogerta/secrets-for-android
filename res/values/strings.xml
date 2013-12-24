@@ -28,7 +28,7 @@ limitations under the License.
 
 <!-- Whenever the version changes here, it must also be changed in
      the androidmanifest.xml file -->
-<string name="copyright">Version 2.3.1 &#169; 2012 Google Inc.</string>
+<string name="copyright">Version 2.3-online-sync &#169; 2012 Google Inc.</string>
 
 <string name="invalid_password">Oops! The password is invalid, please try again.</string>
 <string name="no_password">&lt; No PIN &gt;</string>
@@ -37,8 +37,10 @@ limitations under the License.
 
 <string name="backup_succeeded">Backup succeeded.</string>
 <string name="restore_succeeded">Restore succeeded.</string>
+<string name="sync_succeeded">Sync with {0} succeeded.</string>
 <string name="restore_failed">Uh oh.  Unable to restore your secrets.  Make sure your password is the same as the one used to create the backup.</string>
 <string name="enable_online_backup">Enable online backup to safe guard your secrets.</string>
+<string name="sync_failed">Uh oh. Sync with {0} failed.  Check with the Sync agent app for more details.</string>
 <string name="dialog_learn_how">Learn how</string>
 <string name="dialog_not_now">Not now</string>
 
@@ -117,6 +119,7 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="list_menu_restore">Restore</string>
 <string name="list_menu_import">Import</string>
 <string name="list_menu_export">Export</string>
+<string name="list_menu_sync">Sync</string>
 <string name="list_menu_copy_username_to_clipoboard">Copy Id</string>
 <string name="list_menu_copy_password_to_clipoboard">Copy PIN</string>
 <string name="list_menu_generate_password">Generate</string>
@@ -125,6 +128,18 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_name">Access log</string>
 <string name="log_name_format">Access log for {0}</string>
 
+<!-- String assocated with online agent support -->
+<string name="permission_osa_label">access unencrypted secrets</string>
+<string name="permission_osa_desc">Allows an application to read and write all your secrets.
+    A malicious application could send your secrets to anyone or post them online for everyone to see.</string>
+<string name="osa_sent">Secrets sent to {0} application</string>
+<string name="dialog_sync_title">Sync with:</string>
+<string name="no_osa_available">Sorry, there are no sync agents available.</string>
+<string name="error_osa_secrets">Unable to sync your secrets.</string>
+<string name="sync_active">A sync operation is already active. Do you want to
+    cancel it so that you can re-issue the sync request?</string>
+<string name="yes_option">Yes</string>
+<string name="no_option">No</string>    
 <!-- the following string are used to format a string that indicate when a
      given secret was created or last viewed, modified, or exported.  The
      {0} will be replaced with a "verb" which describes the action, and {1}
@@ -142,6 +157,7 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="log_changed">Modified</string>
 <string name="log_viewed">Viewed</string>
 <string name="log_exported">Exported</string>
+<string name="log_synced">Synced</string>
 
 <string name="error_missing_ciphers">Uh oh: can\'t save, password is invalid.</string>
 <string name="error_cannot_move_existing">Uh oh: can\'t move existing file out of the way.</string>
