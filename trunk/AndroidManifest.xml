@@ -19,7 +19,7 @@ limitations under the License.
      the strings.xml file -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="net.tawacentral.roger.secrets"
-    android:versionName="2.3.1"
+    android:versionName="2.3-online-sync"
     android:versionCode="45"
     android:installLocation="auto">
   <!--Secrets supports Android 2.3 (SDK 9) or later only.  The main reasons for
@@ -30,6 +30,18 @@ limitations under the License.
   <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="17"></uses-sdk>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE">
   </uses-permission>
+  <permission-group
+      android:name="net.tawacentral.roger.secrets.permission_group.SECRETS"
+      android:label="@string/app_name"
+      android:icon="@drawable/icon"
+      android:description="@string/permission_osa_desc"
+      android:permissionGroupFlags="personalInfo" />
+  <permission
+      android:name="net.tawacentral.roger.secrets.permission.SECRETS"
+      android:permissionGroup="net.tawacentral.roger.secrets.permission_group.SECRETS"
+      android:description="@string/permission_osa_desc"
+      android:label="@string/permission_osa_label"
+      android:protectionLevel="dangerous" />
   <application android:icon="@drawable/icon"
       android:label="@string/app_name"
       android:allowBackup="true"
@@ -76,6 +88,19 @@ limitations under the License.
         android:stateNotNeeded="true"
         android:finishOnTaskLaunch="true"></activity>
     <service android:name=".SaveService"></service>
+
+    <receiver
+       android:name=".OnlineAgentManager"
+       android:label="OnlineAgentReceiver"
+       android:permission="net.tawacentral.roger.secrets.permission.SECRETS">
+       <intent-filter>
+         <action
+             android:name="net.tawacentral.roger.secrets.OSA_ROLLCALL_RESPONSE"/>
+         <action
+             android:name="net.tawacentral.roger.secrets.SYNC_RESPONSE"/>
+       </intent-filter>
+    </receiver>
+
   </application>
 </manifest>
  
