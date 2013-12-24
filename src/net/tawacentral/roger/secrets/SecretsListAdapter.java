@@ -471,9 +471,6 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
     if (changedSecrets != null) {
       synchronized (allSecrets) {
         OnlineAgentManager.syncSecrets(allSecrets, changedSecrets);
-        if (secrets != allSecrets) {
-          OnlineAgentManager.syncSecrets(secrets, changedSecrets);
-        }
         deletedSecrets.clear();
       }
       notifyDataSetChanged();

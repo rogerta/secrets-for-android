@@ -1087,11 +1087,6 @@ public class SecretsListActivity extends ListActivity {
     // completion even if the user switches to another task/application.
     ArrayList<Secret> secrets = secretsList.getAllAndDeletedSecrets();
 
-    // since the adapter is using a copy of the secrets, we must update the
-    // global collection at this point otherwise a config change (e.g.
-    // rotation) will lose any changes
-    LoginActivity.replaceSecrets(secrets);
-
     Cipher cipher = SecurityUtils.getEncryptionCipher();
     byte[] salt = SecurityUtils.getSalt();
     int rounds = SecurityUtils.getRounds();

@@ -461,14 +461,11 @@ public class LoginActivity extends Activity implements TextWatcher {
     // in the code.  I will simply replace the contents of the existing array
     // with the entries from the new one.
     
-    // Here we separate out deletionsinto their own array.
-    
-    // Copy the input array in case it is the global list
-    ArrayList<Secret> tempSecrets = new ArrayList<Secret>(newSecrets);
+    // Here we separate out deletions into their own array.
     
     LoginActivity.secrets.clear();
     LoginActivity.deletedSecrets.clear();
-    for (Secret secret : tempSecrets) {
+    for (Secret secret : newSecrets) {
       if (secret.isDeleted()) {
         deletedSecrets.add(secret);
       } else {
