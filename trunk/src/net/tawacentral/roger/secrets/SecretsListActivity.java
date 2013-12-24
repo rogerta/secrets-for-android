@@ -880,8 +880,9 @@ public class SecretsListActivity extends ListActivity {
             // methods for details.
             
             // Try V3.
-            ArrayList<Secret> secrets = FileUtils.loadSecretsV3(SecretsListActivity.this,
-                SecurityUtils.getCipherInfo(), restorePoint);
+            ArrayList<Secret> secrets =
+                FileUtils.loadSecretsV3(SecretsListActivity.this, info,
+                                        restorePoint);
             
             if (secrets == null) {
               // Try V2.
