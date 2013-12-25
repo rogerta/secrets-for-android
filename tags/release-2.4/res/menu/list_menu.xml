@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/list_search"
+        android:title="@string/list_menu_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:showAsAction="ifRoom|collapseActionView"
+        android:actionViewClass="android.widget.SearchView" />
+    <item android:id="@+id/list_add"
+        android:title="@string/list_menu_add"
+        android:icon="@android:drawable/ic_menu_add" />
+    <item android:id="@+id/list_backup"
+        android:title="@string/list_menu_backup"
+        android:icon="@android:drawable/ic_menu_save" />
+    <item android:id="@+id/list_restore"
+        android:title="@string/list_menu_restore"
+        android:icon="@android:drawable/stat_sys_download" />
+    <item android:id="@+id/list_menu_change_password"
+        android:title="@string/list_menu_change_password"
+        android:icon="@android:drawable/ic_menu_edit" />
+    <item android:id="@+id/list_export"
+        android:title="@string/list_menu_export"
+        android:icon="@android:drawable/ic_menu_upload" />
+    <item android:id="@+id/list_sync"
+        android:title="@string/list_menu_sync"
+        android:icon="@drawable/sync" />
+    <item android:id="@+id/list_import"
+        android:title="@string/list_menu_import"
+        android:icon="@android:drawable/stat_sys_download" />
+    <!-- The items below are used in edit mode only.  The items above are
+         used in non-edit mode only. -->
+    <item android:id="@+id/list_save"
+        android:title="@string/list_menu_save"
+        android:icon="@android:drawable/ic_menu_save"
+        android:showAsAction="ifRoom|withText" />
+    <item android:id="@+id/list_generate_password"
+        android:title="@string/list_menu_generate_password"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:showAsAction="ifRoom|withText" />
+    <item android:id="@+id/list_discard"
+        android:title="@string/list_menu_discard"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:showAsAction="ifRoom|withText" />
+</menu>
