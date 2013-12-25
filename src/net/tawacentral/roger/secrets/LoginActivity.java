@@ -57,8 +57,8 @@ public class LoginActivity extends Activity implements TextWatcher {
   /**
    * This is the global list of the user's secrets.  This list is accessed
    * from other parts of the program. */
-  private static ArrayList<Secret> secrets = null;
-  
+  private static ArrayList<Secret> secrets;
+
   /**
    * Secrets that are deleted are held in the deletedSecrets list. This
    * is primarily to support synchronizing deletions across devices.
@@ -109,7 +109,7 @@ public class LoginActivity extends Activity implements TextWatcher {
     // to onKey above. However, some keys, including Enter, are still processed
     // by onKey, so the above code is fine and probably needs to stay.
     password.addTextChangedListener(this);
-    
+
     FileUtils.cleanupDataFiles(this);
     Log.d(LOG_TAG, "LoginActivity.onCreate done");
   }
@@ -140,9 +140,6 @@ public class LoginActivity extends Activity implements TextWatcher {
     //  . when the user leaves the SecretsListActivity, the list of secrets
     //    is overwritten by an empty list
 
-    passwordString = null;
-    isValidatingPassword = false;
-    
     // If there is no existing secrets file, this is a first-run scenario.
     // (Its also possible that the user started the app but never got passed
     // entering his password)  In this case, we will show a special first time
@@ -151,18 +148,16 @@ public class LoginActivity extends Activity implements TextWatcher {
     isFirstRun = isFirstRun();
     TextView instructions = (TextView)findViewById(R.id.login_instructions);
     TextView strength = (TextView)findViewById(R.id.password_strength);
+    TextView password = (TextView) findViewById(R.id.login_password);
     if (isFirstRun) {
       instructions.setText(R.string.login_instruction_1);
       strength.setVisibility(TextView.VISIBLE);
+      updatePasswordStrengthView(password.getText().toString());
     } else {
       instructions.setText("");
       strength.setVisibility(TextView.GONE);
     }
 
-    // Clear the password.  The user always needs to type it again when this
-    // activity is started.
-    TextView password = (TextView) findViewById(R.id.login_password);
-    password.setText("");
     password.setHint(R.string.login_enter_password);
     Log.d(LOG_TAG, "LoginActivity.onResume done");
   }
@@ -206,10 +201,12 @@ public class LoginActivity extends Activity implements TextWatcher {
                   // where the user knows his password and has logged in, but
                   // he returned to the login screen and asked to reset his
                   // password.
-                  if (!FileUtils.deleteSecrets(LoginActivity.this))
+                  if (!FileUtils.deleteSecrets(LoginActivity.this)) {
                     showToast(R.string.error_reset_password, Toast.LENGTH_LONG);
-                  else
-                    secrets = null;
+                  } else {
+                    isValidatingPassword = false;
+                    clearSecrets();
+                  }
 
                   onResume();
                 }
@@ -277,7 +274,7 @@ public class LoginActivity extends Activity implements TextWatcher {
       Log.d(LOG_TAG, "LoginActivity.handlePasswordClick ignoring");
       return;
     }
-    
+
     // The program tries to minimize the amount of the time the users password
     // is held in memory.  The password edit field is cleared immediately
     // after getting the value, and the password string is held only as long as
@@ -331,13 +328,15 @@ public class LoginActivity extends Activity implements TextWatcher {
     // we will need based on the password and save those.  First get the salt
     // that is unique for this device.  If we can't find one, null is returned.
     FileUtils.SaltAndRounds pair = FileUtils.getSaltAndRounds(this,
-        FileUtils.SECRETS_FILE_NAME);    
+        FileUtils.SECRETS_FILE_NAME);
     SecurityUtils.saveCiphers(SecurityUtils.createCiphers(passwordString,
                                                           pair.salt,
                                                           pair.rounds));
 
+    ArrayList<Secret> loadedSecrets = null;
+
     if (isFirstRun) {
-      secrets = new ArrayList<Secret>();
+      loadedSecrets = new ArrayList<Secret>();
 
       // Immediately save an empty file to hold the secrets.
       Cipher cipher = SecurityUtils.getEncryptionCipher();
@@ -345,54 +344,56 @@ public class LoginActivity extends Activity implements TextWatcher {
       byte[] salt = SecurityUtils.getSalt();
       int rounds = SecurityUtils.getRounds();
       int err = FileUtils.saveSecrets(this, file, cipher, salt, rounds,
-                                      secrets);
+                                      loadedSecrets);
       if (0 != err) {
         showToast(err, Toast.LENGTH_LONG);
         return;
       }
     } else {
-      secrets = FileUtils.loadSecrets(this);
-      if (null == secrets) {
+      loadedSecrets = FileUtils.loadSecrets(this);
+      if (null == loadedSecrets) {
         // Loading failed. Try the old object format using same cipher
-        secrets = FileUtils.loadSecretsV3(this);
-        if (null == secrets) {
+        loadedSecrets = FileUtils.loadSecretsV3(this);
+        if (null == loadedSecrets) {
           // Loading the secrets failed again. Try loading with the old
           // encryption algorithm in case were are reading an older file.
           Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(
               passwordString, pair.salt, pair.rounds);
           if (null != cipher2) {
-            secrets = FileUtils.loadSecretsV2(this, cipher2, pair.salt,
-                                              pair.rounds);
+            loadedSecrets = FileUtils.loadSecretsV2(this, cipher2, pair.salt,
+                                                 pair.rounds);
           }
         }
-        if (null == secrets) {
+        if (null == loadedSecrets) {
           // Loading the secrets failed again. Try an even older encryption
           // algorithm.
           Cipher cipher1 =
               SecurityUtils.createDecryptionCipherV1(passwordString);
           if (null != cipher1)
-            secrets = FileUtils.loadSecretsV1(this, cipher1);
+            loadedSecrets = FileUtils.loadSecretsV1(this, cipher1);
         }
-        if (null == secrets) {
+        if (null == loadedSecrets) {
           // TODO(rogerta): need better error message here. There are probably
           // many reasons that we might not be able to open the file.
           showToast(R.string.invalid_password, Toast.LENGTH_LONG);
           return;
         }
-        
+
         // previous versions were case-sensitive and may need to be sorted
-        Collections.sort(secrets);
+        Collections.sort(loadedSecrets);
       }
     }
-    
-    // ensure the deleted secrets array is allocated
-    if (deletedSecrets == null) {
+
+    // Ensure the globals array are allocated.
+    if (secrets == null)
+      secrets = new ArrayList<Secret>();
+
+    if (deletedSecrets == null)
       deletedSecrets = new ArrayList<Secret>();
-    }
-    
+
     // extract the deleted secrets from the global secrets list
-    replaceSecrets(secrets);
-    
+    replaceSecrets(loadedSecrets);
+
     passwordString = null;
     Intent intent = new Intent(LoginActivity.this, SecretsListActivity.class);
     startActivity(intent);
@@ -416,7 +417,7 @@ public class LoginActivity extends Activity implements TextWatcher {
 
     toast.show();
   }
-  
+
   /**
    * If the password strength field is visible, recalculate the password
    * strength and update the password strength TextView.
@@ -429,6 +430,11 @@ public class LoginActivity extends Activity implements TextWatcher {
     if (TextView.VISIBLE != strengthView.getVisibility())
       return;
 
+    if (password.isEmpty()) {
+      strengthView.setText("");
+      return;
+    }
+
     // Update UI appropriately based on the strength calculated.
     PasswordStrength str = PasswordStrength.calculateStrength(password);
     strengthView.setText(MessageFormat.format(
@@ -437,21 +443,21 @@ public class LoginActivity extends Activity implements TextWatcher {
     strengthView.setTextColor(str.getColor());
   }
 
-  /** Gets the global list of the user's deleted secrets. 
+  /** Gets the global list of the user's deleted secrets.
    * @return secrets collection
    */
   public static ArrayList<Secret> getDeletedSecrets() {
     return deletedSecrets;
   }
 
-  /** Gets the global list of the user's secrets. 
+  /** Gets the global list of the user's secrets.
    * @return secrets collection
    */
   public static ArrayList<Secret> getSecrets() {
     return secrets;
   }
 
-  /** Overwrite the current secrets with the given list. 
+  /** Overwrite the current secrets with the given list.
    * @param newSecrets list of new secrets
 
    */
@@ -460,9 +466,9 @@ public class LoginActivity extends Activity implements TextWatcher {
     // holds the secrets, since this array is referred to from other places
     // in the code.  I will simply replace the contents of the existing array
     // with the entries from the new one.
-    
+
     // Here we separate out deletions into their own array.
-    
+
     LoginActivity.secrets.clear();
     LoginActivity.deletedSecrets.clear();
     for (Secret secret : newSecrets) {
@@ -473,7 +479,7 @@ public class LoginActivity extends Activity implements TextWatcher {
       }
     }
   }
-  
+
   /**
    * Remove secrets from memory and clear the ciphers.  This method does not
    * save the secrets before clearing them; it is assumed they are already
