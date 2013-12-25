@@ -32,7 +32,7 @@ import android.os.IBinder;
  * Note that a service runs in the main thread of the process, just like the
  * UI activities, so any lengthy task still needs to be performed in a
  * separate thread.
- * 
+ *
  * @author rogerta
  */
 public class SaveService extends Service {
@@ -41,11 +41,11 @@ public class SaveService extends Service {
   private static byte[] salt;
   private static int rounds;
 
-  BackupManager backupManager;
+  private BackupManager backupManager;
 
   /**
    * Queue a background save of the secrets.
-   * 
+   *
    * @param context The activity requesting the save.
    * @param secrets The collection of secrets to save.
    * @param cipher The encryption cipher.
@@ -108,7 +108,7 @@ public class SaveService extends Service {
             int r = FileUtils.saveSecrets(SaveService.this, file, cipher,
                                           salt, rounds, secrets);
 
-            // If the save was successful, schedule a backup. 
+            // If the save was successful, schedule a backup.
             if (0 == r)
               backupManager.dataChanged();
 

@@ -31,9 +31,9 @@ limitations under the License.
     />
 <EditText  
     android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
+    android:layout_height="wrap_content"
+    android:freezesText="true" 
     android:hint="@string/login_enter_password"
-    android:password="true"
     android:clickable="true"
     android:singleLine="true"
     android:inputType="textPassword"
