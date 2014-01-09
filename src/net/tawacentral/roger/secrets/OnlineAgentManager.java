@@ -309,6 +309,8 @@ public class OnlineAgentManager extends BroadcastReceiver {
 
       if (!done && !changedSecret.isDeleted())
         secrets.add(changedSecret);
+        Log.d(LOG_TAG, "syncSecrets: added '" +
+            changedSecret.getDescription() + "'");
     }
   }
   
