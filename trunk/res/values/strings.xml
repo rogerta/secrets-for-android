@@ -139,7 +139,13 @@ Are you sure you want to delete \'\'{0}\'\'?
 <string name="sync_active">A sync operation is already active. Do you want to
     cancel it so that you can re-issue the sync request?</string>
 <string name="yes_option">Yes</string>
-<string name="no_option">No</string>    
+<string name="no_option">No</string>
+<string name="sync_normalization">Problems detected\n\n
+   Sync requires that all secrets must have descriptions that are unique and without leading or trailing spaces.
+   Secrets can fix this for you - duplicates will have a sequence number added to them. \nChoose \"Yes\"
+   if you want secrets to do this now, or \"No\" to go back and fix it manually.
+</string>
+<string name="num_normalized">{0} secret(s) were updated</string>
 <!-- the following string are used to format a string that indicate when a
      given secret was created or last viewed, modified, or exported.  The
      {0} will be replaced with a "verb" which describes the action, and {1}

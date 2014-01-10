@@ -652,7 +652,7 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /* Handle sync request
-   * If sync operation active, give use option to cancel it. Otherwise show
+   * If sync operation active, give option to cancel it. Otherwise show
    * sync dialog only if more than one agent available.
    */
   private void syncRequested() {
@@ -674,13 +674,34 @@ public class SecretsListActivity extends ListActivity {
             }
           };
       AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder
-          .setMessage(R.string.sync_active)
+      builder.setMessage(R.string.sync_active)
+          .setPositiveButton(R.string.yes_option, dialogClickListener)
+          .setNegativeButton(R.string.no_option, dialogClickListener).show();
+    } else if (normalizeSecrets(false)) { // test if we need to remove dups etc
+      DialogInterface.OnClickListener dialogClickListener =
+          new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+              switch (which) {
+              case DialogInterface.BUTTON_POSITIVE:
+                // Yes button clicked
+                normalizeSecrets(true); // actually remove dups etc.
+                syncRequested();
+                break;
+
+              case DialogInterface.BUTTON_NEGATIVE:
+                // No button clicked
+                break;
+              }
+            }
+          };
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setMessage(R.string.sync_normalization)
           .setPositiveButton(R.string.yes_option, dialogClickListener)
           .setNegativeButton(R.string.no_option, dialogClickListener).show();
     } else {
-      Collection<OnlineSyncAgent> agents = OnlineAgentManager
-          .getAvailableAgents();
+      Collection<OnlineSyncAgent> agents =
+          OnlineAgentManager.getAvailableAgents();
       if (agents.size() > 1) {
         // show selection dialog if more than one agent available
         showDialog(DIALOG_SYNC);
@@ -695,7 +716,67 @@ public class SecretsListActivity extends ListActivity {
         showToast(R.string.no_osa_available);
       }
     }
+  }
+  
+  /*
+   * Here we adjust the collection of secrets to comply with the requirments
+   * for sync. This is that the description field is unique so it acts as a
+   * key to the secret. For this we:
+   * - trim whitespace
+   * - remove duplicates by appending " ##n" to the description
+   * If we rename a secret to one which has been deleted, remove it from the
+   * deleted secrets collection.
+   * 
+   * If "action" is false, then just check if anything needs to be done, don't
+   * actually do any renaming
+   */
+  private boolean normalizeSecrets(boolean action) {
+    ArrayList<Secret> secrets = LoginActivity.getSecrets();
+    ArrayList<String> newDescrs = new ArrayList<String>();
     
+    String lastDescr = "";
+    int incr = 1;
+    boolean changed = false;
+    
+    for (Secret secret : secrets) {
+      String descr = secret.getDescription().trim();
+      if (descr.equals(lastDescr)) {
+        descr = descr + " ##" + incr++;
+      }
+      // if description changed, update it
+      if (!secret.getDescription().equals(descr)) {
+        if (action) {
+          secret.setDescription(descr);
+        }
+        changed = true;
+        newDescrs.add(descr); // remember the new name for possible deletion
+        // if just trimmed, remember it as the last value
+        if (incr == 1) { 
+          lastDescr = descr;
+        }
+      } else {
+        lastDescr = descr;
+        incr = 1;
+      }
+    }
+    
+    if (changed && action) {
+      // remove any deleted with same name as renamed secrets
+      ArrayList<Secret> deletedSecrets = LoginActivity.getDeletedSecrets();
+      if (deletedSecrets.size() > 0) {
+        for (int i = deletedSecrets.size()-1; i > -1 ; i--) {
+          Secret deletedSecret = deletedSecrets.get(i);
+          if (newDescrs.contains(deletedSecret.getDescription())) {
+            deletedSecrets.remove(i);
+          }
+        }
+      }
+      secretsList.notifyDataSetChanged();
+      String template = getText(R.string.num_normalized).toString();
+      showToast(MessageFormat.format(template, newDescrs.size()));
+    }
+    
+    return changed;
   }
 
   /**
