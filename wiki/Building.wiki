@@ -1,4 +1,4 @@
-#summary Build environments
+#summary Build environments.
 #labels Phase-Implementation
 
 The source tree includes project files for building the Android application with Eclipse.
