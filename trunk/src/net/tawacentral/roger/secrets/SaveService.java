@@ -112,11 +112,6 @@ public class SaveService extends Service {
             if (0 == r)
               backupManager.dataChanged();
 
-            // If no SD card backup exists, save it now.
-            if (!FileUtils.restoreFileExist())
-              FileUtils.backupSecrets(SaveService.this, cipher, salt, rounds,
-                                      secrets);
-
             stopSelf(startId);
           }}, "saveSecrets").start();
       } else {
