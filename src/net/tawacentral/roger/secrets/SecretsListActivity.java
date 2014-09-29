@@ -264,7 +264,8 @@ public class SecretsListActivity extends ListActivity {
   @Override
   protected void onNewIntent(Intent intent) {
     // This method is invoked when the user performs a search from the global
-    // search dialog.
+    // search dialog.  It is called each time the user presses the "Done"
+    // button on the search keyboard.
 
     // Get the search string. Make it a full text search by ensuring the
     // string begins with a dot.
@@ -274,7 +275,14 @@ public class SecretsListActivity extends ListActivity {
       filter = SecretsListAdapter.DOT + filter;
 
     getListView().setFilterText(filter);
+    
+    // Try to hide the soft keyboard, if present.  On some devices, setting
+    // focus to a view that does not support keyboard input is enough.  On
+    // other devices where the the input method manager is implemented, try
+    // to hide the keyboard explicitly.
     getListView().requestFocus();
+    OS.hideSoftKeyboard(this, getListView());
+    
     allowNextResume = true;
   }
 
