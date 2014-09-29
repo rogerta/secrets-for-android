@@ -75,6 +75,7 @@ limitations under the License.
         android:label="@string/list_name"
         android:excludeFromRecents="true"
         android:finishOnTaskLaunch="true"
+        android:windowSoftInputMode="adjustResize"
         android:launchMode="singleTop">
       <intent-filter>
         <action android:name="android.intent.action.SEARCH" />
