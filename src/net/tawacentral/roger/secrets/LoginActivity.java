@@ -159,10 +159,6 @@ public class LoginActivity extends Activity implements TextWatcher {
     }
 
     password.setHint(R.string.login_enter_password);
-    
-    // Show the virtual keyboard if needed.  Should not open on devices with
-    // a h/w keyboard nor in landscape mode.
-    OS.showSoftKeyboard(this, password);
     Log.d(LOG_TAG, "LoginActivity.onResume done");
   }
 
