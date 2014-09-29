@@ -60,6 +60,17 @@ public class OS {
   }
 
   /**
+   * Show the soft keyboard.
+   * Does not seem to work on the emulator.
+   */
+  public static void showSoftKeyboard(Context ctx, View view) {
+    InputMethodManager manager = (InputMethodManager)
+        ctx.getSystemService(Context.INPUT_METHOD_SERVICE);
+    if (null != manager)
+      manager.showSoftInput(view, 0);
+  }
+
+  /**
    * Invalidates the option menu so that it is recreated.  This is needed
    * for Honeycomb so that the action bar can be updated when switching to
    * and from editing mode.
