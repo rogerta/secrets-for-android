@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (c) 2009, Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<resources>
+<string name="app_name">Secrets</string>
+
+<string name="search_hint">Поиск в Secrets</string>
+
+<string name="login_first_line">Добро пожаловать в Ваши Secrets</string>
+<string name="login_enter_password">Введите пароль</string>
+<string name="login_validate_password">Подтвердите пароль</string>
+
+<string name="cipher_strength_label">Bcrypt округление до ({0,number})</string>
+<string name="password_changed">Пароль успешно изменен.</string>
+
+<!-- Whenever the version changes here, it must also be changed in
+     the androidmanifest.xml file -->
+<string name="copyright">Version 2.4.2 &#169; 2012 Google Inc.</string>
+
+<string name="invalid_password">Ой! Неправильный пароль, попробуйте ещё.</string>
+<string name="no_password">&lt; PIN отсутствует &gt;</string>
+<string name="error_reset_password">Ой ой. Невозможно сбросить Ваш пароль.</string>
+<string name="error_save_secrets">Ой ой. Невозможно сохранить Ваши Secrets.</string>
+
+<string name="backup_succeeded">Резервное копирование удалось.</string>
+<string name="restore_succeeded">Восстановление удалось.</string>
+<string name="sync_succeeded">Синхронизация с {0} удалась.</string>
+<string name="restore_failed">Ой ой. Невозможно восстановить Ваши Secrets. Убедитесь, что пароль тот же, что и в резервной копии.</string>
+<string name="enable_online_backup">Разрешите резервное копирование online для надежного хранения Ваших Secrets.</string>
+<string name="sync_failed">Ой ой. Синхронизация с {0} не удалась. Обратитесь к приложению Sync agent за детальной информацией.</string>
+<string name="dialog_learn_how">Узнать как</string>
+<string name="dialog_not_now">Позже</string>
+
+<string name="export_succeeded">Файл успешно экспортирован на SD-карту.\n\nОСТРОЖНО: Эспортированный файл не защищен паролем!</string>
+<string name="export_failed">Ой ой. Невозможно экспортировать Ваши Secrets.</string>
+
+<string name="import_not_found">На SD-карте не обнаружены файлы CSV.\n\nSecrets могут быть импортированы из следующих файлов:\n\n{0}</string>
+<string name="import_partial">Хмм, только некоторые Secrets импортированы. Убедитесь, что Ваши Secrets и \'\'{0}\'\' файл соответствуют формату.</string>
+<string name="import_failed">Ой ой. Невозможно импортировать Ваши Secrets из \'\'{0}\'\'.</string>
+
+<string name="login_instruction_1">
+Придумайте пароль для защиты Ваших Secrets. Используйте буквы, цифры, и
+знаки препинания для устойчивого к угадыванию пароля.\nПосле ввода пароля,
+нажмите \u21b5 или Готово.
+</string>
+<string name="login_instruction_2">
+Подтвердите Ваш пароль, введя его снова. В случае
+проблем Вы начнете заново. 
+</string>
+<string name="edit_instructions">
+Все поля необязательные, вводите столько информации, сколько нужно Вам.
+
+По завершению, нажмите кнопку Назад, или Меню для других действий.
+</string>
+
+<string name="friendly_id_format">
+{0}, {1,date,short} {1,time,short}
+</string>
+<string name="friendly_id_format_2">
+{1,date,short} {1,time,short}
+</string>
+
+<string name="last_saved_time_format">[{0,date,MMM-dd}]</string>
+<string name="list_title">{0,number} Secrets {1}</string>
+<string name="list_title_filtered">{0,number} of {1,number} Secrets {2}</string>
+
+<string name="list_name">Secrets</string>
+<string name="list_no_data">Нажмите \"Добавить\" для начала.</string>
+<string name="list_descption_label">Web сайт/Описание</string>
+<string name="list_username_label">Имя пользователя/Id</string>
+<string name="list_password_label">Пароль/PIN</string>
+<string name="list_email_label">Email</string>
+<string name="list_notes_label">Заметки</string>
+<string name="list_add_secret">Добавить Secret</string>
+<string name="list_instructions">Нажмите на Secret чтобы показать PIN. Нажмите и удерживайте
+для редактирования.</string>
+
+<string name="login_menu_reset_password">Сбросить пароль</string>
+<string name="login_menu_reset_password_message">
+Сброс пароля приведет к потере всех Ваших Secrets!
+Вы уверены?
+</string>
+<string name="login_reset_password_pos">Да</string>
+<string name="login_reset_password_neg">Нет</string>
+
+<string name="edit_menu_delete_secret_message">
+Действительно удалить \'\'{0}\'\'?
+</string>
+
+<string name="dialog_restore_title">Восстановить из:</string>
+
+<string name="edit_menu_import_secrets_message">Импорт удался. Удалить \'\'{0}\'\' теперь?</string>
+
+<string name="username_copied_to_clipboard">Id</string>
+<string name="password_copied_to_clipboard">PIN</string>
+<string name="copied_to_clipboard">{1} из {0} скопированы в буфер обмена.</string>
+
+<string name="list_menu_add">Добавить</string>
+<string name="list_menu_edit">Редактировать</string>
+<string name="list_menu_search">Поиск</string>
+<string name="list_menu_save">Сохранить</string>
+<string name="list_menu_discard">Отмена</string>
+<string name="list_menu_delete">Удалить</string>
+<string name="list_menu_access">История</string>
+<string name="list_menu_backup">Резервное копирование</string>
+<string name="list_menu_restore">Восстановление</string>
+<string name="list_menu_import">Импорт</string>
+<string name="list_menu_export">Экспорт</string>
+<string name="list_menu_sync">Синхронизация</string>
+<string name="list_menu_copy_username_to_clipoboard">Копировать Id</string>
+<string name="list_menu_copy_password_to_clipoboard">Копировать PIN</string>
+<string name="list_menu_generate_password">Сгенерировать пароль</string>
+<string name="list_menu_change_password">Изменить пароль</string>
+
+<string name="log_name">Лог доступа</string>
+<string name="log_name_format">Лог доступа для {0}</string>
+
+<!-- String assocated with online agent support -->
+<string name="permission_osa_label">Доступ к незашифрованным Secrets</string>
+<string name="permission_osa_desc">Позволяет запись и чтение Secrets для приложений.
+    Вредоносное приложение может послать Ваши Secrets кому угодно или опубликовать их online на всеобщее обозрение.</string>
+<string name="osa_sent">Secrets отправлены в приложение {0} </string>
+<string name="dialog_sync_title">Синхронизировать с:</string>
+<string name="no_osa_available">Извините, нет доступных агентов синхронизации.</string>
+<string name="error_osa_secrets">Невозможно синхронизировать Ваши Secrets.</string>
+<string name="sync_active">Операция синхронизации ативна. Хотите
+    отменить ее и отправить новый запрос синхронизации?</string>
+<string name="yes_option">Да</string>
+<string name="no_option">Нет</string>
+<string name="sync_normalization">Обнаружены проблемы\n\n
+   Синхронизация требует, чтобы все Secrets имели уникальные описания без пробелов в начале и конце.
+   Secrets может исправить это для Вас - к дублям будут добавлены порядковые номера. \nВыберите \"Да\"
+   чтобы позволить Secrets сделать это, или \"Нет\" для отмены и ручного исправления.
+</string>
+<string name="num_normalized">{0} Secret(s) обновлены</string>
+<!-- the following string are used to format a string that indicate when a
+     given secret was created or last viewed, modified, or exported.  The
+     {0} will be replaced with a "verb" which describes the action, and {1}
+     will be replaced with a time value.  Note that for log_min, the time
+     value is simply an integer, whereas for the rest its a Date object. -->
+<string name="log_sec">{0} секунд назад</string>
+<string name="log_min">{0} {1} минут назад</string>
+<string name="log_today">{0} сегодня в {1,time,short}</string>
+<string name="log_yesterday">{0} вчера в {1,time,short}</string>
+<string name="log_date">{0} {1,date,medium}</string>
+
+<!-- These strings represent the "verbs" that will be used in the log strings
+     above. -->
+<string name="log_created">Создано</string>
+<string name="log_changed">Изменено</string>
+<string name="log_viewed">Прочитано</string>
+<string name="log_exported">Экспортировано</string>
+<string name="log_synced">Синхронизировано</string>
+
+<string name="error_missing_ciphers">Ой ой: невозможно сохранить, неправильный пароль.</string>
+<string name="error_cannot_move_existing">Ой ой: невозможно удалить существующий файл.</string>
+<string name="error_cannot_move_new">Ой ой: невозможно переименовать новый файл.</string>
+<string name="password_strength_caption">Надежность пароля: {0}</string>
+<string name="password_strength_weak">Слабая :(</string>
+<string name="password_strength_medium">Средняя :|</string>
+<string name="password_strength_strong">Сильная :)</string>
+<string name="password_strength_very_strong">Очень сильная :D</string>
+<string name="password_strength_crazy_strong">Параноидальная! B)</string>
+
+</resources>
