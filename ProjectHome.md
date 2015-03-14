@@ -92,5 +92,3 @@ _**Secrets**_ has special support for importing passwords from _**OI Safe**_ v.1
   1. press **MENU**, and tap "Import"
 
 _**Secrets**_ knows how to look for the _**OI Safe**_ exported database and imports it automatically.
-
-If there are other applications from which you would like to import, please open an [Issue](http://code.google.com/p/secrets-for-android/issues/list).
