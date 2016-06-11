@@ -31,6 +31,7 @@ import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.ClipboardManager;
@@ -83,7 +84,12 @@ public class SecretsListActivity extends ListActivity {
   private static final int DIALOG_ENTER_RESTORE_PASSWORD = 5;
   private static final int DIALOG_SYNC = 6;
 
+  // All RC_xxx constants should be different.
   private static final int RC_ACCESS_LOG = 1;
+  private static final int RC_STORAGE_IMPORT = 2;
+  private static final int RC_STORAGE_EXPORT = 3;
+  private static final int RC_STORAGE_BACKUP = 4;
+  private static final int RC_STORAGE_RESTORE = 5;
 
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
@@ -97,7 +103,7 @@ public class SecretsListActivity extends ListActivity {
 
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "SecretsListActivity";
-  
+
   public static final String STATE_IS_EDITING = "is_editing";
   public static final String STATE_EDITING_POSITION = "editing_position";
   public static final String STATE_EDITING_DESCRIPTION = "editing_description";
@@ -118,7 +124,7 @@ public class SecretsListActivity extends ListActivity {
   private boolean isConfigChange; // being destroyed for config change?
   private String restorePoint; // That file that should be restored from
   private OnlineSyncAgent selectedOSA; // currently selected agent
-  
+
   // This activity will only allow it self to be resumed in specific
   // circumstances, so that leaving the application will force the user to
   // re-enter the master password. Older versions used to check the state of
@@ -275,24 +281,21 @@ public class SecretsListActivity extends ListActivity {
       filter = SecretsListAdapter.DOT + filter;
 
     getListView().setFilterText(filter);
-    
+
     // Try to hide the soft keyboard, if present.  On some devices, setting
     // focus to a view that does not support keyboard input is enough.  On
     // other devices where the the input method manager is implemented, try
     // to hide the keyboard explicitly.
     getListView().requestFocus();
     OS.hideSoftKeyboard(this, getListView());
-    
+
     allowNextResume = true;
   }
 
   @Override
   public boolean onSearchRequested() {
     // Don't allow search in edit mode.
-    if (isEditing)
-      return true;
-
-    return super.onSearchRequested();
+    return isEditing || super.onSearchRequested();
   }
 
   /** Set the title for this activity. */
@@ -451,6 +454,11 @@ public class SecretsListActivity extends ListActivity {
       backupSecrets();
       break;
     case R.id.list_restore:
+      if (!OS.ensureStoragePermission(this, RC_STORAGE_RESTORE)) {
+        allowNextResume = true;
+        break;
+      }
+
       showDialog(DIALOG_CONFIRM_RESTORE);
       break;
     case R.id.list_sync:
@@ -545,8 +553,44 @@ public class SecretsListActivity extends ListActivity {
     }
   }
 
-  /** Import from a CSV file on the SD card. */
+  /**
+   * Callback received when a permissions request has been completed.
+   */
+  @Override
+  public void onRequestPermissionsResult(int code,
+                                         String[] permissions,
+                                         int[] grantResults) {
+    if (grantResults.length == 1 &&
+        grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+      return;
+    }
+
+    switch (code) {
+      case RC_STORAGE_BACKUP:
+        backupSecrets();
+        break;
+      case RC_STORAGE_RESTORE:
+        showDialog(DIALOG_CONFIRM_RESTORE);
+        break;
+      case RC_STORAGE_EXPORT:
+        exportSecrets();
+        break;
+      case RC_STORAGE_IMPORT:
+        importSecrets();
+        break;
+      default:
+        Log.e(LOG_TAG, "onRequestPermissionsResult: invalid code=" + code);
+        break;
+    }
+  }
+
+    /** Import from a CSV file on the SD card. */
   private void importSecrets() {
+    if (!OS.ensureStoragePermission(this, RC_STORAGE_IMPORT)) {
+      allowNextResume = true;
+      return;
+    }
+
     importedFile = FileUtils.getFileToImport();
     if (null == importedFile) {
       String template = getText(R.string.import_not_found).toString();
@@ -588,6 +632,11 @@ public class SecretsListActivity extends ListActivity {
   }
 
   private void exportSecrets() {
+    if (!OS.ensureStoragePermission(this, RC_STORAGE_EXPORT)) {
+      allowNextResume = true;
+      return;
+    }
+
     // Export everything to the SD card.
     // Export does not include deleted secrets
     if (FileUtils.exportSecrets(this, secretsList.getAllSecrets())) {
@@ -630,6 +679,11 @@ public class SecretsListActivity extends ListActivity {
   }
 
   private void backupSecrets() {
+    if (!OS.ensureStoragePermission(this, RC_STORAGE_BACKUP)) {
+      allowNextResume = true;
+      return;
+    }
+
     // Backup everything to the SD card.
     Cipher cipher = SecurityUtils.getEncryptionCipher();
     byte[] salt = SecurityUtils.getSalt();
@@ -725,7 +779,7 @@ public class SecretsListActivity extends ListActivity {
       }
     }
   }
-  
+
   /*
    * Here we adjust the collection of secrets to comply with the requirments
    * for sync. This is that the description field is unique so it acts as a
@@ -734,18 +788,18 @@ public class SecretsListActivity extends ListActivity {
    * - remove duplicates by appending " ##n" to the description
    * If we rename a secret to one which has been deleted, remove it from the
    * deleted secrets collection.
-   * 
+   *
    * If "action" is false, then just check if anything needs to be done, don't
    * actually do any renaming
    */
   private boolean normalizeSecrets(boolean action) {
     ArrayList<Secret> secrets = LoginActivity.getSecrets();
     ArrayList<String> newDescrs = new ArrayList<String>();
-    
+
     String lastDescr = "";
     int incr = 1;
     boolean changed = false;
-    
+
     for (Secret secret : secrets) {
       String descr = secret.getDescription().trim();
       if (descr.equals(lastDescr)) {
@@ -759,7 +813,7 @@ public class SecretsListActivity extends ListActivity {
         changed = true;
         newDescrs.add(descr); // remember the new name for possible deletion
         // if just trimmed, remember it as the last value
-        if (incr == 1) { 
+        if (incr == 1) {
           lastDescr = descr;
         }
       } else {
@@ -767,7 +821,7 @@ public class SecretsListActivity extends ListActivity {
         incr = 1;
       }
     }
-    
+
     if (changed && action) {
       // remove any deleted with same name as renamed secrets
       ArrayList<Secret> deletedSecrets = LoginActivity.getDeletedSecrets();
@@ -783,7 +837,7 @@ public class SecretsListActivity extends ListActivity {
       String template = getText(R.string.num_normalized).toString();
       showToast(MessageFormat.format(template, newDescrs.size()));
     }
-    
+
     return changed;
   }
 
@@ -967,12 +1021,12 @@ public class SecretsListActivity extends ListActivity {
             // Try old encryption mechanisms - this may be a restore point
             // created by an older version of Secrets. See FileUtils load
             // methods for details.
-            
+
             // Try V3.
             ArrayList<Secret> secrets =
                 FileUtils.loadSecretsV3(SecretsListActivity.this, info,
                                         restorePoint);
-            
+
             if (secrets == null) {
               // Try V2.
               Cipher cipher2 = SecurityUtils.createDecryptionCipherV2(password,

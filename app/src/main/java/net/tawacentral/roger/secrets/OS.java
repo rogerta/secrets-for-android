@@ -16,9 +16,11 @@ package net.tawacentral.roger.secrets;
 
 import java.lang.reflect.Method;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.Menu;
@@ -49,6 +51,54 @@ public class OS {
   /** Does the device support the Honeycomb (Android 3.0) APIs? */
   public static boolean isAndroid30() {
     return android.os.Build.VERSION.SDK_INT >= 11;
+  }
+
+  /** Does the device support the Mashmellow (Android 6.0) APIs? */
+  public static boolean isAndroid60() {
+    return android.os.Build.VERSION.SDK_INT >= 23;
+  }
+
+  /** Does secrets have permission to access external storage? */
+  public static boolean hasStoragePermission(Context ctx) {
+    if (!isAndroid60())
+      return true;
+
+    try {
+      Method m = ctx.getClass().getMethod("checkSelfPermission", String.class);
+      Integer ret =
+          (Integer) m.invoke(ctx, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+      return ret == PackageManager.PERMISSION_GRANTED;
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "hasStoragePermission", ex);
+    }
+    return false;
+  }
+
+  /**
+   * Check if secrets has external storage permission and request it if not.
+   *
+   * @param activity Activity that will use external storage.
+   * @param code A request code to pass back to activities
+   *     onRequestPermissionsResult() method.
+   * @return True storage is already granted.  False is user will be asked
+   *     for permission.
+   */
+  public static boolean ensureStoragePermission(Activity activity, int code) {
+    if (hasStoragePermission(activity))
+      return true;
+
+    try {
+      Method m = activity.getClass().getMethod("requestPermissions",
+                                               String[].class,
+                                               int.class);
+      m.invoke(activity,
+               new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+               code);
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "ensureStoragePermission", ex);
+    }
+
+    return false;
   }
 
   /** Hide the soft keyboard if visible. */
