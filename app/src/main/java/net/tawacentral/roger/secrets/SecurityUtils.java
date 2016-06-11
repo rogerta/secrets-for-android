@@ -20,6 +20,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -75,7 +76,12 @@ public class SecurityUtils {
     (byte)0xD6, (byte)0x95, (byte)0xF3, (byte)0x13
   };
 
-  private static final String KEY_FACTORY = "PBEWITHSHA-256AND256BITAES-CBC-BC";
+  // Factory to use for version 2 of encryption.
+  private static final String KEY_FACTORY_V2 = "AES";
+  private static final String CIPHER_FACTORY_V2 = "AES/CBC/PKCS5Padding";
+
+  private static final String KEY_FACTORY = "AES";
+  private static final String CIPHER_FACTORY = "AES/CBC/PKCS5Padding";
 
   /** Class used to time the execution of functions */
   static public class ExecutionTimer {
@@ -209,9 +215,14 @@ public class SecurityUtils {
       BCrypt bcrypt = new BCrypt();
       byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"), salt,
           rounds, plaintext);
-      SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
-      cipher = Cipher.getInstance(KEY_FACTORY);
-      cipher.init(Cipher.DECRYPT_MODE, spec);
+      SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY_V2);
+
+      // For backwards compatibility with secrets create on Android M and
+      // earlier, create an initial vector of all zeros.
+      IvParameterSpec params = new IvParameterSpec(new byte[16]);
+
+      cipher = Cipher.getInstance(CIPHER_FACTORY_V2);
+      cipher.init(Cipher.DECRYPT_MODE, spec, params);
     } catch (Exception ex) {
       Log.d(LOG_TAG, "createCiphersV2", ex);
     }
@@ -253,11 +264,17 @@ public class SecurityUtils {
       byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"),
                                          salt, rounds, plaintext);
       SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
-      info.encryptCipher = Cipher.getInstance(KEY_FACTORY);
-      info.encryptCipher.init(Cipher.ENCRYPT_MODE, spec);
 
-      info.decryptCipher = Cipher.getInstance(KEY_FACTORY);
-      info.decryptCipher.init(Cipher.DECRYPT_MODE, spec);
+      // For backwards compatibility with secrets create on Android M and
+      // earlier, create an initial vector of all zeros.
+      IvParameterSpec params = new IvParameterSpec(new byte[16]);
+
+      info.encryptCipher = Cipher.getInstance(CIPHER_FACTORY);
+      info.encryptCipher.init(Cipher.ENCRYPT_MODE, spec, params);
+
+      info.decryptCipher = Cipher.getInstance(CIPHER_FACTORY);
+      info.decryptCipher.init(Cipher.DECRYPT_MODE, spec, params);
+
       info.salt = salt;
       info.rounds = rounds;
     } catch (Exception ex) {
@@ -275,9 +292,8 @@ public class SecurityUtils {
    * needs to be called before calling getEncryptionCipher() or
    * getDecryptionCipher().
    *
-   * @param password String to use for creating the ciphers.
-   * @param salt The salt to use when creating the encryption key.
-   * @param rounds The number of rounds for bcrypt.
+   * @param info Information about ciphers to save in global variables.
+   *
    * @return True if the ciphers were successfully created.
    */
   public static void saveCiphers(CipherInfo info) {
@@ -349,6 +365,40 @@ public class SecurityUtils {
       }
 
       return rounds;
+  }
+
+  public static void test_behaviour() {
+    byte[] rawBytes = java.security.SecureRandom.getSeed(16);
+    String plainText = "{\"secrets\":[]}";
+
+    try {
+      SecretKeySpec spec = new SecretKeySpec(rawBytes, "AES");
+
+      // Build encryption cipher and encrypt plaintext.
+
+      Cipher cipherE = Cipher.getInstance("AES/CBC/PKCS5Padding");
+      cipherE.init(Cipher.ENCRYPT_MODE, spec);
+
+      byte[] encrypted = cipherE.doFinal(plainText.getBytes("UTF-8"));
+
+      // Build decryption cipher and decrypt ciphertext.
+
+      IvParameterSpec ivparams = cipherE.getParameters()
+              .getParameterSpec(IvParameterSpec.class);
+      byte[] iv = ivparams.getIV();
+
+      Cipher cipherD = Cipher.getInstance("AES/CBC/PKCS5Padding");
+      cipherD.init(Cipher.DECRYPT_MODE, spec, new IvParameterSpec(iv));
+
+      byte[] decrypted = cipherD.doFinal(encrypted);
+      String plainText2 = new String(decrypted, "UTF-8");
+
+      // Make sure plaintext == dec(enc(plaintext))
+
+      assert(plainText.equals(plainText2));
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "error", ex);
+    }
   }
 
   /** This method returns all available services types. */
