@@ -1,6 +1,7 @@
 .DS_Store
 .gradle/
 .idea/dictionaries/
+.idea/inspectionProfiles/
 .idea/libraries/
 .idea/shelf
 .idea/tasks.xml
