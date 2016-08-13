@@ -151,7 +151,10 @@ public class SecretsListActivity extends ListActivity {
     setTitle();
 
     setListAdapter(secretsList);
-    getListView().setTextFilterEnabled(true);
+    final ListView listView = getListView();
+    listView.setTextFilterEnabled(true);
+    listView.setFastScrollEnabled(true);
+    listView.setFastScrollAlwaysVisible(true);
 
     // Setup the auto complete adapters for the username and email views.
     AutoCompleteTextView username =
