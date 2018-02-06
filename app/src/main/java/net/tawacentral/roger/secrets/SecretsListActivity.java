@@ -661,7 +661,7 @@ public class SecretsListActivity extends ListActivity {
    */
   private boolean restoreSecrets(String rp, SecurityUtils.CipherInfo info,
       boolean askForPassword) {
-    // Restore everything to the SD card.
+    // Restore everything from the SD card.
     ArrayList<Secret> secrets = FileUtils.loadSecrets(this, rp, info);
     if (null == secrets) {
       if (askForPassword) {
@@ -911,7 +911,13 @@ public class SecretsListActivity extends ListActivity {
           .setTitle(R.string.dialog_restore_title)
           .setIcon(android.R.drawable.ic_dialog_alert)
           .setSingleChoiceItems(state.getRestoreChoices(), state.selected,
-              itemListener).create();
+              itemListener)
+          .setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+              removeDialog(DIALOG_CONFIRM_RESTORE);
+            }
+          }).create();
       break;
     }
     case DIALOG_IMPORT_SUCCESS: {

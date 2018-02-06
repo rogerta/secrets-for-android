@@ -47,6 +47,7 @@ import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
@@ -232,9 +233,18 @@ public class FileUtils {
    */
   public static List<String> getRestorePoints(Context context) {
     String[] filenames = context.fileList();
-    ArrayList<String> list = new ArrayList<String>(filenames.length + 1);
+    ArrayList<String> list = new ArrayList<String>(filenames.length + 2);
+
     if (restoreFileExist())
       list.add(SECRETS_FILE_NAME_SDCARD);
+
+    // To ease restoring from Google Drive, look for a secrets file in the
+    // downloads folder and add that option.
+    File downloads = Environment.getExternalStoragePublicDirectory(
+        Environment.DIRECTORY_DOWNLOADS);
+    File rpDownload = new File(downloads, SECRETS_FILE_NAME);
+    if (rpDownload.exists())
+      list.add(rpDownload.getAbsolutePath());
 
     for (String filename : filenames) {
       if (filename.startsWith(RP_PREFIX))
@@ -347,7 +357,7 @@ public class FileUtils {
     // The salt is stored as a byte array at the start of the secrets file.
     FileInputStream input = null;
     try {
-      input = SECRETS_FILE_NAME_SDCARD.equals(path)
+      input = path.startsWith("/")
           ? new FileInputStream(path)
           : context.openFileInput(path);
       return getSaltAndRounds(input);
@@ -564,7 +574,7 @@ public class FileUtils {
     InputStream input = null;
 
     try {
-      input = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+      input = fileName.startsWith("/")
           ? new FileInputStream(fileName)
           : context.openFileInput(fileName);
       secrets = readSecrets(input, info.decryptCipher, info.salt, info.rounds);
@@ -619,7 +629,7 @@ public class FileUtils {
     ObjectInputStream input = null;
 
     try {
-      InputStream fis = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+      InputStream fis = fileName.startsWith("/")
           ? new FileInputStream(fileName)
       : context.openFileInput(fileName);
           input = new ObjectInputStream(new CipherInputStream(fis, cipher));
@@ -673,7 +683,7 @@ public class FileUtils {
     InputStream input = null;
 
     try {
-      input = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+      input = fileName.startsWith("/")
           ? new FileInputStream(fileName)
           : context.openFileInput(fileName);
       secrets = readSecretsV2(input, cipher, salt, rounds);
@@ -730,7 +740,7 @@ public class FileUtils {
     InputStream input = null;
 
     try {
-      input = SECRETS_FILE_NAME_SDCARD.equals(fileName)
+      input = fileName.startsWith("/")
           ? new FileInputStream(fileName)
           : context.openFileInput(fileName);
       secrets = readSecretsV2(input, info.decryptCipher, info.salt, info.rounds);
