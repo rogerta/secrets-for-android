@@ -1,20 +1,32 @@
 apply plugin: 'com.android.application'
 android {
+    signingConfigs {
+        config {
+            storeFile file('/home/rogerta/src/debug.keystore')
+            keyAlias 'Tawacentral.net'
+            keyPassword 'debugg'
+            storePassword 'debugg'
+        }
+    }
     compileSdkVersion 25
-
     defaultConfig {
         applicationId "net.tawacentral.roger.secrets"
         minSdkVersion 19
         targetSdkVersion 23
+        signingConfig signingConfigs.config
     }
-
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
+        debug {
+            signingConfig signingConfigs.config
+        }
     }
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '28.0.0'
+    productFlavors {
+    }
 }
 
 dependencies {
