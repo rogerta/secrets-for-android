@@ -1411,21 +1411,15 @@ public class SecretsListActivity extends ListActivity {
   }
 
   /**
-   * Show a toast on the screen with the given message. If a toast is already
-   * being displayed, the message is replaced and timer is restarted.
+   * Show a toast on the screen with the given message.
    *
    * @param message
    *          Text to display in the toast.
    */
   private void showToast(CharSequence message) {
-    if (null == toast) {
-      toast = Toast.makeText(SecretsListActivity.this, message,
-          Toast.LENGTH_LONG);
-      toast.setGravity(Gravity.CENTER, 0, 0);
-    } else {
-      toast.setText(message);
-    }
-
+    toast = Toast.makeText(SecretsListActivity.this, message,
+        Toast.LENGTH_LONG);
+    toast.setGravity(Gravity.CENTER, 0, 0);
     toast.show();
   }
 
