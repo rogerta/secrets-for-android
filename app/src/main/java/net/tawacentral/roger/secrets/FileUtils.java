@@ -45,6 +45,7 @@ import android.app.backup.BackupAgentHelper;
 import android.app.backup.BackupDataInput;
 import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
+import android.app.backup.FullBackupDataOutput;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
@@ -1200,6 +1201,13 @@ public class FileUtils {
       synchronized (lock) {
         super.onRestore(data, appVersionCode, newState);
       }
+    }
+
+    @Override
+    public void onFullBackup(FullBackupDataOutput data) throws IOException {
+      super.onFullBackup(data);
+      getSharedPreferences(PREFS_FILE_NAME, 0).edit()
+          .putLong(PREF_LAST_BACKUP_DATE, System.currentTimeMillis()).apply();
     }
 
     @Override
