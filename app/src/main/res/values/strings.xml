@@ -44,6 +44,17 @@ limitations under the License.
 <string name="dialog_learn_how">Learn how</string>
 <string name="dialog_not_now">Not now</string>
 
+<string name="dialog_deprecation_title">Secrets is no longer supported</string>
+<string name="dialog_deprecation_message"><![CDATA[
+<p><b>Secrets for Android</b> will continue to function correctly on this
+device but will not be installed automatically on new devices.</p>
+<p><b><span style="color: red;">Your secrets will not migrate
+to new devices</span></b>.</p>
+<p>It is recommended that you Export (not Backup) your secrets and consider
+using a new password manager app.</p>
+]]></string>
+<string name="dialog_deprecation_ok">OK</string>
+
 <string name="export_succeeded">File exported to the SD card successfully.\n\nCAREFUL: The exported file is not password protected!</string>
 <string name="export_failed">Uh oh.  Unable to export your secrets.</string>
 

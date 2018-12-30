@@ -31,10 +31,12 @@ import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.ClipboardManager;
+import android.text.Html;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -94,6 +96,12 @@ public class SecretsListActivity extends ListActivity {
   private static final int PROGRESS_ROUNDS_OFFSET = 4;
 
   private static final String EMPTY_STRING = "";
+
+  /**
+   * Name of deprecation nag preference.
+   */
+  public static final String PREF_LAST_DEPRECATION_NAG_DATE =
+      "last_dep_nag_date";
 
   public static final String EXTRA_ACCESS_LOG =
       "net.tawacentreal.secrets.accesslog";
@@ -373,13 +381,36 @@ public class SecretsListActivity extends ListActivity {
               });
         }
       });
+    } else {
+      final SharedPreferences prefs = getSharedPreferences(
+          PREF_LAST_DEPRECATION_NAG_DATE, 0);
+      final long now = System.currentTimeMillis();
+      final long oneWeek = 7 * 24 * 60 * 60 * 1000;  // One week in millis.
+      long lastNag = prefs.getLong(PREF_LAST_DEPRECATION_NAG_DATE, 0);
+      if ((now - lastNag) > oneWeek) {
+        getListView().post(new Runnable() {
+          @Override
+          public void run() {
+            showModalDialog(R.string.dialog_deprecation_title,
+                            R.string.dialog_deprecation_message,
+                            R.string.dialog_deprecation_ok, 0, 0,
+                            new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialog, int which) {
+                    prefs.edit().putLong(PREF_LAST_DEPRECATION_NAG_DATE, now)
+                        .apply();
+                  }
+                });
+          }
+        });
+      }
     }
   }
 
   private void showModalDialog(int title, int message, int pos, int neut,
       int neg, DialogInterface.OnClickListener callback) {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setMessage(message);
+    builder.setMessage(Html.fromHtml(getString(message)));
     builder.setTitle(title);
     if (pos != 0)
       builder.setPositiveButton(pos, callback);

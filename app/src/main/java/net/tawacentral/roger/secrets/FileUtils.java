@@ -99,13 +99,16 @@ public class FileUtils {
   public static final String SECRETS_FILE_NAME = "secrets";
 
   /** Name of the secrets backup file on the SD card. */
-  public static final String SECRETS_FILE_NAME_SDCARD = Environment.getExternalStorageDirectory().getPath() + "/secrets";
+  public static final String SECRETS_FILE_NAME_SDCARD =
+      Environment.getExternalStorageDirectory().getPath() + "/secrets";
 
   /** Name of the secrets CSV file on the SD card. */
-  public static final String SECRETS_FILE_NAME_CSV = Environment.getExternalStorageDirectory().getPath() + "/secrets.csv";
+  public static final String SECRETS_FILE_NAME_CSV =
+      Environment.getExternalStorageDirectory().getPath() + "/secrets.csv";
 
   /** Name of the OI Safe CSV file on the SD card. */
-  public static final String OI_SAFE_FILE_NAME_CSV = Environment.getExternalStorageDirectory().getPath() + "/oisafe.csv";
+  public static final String OI_SAFE_FILE_NAME_CSV =
+      Environment.getExternalStorageDirectory().getPath() + "/oisafe.csv";
 
   private static final File SECRETS_FILE_CSV = new File(SECRETS_FILE_NAME_CSV);
   private static final File OI_SAFE_FILE_CSV = new File(OI_SAFE_FILE_NAME_CSV);
