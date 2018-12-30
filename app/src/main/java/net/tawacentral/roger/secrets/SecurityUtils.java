@@ -370,7 +370,7 @@ public class SecurityUtils {
       return rounds;
   }
 
-  public static void test_behaviour() {
+  /*public static void test_behaviour() {
     byte[] rawBytes = java.security.SecureRandom.getSeed(16);
     String plainText = "{\"secrets\":[]}";
 
@@ -399,12 +399,12 @@ public class SecurityUtils {
 
       // Make sure plaintext == dec(enc(plaintext))
 
-      if (BuildConfig.DEBUG && plainText.equals(plainText2))
+      if (BuildConfig.DEBUG && !plainText.equals(plainText2))
         throw new AssertionError();
     } catch (Exception ex) {
       Log.e(LOG_TAG, "error", ex);
     }
-  }
+  }*/
 
   /** This method returns all available services types. */
   /*public static String[] getServiceTypes() {
