@@ -1,5 +1,6 @@
 .DS_Store
 .gradle/
+.idea/caches/
 .idea/dictionaries/
 .idea/inspectionProfiles/
 .idea/libraries/

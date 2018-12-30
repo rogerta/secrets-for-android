@@ -48,11 +48,6 @@ public class OS {
   /** Tag for logging purposes. */
   public static final String LOG_TAG = "OS";
 
-  /** Does the device support the Honeycomb (Android 3.0) APIs? */
-  public static boolean isAndroid30() {
-    return android.os.Build.VERSION.SDK_INT >= 11;
-  }
-
   /** Does the device support the Mashmellow (Android 6.0) APIs? */
   public static boolean isAndroid60() {
     return android.os.Build.VERSION.SDK_INT >= 23;
@@ -128,9 +123,6 @@ public class OS {
    * @param activity The activity containing the option menu.
    */
   public static void invalidateOptionsMenu(Activity activity) {
-    if (!isAndroid30())
-      return;
-
     try {
       Method m = activity.getClass().getMethod("invalidateOptionsMenu");
       m.invoke(activity);
@@ -145,9 +137,6 @@ public class OS {
    * @param activity The activity containing the search view.
    */
   public static void configureSearchView(Activity activity, Menu menu) {
-    if (!isAndroid30())
-      return;
-
     try {
       SearchManager sm = (SearchManager) activity.getSystemService(
           Context.SEARCH_SERVICE);

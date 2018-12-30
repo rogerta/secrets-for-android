@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,13 +99,13 @@ public class FileUtils {
   public static final String SECRETS_FILE_NAME = "secrets";
 
   /** Name of the secrets backup file on the SD card. */
-  public static final String SECRETS_FILE_NAME_SDCARD = "/sdcard/secrets";
+  public static final String SECRETS_FILE_NAME_SDCARD = Environment.getExternalStorageDirectory().getPath() + "/secrets";
 
   /** Name of the secrets CSV file on the SD card. */
-  public static final String SECRETS_FILE_NAME_CSV = "/sdcard/secrets.csv";
+  public static final String SECRETS_FILE_NAME_CSV = Environment.getExternalStorageDirectory().getPath() + "/secrets.csv";
 
   /** Name of the OI Safe CSV file on the SD card. */
-  public static final String OI_SAFE_FILE_NAME_CSV = "/sdcard/oisafe.csv";
+  public static final String OI_SAFE_FILE_NAME_CSV = Environment.getExternalStorageDirectory().getPath() + "/oisafe.csv";
 
   private static final File SECRETS_FILE_CSV = new File(SECRETS_FILE_NAME_CSV);
   private static final File OI_SAFE_FILE_CSV = new File(OI_SAFE_FILE_NAME_CSV);
@@ -819,8 +820,7 @@ public class FileUtils {
               buffer.toByteArray());
     } finally {
       try {
-        if (null != bis)
-          bis.close();
+        bis.close();
       } catch (IOException ex) {
       }
     }
@@ -851,7 +851,7 @@ public class FileUtils {
     try {
       return (ArrayList<Secret>)oin.readObject();
     } finally {
-      try {if (null != oin) oin.close();} catch (IOException ex) {}
+      try {oin.close();} catch (IOException ex) {}
     }
   }
 
@@ -912,7 +912,8 @@ public class FileUtils {
 
     try {
       output = new CipherOutputStream(baos, cipher);
-      output.write(FileUtils.toJSONSecrets(secrets).toString().getBytes("UTF-8"));
+      output.write(FileUtils.toJSONSecrets(secrets).toString().getBytes(
+          StandardCharsets.UTF_8));
     } catch (Exception e) {
       Log.e(LOG_TAG, "toEncryptedJSONSecretsStream", e);
       throw new IOException("toEncryptedJSONSecretsStream failed: " + e.getMessage());
@@ -939,7 +940,7 @@ public class FileUtils {
     try {
       byte[] secretStrBytes = cipher.doFinal(secrets);
       JSONObject jsonValues =
-          new JSONObject(new String(secretStrBytes, "UTF-8"));
+          new JSONObject(new String(secretStrBytes, StandardCharsets.UTF_8));
       return FileUtils.fromJSONSecrets(jsonValues);
     } catch (Exception e) {
       Log.e(LOG_TAG, "fromEncryptedJSONSecretsStream", e);
@@ -1133,27 +1134,23 @@ public class FileUtils {
 
   /** Is it likely that the CSV file is in OI Safe format? */
   private static boolean isOiSafeCsv(String[] headers) {
-    if (headers[0].equalsIgnoreCase("Category") &&
+    return headers[0].equalsIgnoreCase("Category") &&
         headers[1].equalsIgnoreCase("Description") &&
         headers[2].equalsIgnoreCase("Website") &&
         headers[3].equalsIgnoreCase("Username") &&
         headers[4].equalsIgnoreCase("Password") &&
-        headers[5].equalsIgnoreCase("Notes"))
-      return true;
+        headers[5].equalsIgnoreCase("Notes");
 
-    return false;
   }
 
   /** Is it likely that the CSV file is in secrets format? */
   private static boolean isSecretsCsv(String[] headers) {
-    if (headers[0].equalsIgnoreCase(COL_DESCRIPTION) &&
+    return headers[0].equalsIgnoreCase(COL_DESCRIPTION) &&
         headers[1].equalsIgnoreCase(COL_USERNAME) &&
         headers[2].equalsIgnoreCase(COL_PASSWORD) &&
         headers[3].equalsIgnoreCase(COL_EMAIL) &&
-        headers[4].equalsIgnoreCase(COL_NOTES))
-      return true;
+        headers[4].equalsIgnoreCase(COL_NOTES);
 
-    return false;
   }
 
   /** Returns a list of the supported CSV file names, newline separated. */

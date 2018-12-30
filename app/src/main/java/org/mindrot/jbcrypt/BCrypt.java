@@ -16,6 +16,7 @@ package org.mindrot.jbcrypt;
 
 import java.io.UnsupportedEncodingException;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
 /**
@@ -486,7 +487,7 @@ public class BCrypt {
    * @param lr  an array containing the two 32-bit half blocks
    * @param off the position in the array of the blocks
    */
-  private final void encipher(int lr[], int off) {
+  private void encipher(int lr[], int off) {
     int i, n, l = lr[off], r = lr[off + 1];
 
     l ^= P[0];
@@ -672,11 +673,7 @@ public class BCrypt {
     rounds = Integer.parseInt(salt.substring(off, off + 2));
 
     real_salt = salt.substring(off + 3, off + 25);
-    try {
-      passwordb = (password + (minor >= 'a' ? "\000" : "")).getBytes("UTF-8");
-    } catch (UnsupportedEncodingException uee) {
-      throw new AssertionError("UTF-8 is not supported");
-    }
+      passwordb = (password + (minor >= 'a' ? "\000" : "")).getBytes(StandardCharsets.UTF_8);
 
     saltb = decode_base64(real_salt, BCRYPT_SALT_LEN);
 

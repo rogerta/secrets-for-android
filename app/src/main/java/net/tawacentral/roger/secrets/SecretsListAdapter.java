@@ -69,7 +69,7 @@ public class SecretsListAdapter extends BaseAdapter implements Filterable {
   /**
    * Create a new secret list adapter for the UI from the given list.
    *
-   * @param context Context of the application, used for getting resources.
+   * @param activity Context of the application, used for getting resources.
    * @param secrets The list of user secrets.  This list cannot be null.
    * @param deletedSecrets The list of deleted user secrets, cannot be null.
    */

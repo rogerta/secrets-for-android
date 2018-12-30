@@ -14,6 +14,7 @@
 
 package net.tawacentral.roger.secrets;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -213,8 +214,9 @@ public class SecurityUtils {
       int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
                          0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
       BCrypt bcrypt = new BCrypt();
-      byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"), salt,
-          rounds, plaintext);
+      byte[] rawBytes = bcrypt.crypt_raw(password.getBytes(
+          StandardCharsets.UTF_8), salt,
+                                         rounds, plaintext);
       SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY_V2);
 
       // For backwards compatibility with secrets create on Android M and
@@ -261,7 +263,8 @@ public class SecurityUtils {
       int plaintext[] = {0x155cbf8e, 0x57f57513, 0x3da787b9, 0x71679d82,
                          0x7cf72e93, 0x1ae25274, 0x64b54adc, 0x335cbd0b};
       BCrypt bcrypt = new BCrypt();
-      byte[] rawBytes = bcrypt.crypt_raw(password.getBytes("UTF-8"),
+      byte[] rawBytes = bcrypt.crypt_raw(password.getBytes(
+          StandardCharsets.UTF_8),
                                          salt, rounds, plaintext);
       SecretKeySpec spec = new SecretKeySpec(rawBytes, KEY_FACTORY);
 
@@ -379,7 +382,8 @@ public class SecurityUtils {
       Cipher cipherE = Cipher.getInstance("AES/CBC/PKCS5Padding");
       cipherE.init(Cipher.ENCRYPT_MODE, spec);
 
-      byte[] encrypted = cipherE.doFinal(plainText.getBytes("UTF-8"));
+      byte[] encrypted = cipherE.doFinal(plainText.getBytes(
+          StandardCharsets.UTF_8));
 
       // Build decryption cipher and decrypt ciphertext.
 
@@ -391,11 +395,12 @@ public class SecurityUtils {
       cipherD.init(Cipher.DECRYPT_MODE, spec, new IvParameterSpec(iv));
 
       byte[] decrypted = cipherD.doFinal(encrypted);
-      String plainText2 = new String(decrypted, "UTF-8");
+      String plainText2 = new String(decrypted, StandardCharsets.UTF_8);
 
       // Make sure plaintext == dec(enc(plaintext))
 
-      assert(plainText.equals(plainText2));
+      if (BuildConfig.DEBUG && plainText.equals(plainText2))
+        throw new AssertionError();
     } catch (Exception ex) {
       Log.e(LOG_TAG, "error", ex);
     }

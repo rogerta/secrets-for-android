@@ -424,8 +424,6 @@ public class SecretsListActivity extends ListActivity {
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    boolean handled = false;
-
     // TODO(rogerta): when using this menu to finish the editing activity, for
     // some reason the selected item in the list view is not highlighted. Need
     // to figure out what the interaction with the menu is. This does not
@@ -477,7 +475,7 @@ public class SecretsListActivity extends ListActivity {
       break;
     }
 
-    return handled;
+    return false;
   }
 
   @Override
@@ -494,7 +492,6 @@ public class SecretsListActivity extends ListActivity {
 
   @Override
   public boolean onContextItemSelected(MenuItem item) {
-    boolean handled = false;
     switch (item.getItemId()) {
     case R.id.list_edit:
       SetEditViews(cmenuPosition);
@@ -537,7 +534,7 @@ public class SecretsListActivity extends ListActivity {
     }
     }
 
-    return handled;
+    return false;
   }
 
   @Override
@@ -1367,7 +1364,7 @@ public class SecretsListActivity extends ListActivity {
     secret.setDescription(description.getText().toString());
     secret.setUsername(username.getText().toString());
     secret.setPassword(password.getText().toString(),
-        (AdapterView.INVALID_POSITION == editingPosition ? false : true));
+        (AdapterView.INVALID_POSITION != editingPosition));
     secret.setEmail(email.getText().toString());
     secret.setNote(notes.getText().toString());
 
@@ -1440,7 +1437,9 @@ public class SecretsListActivity extends ListActivity {
    * secret edit view.
    */
   private void animateToEditView() {
-    assert (!isEditing);
+    if (BuildConfig.DEBUG && isEditing)
+      throw new AssertionError();
+
     isEditing = true;
 
     // Cancel any toast and soft keyboard that may currently be displayed.
@@ -1480,7 +1479,9 @@ public class SecretsListActivity extends ListActivity {
    * list of secrets.
    */
   private void animateFromEditView() {
-    assert (isEditing);
+    if (BuildConfig.DEBUG && !isEditing)
+      throw new AssertionError();
+
     isEditing = false;
 
     OS.hideSoftKeyboard(this, getListView());

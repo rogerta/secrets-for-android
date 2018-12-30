@@ -37,8 +37,8 @@ limitations under the License.
 		    android:layout_width="fill_parent"
 		    android:layout_height="wrap_content"
 		    android:paddingTop="5sp"
-		    android:paddingLeft="10sp"
-		    android:paddingRight="15sp"
+		    android:paddingStart="10sp"
+		    android:paddingEnd="15sp"
 			>
 			<TextView
 			    android:layout_width="fill_parent" 

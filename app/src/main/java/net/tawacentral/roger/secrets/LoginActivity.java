@@ -21,6 +21,7 @@ import java.util.Collections;
 
 import javax.crypto.Cipher;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -407,6 +408,7 @@ public class LoginActivity extends Activity implements TextWatcher {
    * @param message Resource id of tText to display in the toast.
    * @param length Length of time to show toast.
    */
+  @SuppressLint("ShowToast")
   private void showToast(int message, int length) {
     if (null == toast) {
       toast = Toast.makeText(LoginActivity.this, message, length);

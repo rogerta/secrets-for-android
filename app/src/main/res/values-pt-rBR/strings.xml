@@ -19,7 +19,7 @@ limitations under the License.
 
 <string name="search_hint">Buscar segredos</string>
 
-<string name="login_first_line">Bem vindo ao Secrets</string>
+<string name="login_first_line">Bem-vindo ao Secrets</string>
 <string name="login_enter_password">Entre a senha</string>
 <string name="login_validate_password">Verifique a senha</string>
 

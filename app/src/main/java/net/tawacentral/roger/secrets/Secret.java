@@ -134,7 +134,7 @@ public class Secret implements Comparable<Secret>, Serializable {
 
     /**
      * Generate LogEntry from json object
-     * @param json object
+     * @param jsonValues
      * @return LogEntry
      * @throws JSONException
      */

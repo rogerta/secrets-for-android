@@ -20,7 +20,7 @@ limitations under the License.
     android:layout_height="fill_parent"
     android:paddingTop="6dip"
     android:paddingBottom="6dip"
-    android:paddingLeft="20dip"
+    android:paddingStart="20dip"
 >
     <TextView android:id="@android:id/text1"
         android:layout_width="fill_parent"
