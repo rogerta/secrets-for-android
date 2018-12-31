@@ -2,10 +2,8 @@ apply plugin: 'com.android.application'
 android {
     signingConfigs {
         config {
-            storeFile file('/home/rogerta/src/debug.keystore')
+            storeFile file('/home/rogerta/src/apps.keystore')
             keyAlias 'Tawacentral.net'
-            keyPassword 'debugg'
-            storePassword 'debugg'
         }
     }
     compileSdkVersion 25
@@ -19,6 +17,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.config
         }
         debug {
             signingConfig signingConfigs.config
