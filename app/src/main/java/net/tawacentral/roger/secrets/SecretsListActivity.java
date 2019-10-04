@@ -63,6 +63,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import static net.tawacentral.roger.secrets.FileUtils.DISABLE_DEPRECATION_WARNING;
+
 /**
  * An activity that handles two main functions: displaying the list of all
  * secrets, and modifying an existing secret. The reason that these two
@@ -381,11 +383,11 @@ public class SecretsListActivity extends ListActivity {
               });
         }
       });
-    } else {
+    } else if (!new File(DISABLE_DEPRECATION_WARNING).exists()) {
       final SharedPreferences prefs = getSharedPreferences(
           PREF_LAST_DEPRECATION_NAG_DATE, 0);
       final long now = System.currentTimeMillis();
-      final long oneMonth = 30 * 24 * 60 * 60 * 1000;  // ~ one month in millis.
+      final long oneMonth = 30l * 24 * 60 * 60 * 1000;  // ~ one month in millis.
       long lastNag = prefs.getLong(PREF_LAST_DEPRECATION_NAG_DATE, 0);
       if ((now - lastNag) > oneMonth) {
         getListView().post(new Runnable() {

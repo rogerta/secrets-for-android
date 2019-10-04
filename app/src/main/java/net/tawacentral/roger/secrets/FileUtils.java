@@ -110,6 +110,10 @@ public class FileUtils {
   public static final String OI_SAFE_FILE_NAME_CSV =
       Environment.getExternalStorageDirectory().getPath() + "/oisafe.csv";
 
+  /** Name of file to disable deprecation warning. */
+  public static final String DISABLE_DEPRECATION_WARNING =
+          Environment.getExternalStorageDirectory().getPath() + "/.secrets.dep.disable";
+
   private static final File SECRETS_FILE_CSV = new File(SECRETS_FILE_NAME_CSV);
   private static final File OI_SAFE_FILE_CSV = new File(OI_SAFE_FILE_NAME_CSV);
 
