@@ -385,9 +385,9 @@ public class SecretsListActivity extends ListActivity {
       final SharedPreferences prefs = getSharedPreferences(
           PREF_LAST_DEPRECATION_NAG_DATE, 0);
       final long now = System.currentTimeMillis();
-      final long oneWeek = 7 * 24 * 60 * 60 * 1000;  // One week in millis.
+      final long oneMonth = 30 * 24 * 60 * 60 * 1000;  // ~ one month in millis.
       long lastNag = prefs.getLong(PREF_LAST_DEPRECATION_NAG_DATE, 0);
-      if ((now - lastNag) > oneWeek) {
+      if ((now - lastNag) > oneMonth) {
         getListView().post(new Runnable() {
           @Override
           public void run() {
