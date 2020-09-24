@@ -2,11 +2,11 @@ apply plugin: 'com.android.application'
 android {
     signingConfigs {
         config {
-            storeFile file('/home/rogerta/src/apps.keystore')
+            storeFile file('H:/Brian/android/google.keystore')
             keyAlias 'Tawacentral.net'
         }
         debug {
-            storeFile file('/home/test/.android/debug.keystore')
+            storeFile file('H:/Brian/android/debug.keystore')
             storePassword 'android'
             keyPassword 'android'
             keyAlias 'androiddebugkey'

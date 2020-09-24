@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/secrets-for-android.iml" filepath="$PROJECT_DIR$/secrets-for-android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="secrets/app" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/secrets.iml" filepath="$PROJECT_DIR$/.idea/modules/secrets.iml" group="secrets" />
     </modules>
   </component>
 </project>
