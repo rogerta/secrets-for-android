@@ -14,17 +14,6 @@
 
 package net.tawacentral.roger.secrets;
 
-import java.io.File;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-
-import javax.crypto.Cipher;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
@@ -62,6 +51,17 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+
+import javax.crypto.Cipher;
 
 import static net.tawacentral.roger.secrets.FileUtils.DISABLE_DEPRECATION_WARNING;
 
@@ -383,7 +383,7 @@ public class SecretsListActivity extends ListActivity {
               });
         }
       });
-    } else if (!new File(DISABLE_DEPRECATION_WARNING).exists()) {
+    } else if (false && !new File(DISABLE_DEPRECATION_WARNING).exists()) {
       final SharedPreferences prefs = getSharedPreferences(
           PREF_LAST_DEPRECATION_NAG_DATE, 0);
       final long now = System.currentTimeMillis();
