@@ -12,11 +12,11 @@ android {
             keyAlias 'androiddebugkey'
         }
     }
-    compileSdkVersion 25
+    compileSdkVersion 30
     defaultConfig {
         applicationId "net.tawacentral.roger.secrets"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 29
         signingConfig signingConfigs.config
     }
     buildTypes {
