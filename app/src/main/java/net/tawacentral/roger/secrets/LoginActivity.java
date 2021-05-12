@@ -14,13 +14,6 @@
 
 package net.tawacentral.roger.secrets;
 
-import java.io.File;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-
-import javax.crypto.Cipher;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -40,6 +33,13 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import javax.crypto.Cipher;
 
 /**
  * This activity handles logging into the application.  It prompts the user for
@@ -160,6 +160,7 @@ public class LoginActivity extends Activity implements TextWatcher {
     }
 
     password.setHint(R.string.login_enter_password);
+    password.requestFocus();
     Log.d(LOG_TAG, "LoginActivity.onResume done");
   }
 
