@@ -14,6 +14,23 @@
 
 package net.tawacentral.roger.secrets;
 
+import android.app.backup.BackupAgentHelper;
+import android.app.backup.BackupDataInput;
+import android.app.backup.BackupDataOutput;
+import android.app.backup.FileBackupHelper;
+import android.app.backup.FullBackupDataOutput;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
+
+import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -36,22 +53,6 @@ import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 
-import net.tawacentral.roger.secrets.SecurityUtils.CipherInfo;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.app.backup.BackupAgentHelper;
-import android.app.backup.BackupDataInput;
-import android.app.backup.BackupDataOutput;
-import android.app.backup.FileBackupHelper;
-import android.app.backup.FullBackupDataOutput;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.os.Environment;
-import android.os.ParcelFileDescriptor;
-import android.util.Log;
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.CSVWriter;
 
